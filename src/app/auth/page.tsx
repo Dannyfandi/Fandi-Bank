@@ -5,7 +5,6 @@ import { useSearchParams } from 'next/navigation'
 import { Shield, Mail, Lock, CheckCircle2, User } from 'lucide-react'
 import Image from 'next/image'
 
-// Native Dictionary
 const dict = {
   en: {
     welcome: 'Welcome Back',
@@ -19,7 +18,8 @@ const dict = {
     btnUp: 'Create Account',
     switchIn: 'Already have an account? Sign in',
     switchUp: "Don't have an account? Sign up",
-    processing: 'Processing...'
+    processing: 'Processing...',
+    created: 'Account created! You can now sign in.'
   },
   es: {
     welcome: 'Bienvenido de nuevo',
@@ -33,50 +33,68 @@ const dict = {
     btnUp: 'Crear Cuenta',
     switchIn: '¿Ya tienes una cuenta? Iniciar sesión',
     switchUp: '¿No tienes una cuenta? Regístrate',
-    processing: 'Procesando...'
+    processing: 'Procesando...',
+    created: '¡Cuenta creada! Ya puedes iniciar sesión.'
   }
 }
 
 function AuthContent() {
   const [isLogin, setIsLogin] = useState(true)
   const [loading, setLoading] = useState(false)
-  const [lang, setLang] = useState<'en'|'es'>('es') // default to Spanish
+  const [lang, setLang] = useState<'en'|'es'>('es')
   
   const searchParams = useSearchParams()
   const error = searchParams.get('error')
   const message = searchParams.get('message')
+  const created = searchParams.get('created')
 
   useEffect(() => {
-    // Read cookie for locale
     const match = document.cookie.match(/(^| )NEXT_LOCALE=([^;]+)/)
     if (match) setLang(match[2] as 'en'|'es')
   }, [])
 
   const t = dict[lang] || dict.es
 
+  // After successful signup, auto-switch to login mode and stop loading
+  useEffect(() => {
+    if (created === '1') {
+      setIsLogin(true)
+      setLoading(false)
+    }
+  }, [created])
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
     const formData = new FormData(e.currentTarget)
-    if (isLogin) {
-      await login(formData)
-    } else {
-      await signup(formData)
+    try {
+      if (isLogin) {
+        await login(formData)
+      } else {
+        await signup(formData)
+      }
+    } catch {
+      // Server action redirects - this catch handles the redirect gracefully
     }
-    setTimeout(() => setLoading(false), 2000)
+    // Fallback: reset loading after 4s in case redirect doesn't fire
+    setTimeout(() => setLoading(false), 4000)
   }
 
+  // Auto-dismiss toasts after 8 seconds (longer for visibility)
   useEffect(() => {
     if (error || message) {
       const timer = setTimeout(() => {
         window.history.replaceState(null, '', '/auth')
-      }, 5000)
+      }, 8000)
       return () => clearTimeout(timer)
     }
   }, [error, message])
 
+  // Compute display message
+  const displayMessage = created === '1' ? t.created : message
+
   return (
-    <div className="min-h-screen bg-transparent flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-transparent flex flex-col justify-center py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden font-sans">
       
       {/* Liquid Pulse Swirling Background Aesthetics */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none flex items-center justify-center">
@@ -85,29 +103,28 @@ function AuthContent() {
         <div className="absolute bottom-[-10%] right-[-10%] w-[700px] h-[700px] bg-violet-600/40 rounded-full blur-[140px] mix-blend-screen animate-pulse opacity-50" style={{ animationDuration: '8s' }} />
       </div>
       
-      {/* Toast Notifications */}
-      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 w-full max-w-md px-4 pointer-events-none">
+      {/* Toast Notifications — larger and longer lasting */}
+      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 w-full max-w-lg px-4 pointer-events-none">
         {error && (
-          <div className="w-full p-4 bg-red-950/80 border border-red-500/50 rounded-2xl flex items-center gap-3 shadow-2xl animate-in slide-in-from-top-4 fade-in">
-             <div className="w-8 h-8 rounded-full bg-red-500/20 text-red-500 flex shrink-0 items-center justify-center">
-               <Shield className="w-4 h-4" />
+          <div className="w-full p-5 bg-red-950/90 border-2 border-red-500/60 rounded-2xl flex items-center gap-4 shadow-2xl shadow-red-500/30 animate-in slide-in-from-top-4 fade-in backdrop-blur-xl">
+             <div className="w-10 h-10 rounded-full bg-red-500/20 text-red-500 flex shrink-0 items-center justify-center">
+               <Shield className="w-5 h-5" />
              </div>
-             <p className="text-sm font-bold text-red-100">{error}</p>
+             <p className="text-base font-bold text-red-100">{error}</p>
           </div>
         )}
-        {message && (
-          <div className="w-full p-4 bg-purple-950/80 border border-purple-500/50 rounded-2xl flex items-center gap-3 shadow-2xl animate-in slide-in-from-top-4 fade-in duration-300">
-             <div className="w-8 h-8 rounded-full bg-purple-500/20 text-purple-400 flex shrink-0 items-center justify-center">
-               <CheckCircle2 className="w-4 h-4" />
+        {displayMessage && (
+          <div className="w-full p-5 bg-purple-950/90 border-2 border-purple-500/60 rounded-2xl flex items-center gap-4 shadow-2xl shadow-purple-500/30 animate-in slide-in-from-top-4 fade-in duration-300 backdrop-blur-xl">
+             <div className="w-10 h-10 rounded-full bg-purple-500/20 text-purple-400 flex shrink-0 items-center justify-center">
+               <CheckCircle2 className="w-5 h-5" />
              </div>
-             <p className="text-sm font-bold text-purple-100">{message}</p>
+             <p className="text-base font-bold text-purple-100">{displayMessage}</p>
           </div>
         )}
       </div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 flex flex-col items-center">
-        <div className="w-[500px] h-[280px] sm:w-[560px] sm:h-[320px] relative mb-6 hover:scale-105 transition-transform duration-700 ease-out -ml-4">
-           {/* Logo Integration */}
+        <div className="w-[400px] h-[220px] sm:w-[560px] sm:h-[320px] relative mb-6 hover:scale-105 transition-transform duration-700 ease-out">
            <Image src="/logo.png" alt="Fandi Bank Logo" fill className="object-contain drop-shadow-[0_0_60px_rgba(168,85,247,1)]" priority />
         </div>
         <h2 className="text-center text-3xl font-black tracking-tighter bg-gradient-to-br from-white to-zinc-400 bg-clip-text text-transparent">

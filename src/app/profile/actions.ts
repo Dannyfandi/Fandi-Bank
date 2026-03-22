@@ -13,36 +13,41 @@ export async function updateProfile(formData: FormData) {
   const description = formData.get('description') as string
   const avatarFile = formData.get('avatarFile') as File | null
 
-  // Process potential file upload
   let uploadedAvatarUrl: string | undefined = undefined
 
   if (avatarFile && avatarFile.size > 0) {
-    const fileExt = avatarFile.name.split('.').pop()
-    // Generate a unique file name using user.id and timestamp
-    const fileName = `${user.id}-${Date.now()}.${fileExt}`
+    const fileExt = avatarFile.name.split('.').pop()?.toLowerCase() || 'jpg'
+    // Use a stable filename per user so re-uploads overwrite cleanly (fixes iPhone issues)
+    const fileName = `${user.id}.${fileExt}`
     
-    // Upload the raw image file directly to the Supabase "avatars" bucket
+    // Convert File to ArrayBuffer for reliable cross-platform upload (fixes iOS Safari)
+    const arrayBuffer = await avatarFile.arrayBuffer()
+    const fileBuffer = new Uint8Array(arrayBuffer)
+
+    // Determine content type
+    const contentType = avatarFile.type || 'image/jpeg'
+
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('avatars')
-      .upload(fileName, avatarFile, {
+      .upload(fileName, fileBuffer, {
         cacheControl: '3600',
-        upsert: false // We use unique names so we don't need upsert
+        upsert: true, // Overwrite existing avatar
+        contentType: contentType
       })
 
     if (!uploadError && uploadData) {
-       // Retrieve the permanent public URL for the newly uploaded Image
        const { data: { publicUrl } } = supabase.storage
          .from('avatars')
          .getPublicUrl(uploadData.path)
        
-       uploadedAvatarUrl = publicUrl
+       // Append cache-busting timestamp so browsers show the new image
+       uploadedAvatarUrl = `${publicUrl}?t=${Date.now()}`
     } else {
        console.error("Storage upload error:", uploadError)
     }
   }
 
-  // Construct our update object (only overwrite Avatar if a new picture was successfully uploaded)
-  const updateData: any = {
+  const updateData: Record<string, string> = {
     username: username || '',
     description: description || ''
   }

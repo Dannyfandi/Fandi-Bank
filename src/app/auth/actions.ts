@@ -44,6 +44,5 @@ export async function signup(formData: FormData) {
     return redirect(`/auth?error=${encodeURIComponent(error.message)}`)
   }
 
-  // Check email popup message 
-  redirect('/auth?message=Account%20created!%20Please%20check%20your%20email%20to%20verify%20your%20account.')
+  redirect('/auth?message=Account%20created!&created=1')
 }
