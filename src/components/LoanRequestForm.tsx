@@ -9,10 +9,11 @@ export function LoanRequestForm() {
   const [msg, setMsg] = useState('')
 
   const handleSubmit = async (formData: FormData) => {
+    if (loading) return
     setLoading(true)
     const err = await submitLoanRequest(formData)
     if (err) setMsg(err)
-    else setMsg('Loan requested successfully! 🎉')
+    else setMsg('Pending for approval ⏳')
     setLoading(false)
   }
 

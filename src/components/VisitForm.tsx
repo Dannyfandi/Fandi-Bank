@@ -13,11 +13,12 @@ export function VisitForm() {
   }
 
   const handleSubmit = async (formData: FormData) => {
+    if (loading) return // prevent double-submit
     setLoading(true)
     setMsg('')
     const err = await submitVisitRequest(formData)
     if (err) setMsg(err)
-    else setMsg('Visit scheduled! 🎉')
+    else setMsg('Pending for approval ⏳')
     setLoading(false)
   }
 

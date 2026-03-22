@@ -9,6 +9,7 @@ export function TicketRequestForm() {
   const [message, setMessage] = useState('')
 
   async function onSubmit(formData: FormData) {
+    if (loading) return
     setLoading(true)
     setMessage('')
     const errorMsg = await submitTicketRequest(formData)
@@ -16,7 +17,7 @@ export function TicketRequestForm() {
     if (errorMsg) {
       setMessage(errorMsg)
     } else {
-      setMessage('Request submitted successfully!')
+      setMessage('Pending for approval ⏳')
     }
   }
 

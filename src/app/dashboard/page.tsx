@@ -8,6 +8,7 @@ import { ChatWidget } from '@/components/ChatWidget'
 import { LanguageToggle } from '@/components/LanguageToggle'
 import { DashboardClient } from '@/components/DashboardClient'
 import { Ticket, Calendar, Landmark, Sparkles, Star, User, Users } from 'lucide-react'
+import { LoanSimulator } from '@/components/LoanSimulator'
 import Image from 'next/image'
 import Link from 'next/link'
 import { formatCOP } from '@/utils/currency'
@@ -182,6 +183,9 @@ export default async function DashboardPage() {
               <p className="text-xs text-zinc-400 mb-4 font-medium">{t.scheduleVisit}</p>
               <VisitForm />
             </div>
+
+            {/* Loan Simulator */}
+            <LoanSimulator lang={lang} />
           </div>
 
         </main>

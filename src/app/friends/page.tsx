@@ -1,11 +1,11 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
-import { sendFriendRequest, respondFriendRequest } from './actions'
+import { respondFriendRequest } from './actions'
 import { FriendChat } from '@/components/FriendChat'
+import { FriendSearchPreview } from '@/components/FriendSearchPreview'
 import { LanguageToggle } from '@/components/LanguageToggle'
-import { ArrowLeft, UserPlus, Users, Check, X, User, MessageCircle } from 'lucide-react'
-import Image from 'next/image'
+import { ArrowLeft, Users, Check, X, User, MessageCircle } from 'lucide-react'
 import Link from 'next/link'
 
 const dict = {
@@ -13,16 +13,10 @@ const dict = {
     back: 'Back',
     title: 'Friends',
     subtitle: 'Connect with friends, chat, and share your transactions.',
-    addFriend: 'Add Friend',
-    addPh: 'Enter username...',
-    sendReq: 'Send',
     pending: 'Pending Requests',
-    accept: 'Accept',
-    decline: 'Decline',
     myFriends: 'My Friends',
-    noFriends: 'No friends yet. Add someone by username!',
+    noFriends: 'No friends yet. Search and add someone!',
     noPending: 'No pending requests.',
-    chatWith: 'Chat with',
     sentTo: 'Sent to',
     fromUser: 'From',
     waiting: 'Waiting...'
@@ -31,16 +25,10 @@ const dict = {
     back: 'Volver',
     title: 'Amigos',
     subtitle: 'Conecta con amigos, chatea y comparte tus transacciones.',
-    addFriend: 'Agregar Amigo',
-    addPh: 'Nombre de usuario...',
-    sendReq: 'Enviar',
     pending: 'Solicitudes Pendientes',
-    accept: 'Aceptar',
-    decline: 'Rechazar',
     myFriends: 'Mis Amigos',
-    noFriends: 'Aún no tienes amigos. ¡Agrega a alguien por su nombre!',
+    noFriends: 'Aún no tienes amigos. ¡Busca y agrega a alguien!',
     noPending: 'No hay solicitudes.',
-    chatWith: 'Chat con',
     sentTo: 'Enviado a',
     fromUser: 'De',
     waiting: 'Esperando...'
@@ -74,16 +62,40 @@ export default async function FriendsPage() {
   // Get my debts for sharing
   const { data: myDebts } = await supabase.from('debts').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
 
-  // Get chat URL param
-  const chatFriendParam = null // Handled client-side via URL
-
   // Pre-fetch messages for all accepted friends
   const friendIds = accepted.map(f => f.requester_id === user.id ? f.addressee_id : f.requester_id)
-  const { data: allFriendMessages } = await supabase
-    .from('friend_messages')
-    .select('*')
-    .or(friendIds.map(fid => `and(sender_id.eq.${user.id},receiver_id.eq.${fid}),and(sender_id.eq.${fid},receiver_id.eq.${user.id})`).join(',') || 'id.eq.00000000-0000-0000-0000-000000000000')
-    .order('created_at', { ascending: true })
+  
+  let allFriendMessages: any[] = []
+  if (friendIds.length > 0) {
+    const { data: msgs } = await supabase
+      .from('friend_messages')
+      .select('*')
+      .or(friendIds.map(fid => `and(sender_id.eq.${user.id},receiver_id.eq.${fid}),and(sender_id.eq.${fid},receiver_id.eq.${user.id})`).join(','))
+      .order('created_at', { ascending: true })
+    allFriendMessages = msgs || []
+  }
+
+  // Fetch friend's debts for shared transactions display
+  // Collect all debt IDs that appear in shared messages
+  const allSharedDebtIds = new Set<string>()
+  for (const msg of allFriendMessages) {
+    if (msg.shared_debt_ids && msg.shared_debt_ids.length > 0) {
+      msg.shared_debt_ids.forEach((id: string) => allSharedDebtIds.add(id))
+    }
+  }
+  
+  // Fetch all referenced debts (both mine and friends')
+  let allSharedDebts: any[] = [...(myDebts || [])]
+  if (allSharedDebtIds.size > 0) {
+    const missingIds = [...allSharedDebtIds].filter(id => !(myDebts || []).find(d => d.id === id))
+    if (missingIds.length > 0) {
+      const { data: friendDebts } = await supabase
+        .from('debts')
+        .select('id, description, amount, created_at')
+        .in('id', missingIds)
+      if (friendDebts) allSharedDebts = [...allSharedDebts, ...friendDebts]
+    }
+  }
 
   return (
     <div className="min-h-screen bg-transparent text-zinc-50 p-3 sm:p-4 md:p-8 font-sans">
@@ -104,19 +116,8 @@ export default async function FriendsPage() {
 
         <p className="text-sm text-zinc-400 font-medium">{t.subtitle}</p>
 
-        {/* Add Friend */}
-        <div className="p-4 sm:p-6 rounded-2xl bg-zinc-900/30 backdrop-blur-[40px] border border-white/10 shadow-xl">
-          <h3 className="font-bold flex items-center gap-2 text-purple-400 mb-3 text-sm sm:text-base">
-            <UserPlus className="w-4 h-4" /> {t.addFriend}
-          </h3>
-          <form action={sendFriendRequest} className="flex gap-2">
-            <input name="username" type="text" required placeholder={t.addPh}
-              className="flex-1 px-3 py-2 bg-black/30 border border-white/10 rounded-xl text-sm text-white placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-purple-500/50 min-w-0" />
-            <button type="submit" className="px-4 sm:px-6 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 font-bold rounded-xl text-sm transition-colors border border-purple-500/30 shrink-0">
-              {t.sendReq}
-            </button>
-          </form>
-        </div>
+        {/* Friend Search with Preview */}
+        <FriendSearchPreview lang={lang} />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
@@ -172,7 +173,7 @@ export default async function FriendsPage() {
             {accepted.map(f => {
               const friend = f.requester_id === user.id ? f.addressee : f.requester
               const friendId = f.requester_id === user.id ? f.addressee_id : f.requester_id
-              const msgs = (allFriendMessages || []).filter(m =>
+              const msgs = allFriendMessages.filter(m =>
                 (m.sender_id === user.id && m.receiver_id === friendId) ||
                 (m.sender_id === friendId && m.receiver_id === user.id)
               )
@@ -202,6 +203,7 @@ export default async function FriendsPage() {
                       friendName={friend?.username || ''}
                       messages={msgs}
                       myDebts={myDebts || []}
+                      allSharedDebts={allSharedDebts}
                       lang={lang}
                     />
                   </div>

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Send, Share2, ChevronDown, Calendar } from 'lucide-react'
+import { useState, useRef } from 'react'
+import { Send, Share2, Calendar, Loader2 } from 'lucide-react'
 import { sendFriendMessage } from '@/app/friends/actions'
 import { formatCOP } from '@/utils/currency'
 
@@ -11,6 +11,7 @@ interface FriendChatProps {
   friendName: string
   messages: any[]
   myDebts: any[]
+  allSharedDebts: any[]  // All debts referenced in shared messages (includes friend's debts)
   lang: 'en' | 'es'
 }
 
@@ -20,27 +21,29 @@ const dict = {
     send: 'Send',
     shareTitle: 'Share Transactions',
     selectAll: 'Select All',
-    shareSelected: 'Share Selected',
     noDebts: 'No transactions to share.',
     sharedTx: 'Shared Transactions:',
-    close: 'Close'
+    close: 'Close',
+    sending: 'Sending...'
   },
   es: {
     msgPh: 'Escribe un mensaje...',
     send: 'Enviar',
     shareTitle: 'Compartir Transacciones',
     selectAll: 'Seleccionar Todo',
-    shareSelected: 'Compartir',
     noDebts: 'No hay transacciones.',
     sharedTx: 'Transacciones Compartidas:',
-    close: 'Cerrar'
+    close: 'Cerrar',
+    sending: 'Enviando...'
   }
 }
 
-export function FriendChat({ currentUserId, friendId, friendName, messages, myDebts, lang }: FriendChatProps) {
+export function FriendChat({ currentUserId, friendId, friendName, messages, myDebts, allSharedDebts, lang }: FriendChatProps) {
   const t = dict[lang]
   const [showShare, setShowShare] = useState(false)
   const [selectedDebts, setSelectedDebts] = useState<string[]>([])
+  const [sending, setSending] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
 
   const toggleDebt = (id: string) => {
     setSelectedDebts(prev => prev.includes(id) ? prev.filter(d => d !== id) : [...prev, id])
@@ -53,6 +56,22 @@ export function FriendChat({ currentUserId, friendId, friendName, messages, myDe
       setSelectedDebts(myDebts.map(d => d.id))
     }
   }
+
+  const handleSubmit = async (formData: FormData) => {
+    if (sending) return // prevent double-send
+    setSending(true)
+    try {
+      await sendFriendMessage(formData)
+      formRef.current?.reset()
+      setSelectedDebts([])
+      setShowShare(false) // Auto-close share panel
+    } finally {
+      setSending(false)
+    }
+  }
+
+  // Lookup debts from the combined pool (sender + receiver debts)
+  const findDebt = (dId: string) => allSharedDebts.find(x => x.id === dId)
 
   return (
     <div className="flex flex-col h-[400px] sm:h-[500px]">
@@ -74,14 +93,14 @@ export function FriendChat({ currentUserId, friendId, friendName, messages, myDe
                   <div className="mt-2 pt-2 border-t border-white/10">
                     <p className="text-[10px] uppercase tracking-widest font-bold text-purple-400 mb-1">{t.sharedTx}</p>
                     {msg.shared_debt_ids.map((dId: string) => {
-                      const d = myDebts.find(x => x.id === dId)
+                      const d = findDebt(dId)
                       return d ? (
                         <div key={dId} className="text-xs text-zinc-400 flex justify-between py-0.5">
                           <span>{d.description}</span>
                           <span className="font-bold text-zinc-300">{formatCOP(d.amount)}</span>
                         </div>
                       ) : (
-                        <div key={dId} className="text-xs text-zinc-600">ID: {dId.slice(0, 8)}...</div>
+                        <div key={dId} className="text-xs text-zinc-600">Transaction ({dId.slice(0, 8)}...)</div>
                       )
                     })}
                   </div>
@@ -111,9 +130,9 @@ export function FriendChat({ currentUserId, friendId, friendName, messages, myDe
                 {myDebts.map(d => (
                   <label key={d.id} className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer text-xs transition-colors ${selectedDebts.includes(d.id) ? 'bg-purple-500/10 border border-purple-500/20' : 'hover:bg-white/5 border border-transparent'}`}>
                     <input type="checkbox" checked={selectedDebts.includes(d.id)} onChange={() => toggleDebt(d.id)} className="accent-purple-500" />
-                    <span className="flex-1 text-zinc-300">{d.description}</span>
-                    <span className="text-zinc-500 flex items-center gap-1"><Calendar className="w-2.5 h-2.5" />{new Date(d.created_at).toLocaleDateString()}</span>
-                    <span className="font-bold text-zinc-200">{formatCOP(d.amount)}</span>
+                    <span className="flex-1 text-zinc-300 truncate">{d.description}</span>
+                    <span className="text-zinc-500 flex items-center gap-1 shrink-0"><Calendar className="w-2.5 h-2.5" />{new Date(d.created_at).toLocaleDateString()}</span>
+                    <span className="font-bold text-zinc-200 shrink-0">{formatCOP(d.amount)}</span>
                   </label>
                 ))}
               </div>
@@ -123,7 +142,7 @@ export function FriendChat({ currentUserId, friendId, friendName, messages, myDe
       )}
 
       {/* Message Input */}
-      <form action={sendFriendMessage} className="border-t border-white/10 p-3 flex gap-2 items-center">
+      <form ref={formRef} action={handleSubmit} className="border-t border-white/10 p-3 flex gap-2 items-center">
         <input type="hidden" name="receiverId" value={friendId} />
         <input type="hidden" name="sharedDebtIds" value={JSON.stringify(selectedDebts)} />
         <button type="button" onClick={() => setShowShare(!showShare)} className={`p-2 rounded-lg transition-colors shrink-0 ${showShare ? 'bg-purple-500/20 text-purple-400' : 'text-zinc-500 hover:text-purple-400 hover:bg-white/5'}`}>
@@ -135,8 +154,8 @@ export function FriendChat({ currentUserId, friendId, friendName, messages, myDe
           placeholder={t.msgPh}
           className="flex-1 px-3 py-2 bg-black/30 border border-white/10 rounded-xl text-sm text-white placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-purple-500/50 min-w-0"
         />
-        <button type="submit" className="p-2 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors shrink-0">
-          <Send className="w-4 h-4" />
+        <button type="submit" disabled={sending} className="p-2 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors shrink-0 disabled:opacity-40">
+          {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
         </button>
       </form>
     </div>
