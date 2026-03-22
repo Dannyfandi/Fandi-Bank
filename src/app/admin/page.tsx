@@ -1,14 +1,15 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
-import { createDebt, createPayment, deleteDebt, markDebtPaid, updateTicketRequestStatus, updateLoanStatus } from './actions'
-import { User, Receipt, Shield, Check, X, Ticket, MapPin, Wallet, ChevronDown, Landmark, Star } from 'lucide-react'
+import { createDebt, createPayment, deleteDebt, markDebtPaid, updateTicketRequestStatus, updateLoanStatus, updateVisitStatus } from './actions'
+import { User, Receipt, Shield, Check, X, Ticket, MapPin, Wallet, ChevronDown, Landmark, Star, Users } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { formatCOP } from '@/utils/currency'
 import { AdminParser } from '@/components/AdminParser'
 import { AdminHelpCenter } from '@/components/AdminHelpCenter'
 import { LanguageToggle } from '@/components/LanguageToggle'
+import { ExperimentalTab } from '@/components/ExperimentalTab'
 import { calculateCreditScore, calculateDebtInterest, DebtForCredit } from '@/utils/credit'
 
 const dict = {
@@ -48,7 +49,10 @@ const dict = {
     paidLabel: 'Paid',
     paidStatus: 'paid',
     pendingStatus: 'pending',
-    created: 'Created'
+    created: 'Created',
+    pending: 'pending',
+    approved: 'approved',
+    rejected: 'rejected',
   },
   es: {
     adminHq: 'Panel de Admin',
@@ -86,7 +90,10 @@ const dict = {
     paidLabel: 'Pagado',
     paidStatus: 'pagado',
     pendingStatus: 'pendiente',
-    created: 'Creado'
+    created: 'Creado',
+    pending: 'pendiente',
+    approved: 'aprobado',
+    rejected: 'rechazado',
   }
 }
 
@@ -104,12 +111,18 @@ export default async function AdminPage() {
   if (profile?.role !== 'admin') return redirect('/dashboard')
 
   const { data: profiles } = await supabase.from('profiles').select('*').order('created_at', { ascending: false })
-  const { data: debts } = await supabase.from('debts').select('*, profiles(username)').order('created_at', { ascending: false })
+  const { data: debts } = await supabase.from('debts').select('*, profiles(username, avatar_url)').order('created_at', { ascending: false })
   const { data: allocations } = await supabase.from('payment_allocations').select('*, payments(created_at, total_amount)')
   const { data: requests } = await supabase.from('ticket_requests').select('*, profiles(username)').order('created_at', { ascending: false })
-  const { data: visits } = await supabase.from('visit_requests').select('*, profiles(username)').order('visit_date', { ascending: true })
+  const { data: visits } = await supabase.from('visit_requests').select('*, profiles(username)').order('created_at', { ascending: false })
   const { data: loans } = await supabase.from('loan_requests').select('*, profiles(username)').order('created_at', { ascending: false })
   const { data: allMessages } = await supabase.from('messages').select('*').order('created_at', { ascending: true })
+
+  // Build profile avatar lookup
+  const avatarMap: Record<string, string> = {}
+  for (const p of (profiles || [])) {
+    if (p.avatar_url) avatarMap[p.id] = p.avatar_url
+  }
 
   let grandTotal = 0
   const userTotals = (profiles || []).map(p => {
@@ -125,12 +138,16 @@ export default async function AdminPage() {
     return { ...p, totalRemaining, debts: userDebts, score, isSuspended }
   })
 
-  // Group debts by user for the receipt accordion
-  const debtsByUser: Record<string, { username: string; debts: any[] }> = {}
+  // Group debts by user
+  const debtsByUser: Record<string, { username: string; avatarUrl: string | null; debts: any[] }> = {}
   for (const debt of (debts || [])) {
     const uid = debt.user_id
     if (!debtsByUser[uid]) {
-      debtsByUser[uid] = { username: debt.profiles?.username || uid, debts: [] }
+      debtsByUser[uid] = {
+        username: debt.profiles?.username || uid,
+        avatarUrl: debt.profiles?.avatar_url || avatarMap[uid] || null,
+        debts: []
+      }
     }
     debtsByUser[uid].debts.push(debt)
   }
@@ -139,22 +156,22 @@ export default async function AdminPage() {
     <div className="min-h-screen bg-transparent text-zinc-50 p-3 sm:p-4 md:p-8 font-sans">
       <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
         
-        {/* Header */}
+        {/* Header — bigger logo, no Fandi Bank text */}
         <header className="flex items-center justify-between pb-4 sm:pb-6 border-b border-white/10">
           <div className="flex items-center gap-3 sm:gap-4">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 relative hidden sm:block">
-               <Image src="/logo.png" alt="Fandi Bank Logo" fill className="object-cover rounded-full shadow-lg" priority />
+            <div className="w-14 h-14 sm:w-20 sm:h-20 relative shrink-0">
+               <Image src="/logo.png" alt="Fandi Bank" fill className="object-cover rounded-full shadow-lg shadow-purple-900/30" priority />
             </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tighter bg-gradient-to-r from-purple-400 to-fuchsia-600 bg-clip-text text-transparent">
-                {t.adminHq}
-              </h1>
-              <span className="text-xs font-bold text-zinc-500 tracking-widest uppercase">Fandi Bank</span>
-            </div>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tighter bg-gradient-to-r from-purple-400 to-fuchsia-600 bg-clip-text text-transparent">
+              {t.adminHq}
+            </h1>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
             <LanguageToggle />
             <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 border-l border-white/10">
+              <Link href="/friends" className="p-2 rounded-lg hover:bg-white/5 transition-colors text-zinc-400 hover:text-purple-400" title="Friends">
+                <Users className="w-4 h-4 sm:w-5 sm:h-5" />
+              </Link>
               <Link href="/profile" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                 <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden border-2 border-purple-500/30 bg-black flex items-center justify-center shadow-lg shadow-purple-900/40">
                    {profile?.avatar_url ? (
@@ -270,7 +287,7 @@ export default async function AdminPage() {
               </div>
             </div>
 
-            {/* Visit Requests */}
+            {/* Visit Requests — with Accept/Reject, sorted newest first */}
             <div className="space-y-3 sm:space-y-4">
               <h3 className="text-base sm:text-lg font-bold text-zinc-100 flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-fuchsia-400" /> {t.visits}
@@ -281,10 +298,22 @@ export default async function AdminPage() {
                   <div key={visit.id} className="p-3 sm:p-4 border border-white/10 rounded-xl sm:rounded-2xl bg-zinc-900/30 backdrop-blur-[40px]">
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-bold text-zinc-200 text-sm">{visit.profiles?.username}</span>
-                      <span className="text-xs uppercase tracking-wider font-bold text-zinc-400">{new Date(visit.visit_date).toLocaleDateString()}</span>
+                      <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded-full border ${
+                        visit.status === 'approved' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                        : visit.status === 'rejected' ? 'bg-red-500/10 text-red-400 border-red-500/20'
+                        : 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                      }`}>
+                        {visit.status || t.pending}
+                      </span>
                     </div>
-                    <p className="text-sm text-zinc-300"><strong>{t.eta}</strong> {visit.arrival_time.slice(0, 5)}</p>
+                    <p className="text-sm text-zinc-300">{new Date(visit.visit_date).toLocaleDateString()} · {t.eta} {visit.arrival_time?.slice(0, 5)}</p>
                     <p className="text-sm text-fuchsia-400 font-medium break-words mt-1">{visit.stay_status}</p>
+                    {(!visit.status || visit.status === 'pending') && (
+                      <div className="flex gap-2 mt-3">
+                        <form action={updateVisitStatus} className="flex-1"><input type="hidden" name="visitId" value={visit.id} /><input type="hidden" name="status" value="approved" /><button className="w-full py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 rounded-lg text-xs font-bold transition-colors border border-purple-500/30">{t.approve}</button></form>
+                        <form action={updateVisitStatus} className="flex-1"><input type="hidden" name="visitId" value={visit.id} /><input type="hidden" name="status" value="rejected" /><button className="w-full py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg text-xs font-bold transition-colors border border-red-500/30">{t.reject}</button></form>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -337,7 +366,7 @@ export default async function AdminPage() {
               })}
             </div>
 
-            {/* Grouped Debt Receipts by User */}
+            {/* Grouped Debt Receipts by User — with avatars */}
             <h2 className="text-lg sm:text-xl font-bold flex items-center gap-3 mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-white/10">
               <Receipt className="w-5 h-5 text-zinc-500" /> {t.receipts}
             </h2>
@@ -350,8 +379,12 @@ export default async function AdminPage() {
                   <details key={uid} className="border border-white/10 rounded-2xl sm:rounded-3xl bg-zinc-900/30 backdrop-blur-[40px] overflow-hidden shadow-lg group/userDebts">
                     <summary className="cursor-pointer list-none flex items-center justify-between p-4 sm:p-5 hover:bg-white/5 transition-colors">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center">
-                          <User className="w-4 h-4 text-purple-400" />
+                        <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-purple-500/20 bg-black flex items-center justify-center shrink-0">
+                          {group.avatarUrl ? (
+                            <img src={group.avatarUrl} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <User className="w-4 h-4 text-purple-400" />
+                          )}
                         </div>
                         <span className="font-bold text-zinc-200">{group.username}</span>
                         <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 bg-white/5 px-2 py-1 rounded-full">{group.debts.length} debts</span>
@@ -419,6 +452,9 @@ export default async function AdminPage() {
         <div className="pt-6 sm:pt-8">
            <AdminHelpCenter adminId={user.id} users={profiles || []} messages={allMessages || []} />
         </div>
+
+        {/* Experimental Tab */}
+        <ExperimentalTab lang={lang} />
       </div>
     </div>
   )

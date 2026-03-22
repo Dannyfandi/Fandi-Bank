@@ -3,8 +3,7 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { updateProfile } from './actions'
 import { LanguageToggle } from '@/components/LanguageToggle'
-import { User, Camera, AlignLeft, ArrowLeft, Save, MapPin, Calendar, Clock } from 'lucide-react'
-import Image from 'next/image'
+import { User, Camera, AlignLeft, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
 const dict = {
@@ -12,48 +11,29 @@ const dict = {
     back: 'Back to Dashboard',
     title: 'Edit Profile',
     subtitle: 'Customize how you appear to your friends in Fandi Bank.',
-    avatarTitle: 'Avatar Profile Picture',
-    avatarEmpty: 'No Avatar',
     avatarLabel: 'Upload Avatar Image',
     userLabel: 'Username',
     userPh: 'Ferb',
     descLabel: 'Bio / Description',
     descPh: 'Tell your friends about yourself...',
     saveBtn: 'Save Changes',
-    myVisits: 'My Visit Requests',
-    noVisits: 'No visit requests yet.',
-    visitDate: 'Date',
-    visitEta: 'ETA',
-    visitStay: 'Plan',
-    pending: 'Pending',
-    approved: 'Approved'
   },
   es: {
     back: 'Volver al Panel',
     title: 'Editar Perfil',
     subtitle: 'Personaliza cómo te ven tus amigos en Fandi Bank.',
-    avatarTitle: 'Foto de Perfil',
-    avatarEmpty: 'Sin Foto',
     avatarLabel: 'Subir Foto de Perfil',
     userLabel: 'Nombre de Usuario',
     userPh: 'Ferb',
     descLabel: 'Biografía / Descripción',
     descPh: 'Cuéntale a tus amigos sobre ti...',
     saveBtn: 'Guardar Cambios',
-    myVisits: 'Mis Solicitudes de Visita',
-    noVisits: 'No hay solicitudes de visita.',
-    visitDate: 'Fecha',
-    visitEta: 'Hora',
-    visitStay: 'Plan',
-    pending: 'Pendiente',
-    approved: 'Aprobado'
   }
 }
 
 export default async function ProfilePage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-
   if (!user) return redirect('/auth')
 
   const cookieStore = await cookies()
@@ -61,19 +41,7 @@ export default async function ProfilePage() {
   const lang = (langCookie === 'en' ? 'en' : 'es') as 'en' | 'es'
   const t = dict[lang]
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
-
-  // Fetch user's visit requests
-  const { data: visits } = await supabase
-    .from('visit_requests')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('visit_date', { ascending: false })
-
+  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
   const backLink = profile?.role === 'admin' ? '/admin' : '/dashboard'
 
   return (
@@ -89,7 +57,7 @@ export default async function ProfilePage() {
 
         <main className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 pt-2 sm:pt-4">
            
-           {/* Left Sidebar Avatar Preview */}
+           {/* Avatar Preview */}
            <div className="md:col-span-1 flex flex-col items-center p-6 sm:p-8 bg-zinc-900/30 backdrop-blur-[40px] border border-white/10 shadow-2xl shadow-purple-900/20 rounded-[24px] sm:rounded-[40px] relative overflow-hidden">
              <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden border-4 border-purple-500/30 shadow-[0_0_40px_rgba(168,85,247,0.3)] relative mb-4 sm:mb-6 bg-black flex items-center justify-center">
                {profile?.avatar_url ? (
@@ -105,7 +73,7 @@ export default async function ProfilePage() {
              )}
            </div>
 
-           {/* Right Column Form */}
+           {/* Form */}
            <div className="md:col-span-2 space-y-6">
              <div>
                <h1 className="text-2xl sm:text-3xl font-black tracking-tighter bg-gradient-to-r from-purple-400 to-fuchsia-600 bg-clip-text text-transparent">
@@ -167,42 +135,6 @@ export default async function ProfilePage() {
 
                </form>
              </div>
-
-             {/* Visit Requests */}
-             <div className="space-y-3">
-               <h3 className="text-base sm:text-lg font-bold text-zinc-200 flex items-center gap-2">
-                 <MapPin className="w-5 h-5 text-fuchsia-400" /> {t.myVisits}
-               </h3>
-               {(!visits || visits.length === 0) ? (
-                 <p className="text-sm text-zinc-600">{t.noVisits}</p>
-               ) : (
-                 <div className="space-y-2">
-                   {visits.map((v: any) => (
-                     <div key={v.id} className="p-3 sm:p-4 rounded-xl bg-zinc-900/30 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                       <div className="flex items-center gap-3 flex-wrap">
-                         <div className="flex items-center gap-1.5 text-sm">
-                           <Calendar className="w-3.5 h-3.5 text-fuchsia-400" />
-                           <span className="text-zinc-300">{new Date(v.visit_date).toLocaleDateString()}</span>
-                         </div>
-                         <div className="flex items-center gap-1.5 text-sm">
-                           <Clock className="w-3.5 h-3.5 text-zinc-500" />
-                           <span className="text-zinc-400">{v.arrival_time?.slice(0, 5)}</span>
-                         </div>
-                         <span className="text-xs text-zinc-500">{v.stay_status}</span>
-                       </div>
-                       <span className={`text-[10px] uppercase tracking-widest font-black px-2 py-1 rounded-full border shrink-0 w-fit ${
-                         v.status === 'approved'
-                           ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
-                           : 'bg-amber-500/10 text-amber-500 border-amber-500/20'
-                       }`}>
-                         {v.status === 'approved' ? t.approved : t.pending}
-                       </span>
-                     </div>
-                   ))}
-                 </div>
-               )}
-             </div>
-
            </div>
 
         </main>

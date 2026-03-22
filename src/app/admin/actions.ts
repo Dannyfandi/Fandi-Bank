@@ -200,3 +200,13 @@ export async function updateLoanStatus(formData: FormData) {
   revalidatePath('/admin')
   revalidatePath('/dashboard')
 }
+
+export async function updateVisitStatus(formData: FormData) {
+  const supabase = await checkAdmin()
+  const visitId = formData.get('visitId') as string
+  const status = formData.get('status') as string
+
+  await supabase.from('visit_requests').update({ status }).eq('id', visitId)
+  revalidatePath('/admin')
+  revalidatePath('/dashboard')
+}

@@ -1,14 +1,16 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
+import { Suspense } from 'react'
 import { TicketRequestForm } from '@/components/TicketRequestForm'
 import { VisitForm } from '@/components/VisitForm'
 import { LoanRequestForm } from '@/components/LoanRequestForm'
 import { ChatWidget } from '@/components/ChatWidget'
 import { LanguageToggle } from '@/components/LanguageToggle'
 import { DashboardClient } from '@/components/DashboardClient'
-import { Ticket, Calendar, Landmark, Sparkles, Star, User, Users } from 'lucide-react'
 import { LoanSimulator } from '@/components/LoanSimulator'
+import { ExperimentalTab } from '@/components/ExperimentalTab'
+import { Ticket, Calendar, Landmark, Sparkles, Star, User, Users, MapPin, Clock } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { formatCOP } from '@/utils/currency'
@@ -24,7 +26,11 @@ const sideDict = {
     visits: 'Mojo Dojo Casa House Visits',
     scheduleVisit: 'Schedule an upcoming visit',
     logout: 'Log Out',
-    score: 'Score:'
+    score: 'Score:',
+    myVisits: 'My Visit Requests',
+    noVisits: 'No visit requests yet.',
+    pending: 'Pending',
+    approved: 'Approved',
   },
   es: {
     actions: 'Acciones Rápidas',
@@ -35,8 +41,16 @@ const sideDict = {
     visits: 'Visitas Mojo Dojo Casa House',
     scheduleVisit: 'Programa una visita',
     logout: 'Salir',
-    score: 'Puntos:'
+    score: 'Puntos:',
+    myVisits: 'Mis Solicitudes de Visita',
+    noVisits: 'No hay solicitudes.',
+    pending: 'Pendiente',
+    approved: 'Aprobado',
   }
+}
+
+function LoadingBlock() {
+  return <div className="p-6 rounded-2xl bg-zinc-900/20 border border-white/5 animate-pulse h-32" />
 }
 
 export default async function DashboardPage() {
@@ -72,11 +86,16 @@ export default async function DashboardPage() {
     if (msgs) chatMessages = msgs
   }
 
+  // Fetch visit requests
+  const { data: visits } = await supabase
+    .from('visit_requests')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('visit_date', { ascending: false })
+
   const { score, isSuspended } = calculateCreditScore((debts || []) as DebtForCredit[])
 
-  // Pre-compute interest map on the server
   const interestMap: Record<string, number> = {}
-  const pendingDebts = debts?.filter(d => d.status === 'pending') || []
   let totalOwed = 0
   for (const debt of (debts || [])) {
     const interest = calculateDebtInterest(debt as DebtForCredit)
@@ -92,15 +111,12 @@ export default async function DashboardPage() {
     <div className="min-h-screen bg-transparent text-zinc-50 p-3 sm:p-4 md:p-8 font-sans">
       <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8">
 
-        {/* Header */}
+        {/* Header — Larger logo, no "Fandi Bank" text */}
         <header className="flex items-center justify-between pb-4 sm:pb-6 border-b border-zinc-800/50">
-          <div className="flex items-center gap-3 sm:gap-4">
-            <div className="w-10 h-10 sm:w-14 sm:h-14 relative">
-              <Image src="/logo.png" alt="Logo" fill className="object-cover rounded-full shadow-lg" priority />
+          <div className="flex items-center gap-2">
+            <div className="w-14 h-14 sm:w-20 sm:h-20 relative shrink-0">
+              <Image src="/logo.png" alt="Fandi Bank" fill className="object-cover rounded-full shadow-lg shadow-purple-900/30" priority />
             </div>
-            <h1 className="text-xl sm:text-2xl font-black tracking-tighter bg-gradient-to-r from-purple-400 to-fuchsia-400 bg-clip-text text-transparent">
-              Fandi Bank
-            </h1>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
             <LanguageToggle />
@@ -135,17 +151,23 @@ export default async function DashboardPage() {
           
           {/* Debt Section */}
           <div className="lg:col-span-2 space-y-4">
-            <DashboardClient
-              profile={profile}
-              debts={debts || []}
-              allocations={allocations || []}
-              totalOwed={totalOwed}
-              credits={credits}
-              score={score}
-              isSuspended={isSuspended}
-              lang={lang}
-              interestMap={interestMap}
-            />
+            {/* Mobile: score badge */}
+            <div className={`sm:hidden flex px-3 py-1.5 rounded-full border text-sm font-black items-center gap-2 w-fit ${score >= 0 ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
+              <Star className="w-4 h-4" /> {t.score} {score}
+            </div>
+            <Suspense fallback={<LoadingBlock />}>
+              <DashboardClient
+                profile={profile}
+                debts={debts || []}
+                allocations={allocations || []}
+                totalOwed={totalOwed}
+                credits={credits}
+                score={score}
+                isSuspended={isSuspended}
+                lang={lang}
+                interestMap={interestMap}
+              />
+            </Suspense>
           </div>
 
           {/* Sidebar Actions */}
@@ -155,40 +177,68 @@ export default async function DashboardPage() {
               {t.actions}
             </h2>
             
-            {/* Mobile: score badge inline */}
-            <div className={`sm:hidden flex px-3 py-1.5 rounded-full border text-sm font-black items-center gap-2 w-fit ${score >= 0 ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
-              <Star className="w-4 h-4" /> {t.score} {score}
-            </div>
-            
-            <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-zinc-900/30 backdrop-blur-[40px] border border-white/10 shadow-xl">
-              <h3 className="font-bold flex items-center gap-2 text-purple-400 mb-2 text-sm sm:text-base">
-                <Ticket className="w-4 h-4" /> {t.requestTicket}
-              </h3>
-              <p className="text-xs text-zinc-400 mb-4 font-medium leading-relaxed">{t.descTicket}</p>
-              <TicketRequestForm />
-            </div>
+            <Suspense fallback={<LoadingBlock />}>
+              <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-zinc-900/30 backdrop-blur-[40px] border border-white/10 shadow-xl">
+                <h3 className="font-bold flex items-center gap-2 text-purple-400 mb-2 text-sm sm:text-base">
+                  <Ticket className="w-4 h-4" /> {t.requestTicket}
+                </h3>
+                <p className="text-xs text-zinc-400 mb-4 font-medium leading-relaxed">{t.descTicket}</p>
+                <TicketRequestForm />
+              </div>
+            </Suspense>
 
-            <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-zinc-900/30 backdrop-blur-[40px] border border-white/10 shadow-xl">
-              <h3 className="font-bold flex items-center gap-2 text-amber-500 mb-2 text-sm sm:text-base">
-                <Landmark className="w-4 h-4" /> {t.requestLoan}
-              </h3>
-              <p className="text-xs text-zinc-400 mb-4 font-medium leading-relaxed">{t.descLoan}</p>
-              <LoanRequestForm />
-            </div>
+            <Suspense fallback={<LoadingBlock />}>
+              <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-zinc-900/30 backdrop-blur-[40px] border border-white/10 shadow-xl">
+                <h3 className="font-bold flex items-center gap-2 text-amber-500 mb-2 text-sm sm:text-base">
+                  <Landmark className="w-4 h-4" /> {t.requestLoan}
+                </h3>
+                <p className="text-xs text-zinc-400 mb-4 font-medium leading-relaxed">{t.descLoan}</p>
+                <LoanRequestForm />
+              </div>
+            </Suspense>
 
-            <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-zinc-900/30 backdrop-blur-[40px] border border-white/10 shadow-xl">
-              <h3 className="font-bold flex items-center gap-2 text-fuchsia-400 mb-2 text-sm sm:text-base">
-                <Calendar className="w-4 h-4" /> {t.visits}
-              </h3>
-              <p className="text-xs text-zinc-400 mb-4 font-medium">{t.scheduleVisit}</p>
-              <VisitForm />
-            </div>
+            <Suspense fallback={<LoadingBlock />}>
+              <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-zinc-900/30 backdrop-blur-[40px] border border-white/10 shadow-xl">
+                <h3 className="font-bold flex items-center gap-2 text-fuchsia-400 mb-2 text-sm sm:text-base">
+                  <Calendar className="w-4 h-4" /> {t.visits}
+                </h3>
+                <p className="text-xs text-zinc-400 mb-4 font-medium">{t.scheduleVisit}</p>
+                <VisitForm />
+              </div>
+            </Suspense>
 
-            {/* Loan Simulator */}
-            <LoanSimulator lang={lang} />
+            {/* My Visit Requests */}
+            {visits && visits.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="text-sm font-bold text-zinc-300 flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-fuchsia-400" /> {t.myVisits}
+                </h3>
+                {visits.map((v: any) => (
+                  <div key={v.id} className="p-3 rounded-xl bg-zinc-900/30 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                    <div className="flex items-center gap-2 flex-wrap text-sm">
+                      <span className="text-zinc-300">{new Date(v.visit_date).toLocaleDateString()}</span>
+                      <span className="text-zinc-500 flex items-center gap-1"><Clock className="w-3 h-3" />{v.arrival_time?.slice(0, 5)}</span>
+                    </div>
+                    <span className={`text-[10px] uppercase tracking-widest font-black px-2 py-0.5 rounded-full border w-fit ${
+                      v.status === 'approved' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                    }`}>
+                      {v.status === 'approved' ? t.approved : t.pending}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <Suspense fallback={<LoadingBlock />}>
+              <LoanSimulator lang={lang} />
+            </Suspense>
           </div>
 
         </main>
+
+        {/* Experimental Tab */}
+        <ExperimentalTab lang={lang} />
+
       </div>
       
       {adminId && <ChatWidget userId={user.id} adminId={adminId} initialMessages={chatMessages} />}
