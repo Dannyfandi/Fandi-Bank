@@ -6,8 +6,9 @@ import { VisitForm } from '@/components/VisitForm'
 import { LoanRequestForm } from '@/components/LoanRequestForm'
 import { ChatWidget } from '@/components/ChatWidget'
 import { LanguageToggle } from '@/components/LanguageToggle'
-import { Receipt, Calendar, CreditCard, Ticket, Wallet, Sparkles, ChevronDown, Landmark, Star, AlertTriangle } from 'lucide-react'
+import { Receipt, Calendar, CreditCard, Ticket, Wallet, Sparkles, ChevronDown, Landmark, Star, AlertTriangle, User } from 'lucide-react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { formatCOP } from '@/utils/currency'
 import { calculateCreditScore, calculateDebtInterest, DebtForCredit } from '@/utils/credit'
 
@@ -32,7 +33,8 @@ const dict = {
     requestLoan: 'Request Fandi Loan',
     descLoan: 'Need cash fast? Request up to $500,000 COP immediately. Approved loans accrue 0.051% simple daily interest on the original amount.',
     visits: 'Mojo Dojo Casa House Visits',
-    scheduleVisit: 'Schedule an upcoming visit'
+    scheduleVisit: 'Schedule an upcoming visit',
+    logout: 'Log Out'
   },
   es: {
     score: 'Puntos:',
@@ -54,7 +56,8 @@ const dict = {
     requestLoan: 'Pedir Préstamo',
     descLoan: '¿Necesitas efectivo? Pide hasta $500,000 COP. Los préstamos aprobados generan un interés simple diario del 0.051% sobre el monto original.',
     visits: 'Visitas Mojo Dojo Casa House',
-    scheduleVisit: 'Programa una visita'
+    scheduleVisit: 'Programa una visita',
+    logout: 'Salir'
   }
 }
 
@@ -138,14 +141,27 @@ export default async function DashboardPage() {
           </div>
           <div className="flex items-center gap-4">
             <LanguageToggle />
-            <div className={`px-4 py-1.5 rounded-full border text-sm font-black flex items-center gap-2 ${score >= 0 ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
+            <div className={`hidden sm:flex px-4 py-1.5 rounded-full border text-sm font-black items-center gap-2 ${score >= 0 ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
                <Star className="w-4 h-4" /> {t.score} {score}
             </div>
-            <form action="/auth/signout" method="post">
-              <button className="text-sm font-bold text-zinc-400 hover:text-zinc-200 transition-colors">
-                Log out
-              </button>
-            </form>
+            
+            <div className="flex items-center gap-3 pl-4 border-l border-white/10">
+              <Link href="/profile" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-purple-500/30 bg-black flex items-center justify-center shadow-lg shadow-purple-900/40">
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-5 h-5 text-zinc-500" />
+                  )}
+                </div>
+                <span className="text-sm font-bold text-zinc-200 hidden sm:block">{profile?.username || 'Profile'}</span>
+              </Link>
+              <form action="/auth/signout" method="post">
+                <button className="text-xs font-bold text-zinc-500 hover:text-red-400 transition-colors uppercase tracking-widest ml-1 hidden md:block">
+                  {t.logout || 'Log Out'}
+                </button>
+              </form>
+            </div>
           </div>
         </header>
 
