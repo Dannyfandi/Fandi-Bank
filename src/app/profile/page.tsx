@@ -14,8 +14,8 @@ const dict = {
     subtitle: 'Customize how you appear to your friends in Fandi Bank.',
     avatarTitle: 'Avatar Profile Picture',
     avatarEmpty: 'No Avatar',
-    avatarLabel: 'Avatar Image URL',
-    avatarPh: 'https://example.com/my-photo.png',
+    avatarLabel: 'Upload Avatar Image',
+    avatarPh: 'Choose a file...',
     userLabel: 'Username',
     userPh: 'Ferb',
     descLabel: 'Bio / Description',
@@ -28,8 +28,8 @@ const dict = {
     subtitle: 'Personaliza cómo te ven tus amigos en Fandi Bank.',
     avatarTitle: 'Foto de Perfil',
     avatarEmpty: 'Sin Foto',
-    avatarLabel: 'URL de Imagen (Avatar)',
-    avatarPh: 'https://ejemplo.com/mi-foto.png',
+    avatarLabel: 'Subir Foto de Perfil',
+    avatarPh: 'Elegir archivo...',
     userLabel: 'Nombre de Usuario',
     userPh: 'Ferb',
     descLabel: 'Biografía / Descripción',
@@ -105,9 +105,8 @@ export default async function ProfilePage() {
                        <Camera className="h-5 w-5 text-zinc-500" />
                      </div>
                      <input
-                       name="avatarUrl" type="url" defaultValue={profile?.avatar_url || ''}
-                       className="block w-full pl-11 pr-4 py-3 bg-black/40 border border-white/10 rounded-2xl text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 sm:text-sm transition-all shadow-inner"
-                       placeholder={t.avatarPh}
+                       name="avatarFile" type="file" accept="image/*"
+                       className="block w-full pl-11 pr-4 py-2.5 bg-black/40 border border-white/10 rounded-2xl text-white file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:uppercase file:tracking-widest file:font-black file:bg-purple-500/20 file:text-purple-400 hover:file:bg-purple-500/30 focus:outline-none transition-all shadow-inner"
                      />
                    </div>
                  </div>
