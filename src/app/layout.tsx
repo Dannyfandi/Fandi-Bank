@@ -23,11 +23,42 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
+      <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col bg-black text-zinc-50 relative overflow-x-hidden selection:bg-purple-500/30" suppressHydrationWarning>
+        
+        {/* iOS 26 Liquid Glass Core Background */}
+        <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none bg-black">
+          {/* Animated Liquid Orbs */}
+          <div className="absolute -top-[20%] -left-[10%] w-[70vw] h-[70vh] rounded-full bg-purple-600/30 mix-blend-screen filter blur-[120px] opacity-80 animate-glass-1" />
+          <div className="absolute top-[20%] -right-[20%] w-[60vw] h-[80vh] rounded-full bg-fuchsia-600/30 mix-blend-screen filter blur-[140px] opacity-70 animate-glass-2" />
+          <div className="absolute -bottom-[20%] left-[20%] w-[80vw] h-[60vh] rounded-full bg-violet-600/30 mix-blend-screen filter blur-[130px] opacity-60 animate-glass-3" />
+          
+          {/* Additional Frost Overlay for smooth blend */}
+          <div className="absolute inset-0 bg-transparent backdrop-blur-[60px]" />
+        </div>
+        
+        <style dangerouslySetInnerHTML={{__html: `
+          @keyframes drift {
+            0% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(6vw, -8vh) scale(1.1); }
+            66% { transform: translate(-4vw, 5vh) scale(0.95); }
+            100% { transform: translate(0, 0) scale(1); }
+          }
+          .animate-glass-1 { animation: drift 25s infinite ease-in-out; }
+          .animate-glass-2 { animation: drift 30s infinite ease-in-out reverse; }
+          .animate-glass-3 { animation: drift 35s infinite ease-in-out 5s; }
+        `}} />
+
+        <div className="relative z-0 flex-1 flex flex-col">
+          {children}
+        </div>
+        <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+        <script dangerouslySetInnerHTML={{__html: `function googleTranslateElementInit() { new google.translate.TranslateElement({pageLanguage: 'en', autoDisplay: false}, 'google_translate_element'); }`}} />
+      </body>
     </html>
   );
 }
