@@ -1,3 +1,22 @@
+# 🏦 Fandi Bank
+
+Being the "bank" for your friend group shouldn't be a headache. Fandi Bank is a custom full-stack web application designed to track shared expenses, manage IOUs, and streamline payments for my friends and roommates. 
+
+Whenever I cover the cost of food, parties, or household bills, this app keeps everything organized so everyone knows exactly what they owe and exactly how to pay it back.
+
+## ✨ Key Features
+
+* **Role-Based Dashboards:** Separate, tailored views for the Admin (the "Bank") and standard Users (friends).
+* **Clear Debt Tracking:** Users can log in to see their total pending debt, along with an itemized history of what they owe and what it was for.
+* **Quick Pay Integration:** A seamless, one-click button that copies my *llave de bre-b* to their clipboard so they can jump straight to their banking app and pay.
+* **Concert Ticket Benefit:** A built-in request system where friends can ask Fandi Bank to front the cost for presale concert tickets, allowing them to pay it back later.
+* **Admin Management:** A central hub where I can manually add, edit, and clear debts, as well as approve or reject incoming ticket requests.
+
+## 🛠️ Tech Stack
+
+* **Frontend:** Next.js, React, Tailwind CSS
+* **Backend, Database & Authentication:** Supabase
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
