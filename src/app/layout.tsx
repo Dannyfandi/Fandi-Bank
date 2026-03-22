@@ -56,8 +56,6 @@ export default function RootLayout({
         <div className="relative z-0 flex-1 flex flex-col">
           {children}
         </div>
-        <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-        <script dangerouslySetInnerHTML={{__html: `function googleTranslateElementInit() { new google.translate.TranslateElement({pageLanguage: 'en', autoDisplay: false}, 'google_translate_element'); }`}} />
       </body>
     </html>
   );

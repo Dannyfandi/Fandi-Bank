@@ -5,12 +5,54 @@ import { useSearchParams } from 'next/navigation'
 import { Shield, Mail, Lock, CheckCircle2, User } from 'lucide-react'
 import Image from 'next/image'
 
+// Native Dictionary
+const dict = {
+  en: {
+    welcome: 'Welcome Back',
+    join: 'Join Fandi Bank',
+    descLogin: 'Enter your details to access your dashboard.',
+    descJoin: 'Sign up to start tracking expenses with your friends.',
+    username: 'Username',
+    email: 'Email Address',
+    password: 'Password',
+    btnIn: 'Sign In',
+    btnUp: 'Create Account',
+    switchIn: 'Already have an account? Sign in',
+    switchUp: "Don't have an account? Sign up",
+    processing: 'Processing...'
+  },
+  es: {
+    welcome: 'Bienvenido de nuevo',
+    join: 'Únete a Fandi Bank',
+    descLogin: 'Ingresa tus datos para acceder a tu panel.',
+    descJoin: 'Regístrate para empezar a registrar gastos con tus amigos.',
+    username: 'Usuario',
+    email: 'Correo Electrónico',
+    password: 'Contraseña',
+    btnIn: 'Iniciar Sesión',
+    btnUp: 'Crear Cuenta',
+    switchIn: '¿Ya tienes una cuenta? Iniciar sesión',
+    switchUp: '¿No tienes una cuenta? Regístrate',
+    processing: 'Procesando...'
+  }
+}
+
 function AuthContent() {
   const [isLogin, setIsLogin] = useState(true)
   const [loading, setLoading] = useState(false)
+  const [lang, setLang] = useState<'en'|'es'>('es') // default to Spanish
+  
   const searchParams = useSearchParams()
   const error = searchParams.get('error')
   const message = searchParams.get('message')
+
+  useEffect(() => {
+    // Read cookie for locale
+    const match = document.cookie.match(/(^| )NEXT_LOCALE=([^;]+)/)
+    if (match) setLang(match[2] as 'en'|'es')
+  }, [])
+
+  const t = dict[lang] || dict.es
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -69,20 +111,20 @@ function AuthContent() {
            <Image src="/logo.png" alt="Fandi Bank Logo" fill className="object-contain drop-shadow-[0_0_60px_rgba(168,85,247,1)]" priority />
         </div>
         <h2 className="text-center text-3xl font-black tracking-tighter bg-gradient-to-br from-white to-zinc-400 bg-clip-text text-transparent">
-          {isLogin ? 'Welcome Back' : 'Join Fandi Bank'}
+          {isLogin ? t.welcome : t.join}
         </h2>
         <p className="mt-2 text-center text-sm font-medium text-zinc-400">
-          {isLogin ? 'Enter your details to access your dashboard.' : 'Sign up to start tracking expenses with your friends.'}
+          {isLogin ? t.descLogin : t.descJoin}
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-[400px] relative z-10">
-        <div className="bg-zinc-900/30 backdrop-blur-[40px] shadow-2xl shadow-purple-900/20 saturate-150/80 backdrop-blur-xl py-8 px-4 sm:px-10 border border-white/10 rounded-3xl shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)]">
+        <div className="bg-zinc-900/30 backdrop-blur-[40px] shadow-2xl shadow-purple-900/20 saturate-150 py-8 px-4 sm:px-10 border border-white/10 rounded-3xl">
           <form className="space-y-5" onSubmit={handleSubmit}>
             
             {!isLogin && (
               <div className="space-y-1 relative animate-in fade-in slide-in-from-top-2">
-                <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest pl-1">Username</label>
+                <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest pl-1">{t.username}</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <User className="h-5 w-5 text-zinc-500" />
@@ -97,7 +139,7 @@ function AuthContent() {
             )}
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest pl-1">Email Address</label>
+              <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest pl-1">{t.email}</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <Mail className="h-5 w-5 text-zinc-500" />
@@ -111,7 +153,7 @@ function AuthContent() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest pl-1">Password</label>
+              <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest pl-1">{t.password}</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <Lock className="h-5 w-5 text-zinc-500" />
@@ -128,7 +170,7 @@ function AuthContent() {
               type="submit" disabled={loading}
               className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-2xl text-sm font-black tracking-wide text-white bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 focus:ring-offset-black transition-all active:scale-[0.98] mt-2 shadow-lg shadow-purple-500/25 disabled:opacity-50"
             >
-              {loading ? 'Processing...' : isLogin ? 'Sign In' : 'Create Account'}
+              {loading ? t.processing : isLogin ? t.btnIn : t.btnUp}
             </button>
           </form>
 
@@ -138,7 +180,7 @@ function AuthContent() {
               onClick={() => setIsLogin(!isLogin)}
               className="text-sm font-medium text-zinc-400 hover:text-purple-400 transition-colors focus:outline-none"
             >
-              {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
+              {isLogin ? t.switchUp : t.switchIn}
             </button>
           </div>
         </div>
