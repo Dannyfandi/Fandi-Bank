@@ -35,7 +35,7 @@ export function AdminEventsManager({ users, events, invitations }: any) {
       </div>
 
       {showForm && !editingEventId && (
-        <form action={createEvent} className="p-5 sm:p-6 border border-fuchsia-500/20 rounded-2xl sm:rounded-3xl bg-zinc-900/80 backdrop-blur-[40px] shadow-2xl relative overflow-hidden space-y-4 animate-in slide-in-from-top-4 duration-300">
+        <form action={createEvent} encType="multipart/form-data" className="p-5 sm:p-6 border border-fuchsia-500/20 rounded-2xl sm:rounded-3xl bg-zinc-900/80 backdrop-blur-[40px] shadow-2xl relative overflow-hidden space-y-4 animate-in slide-in-from-top-4 duration-300">
           <input type="hidden" name="userIds" value={JSON.stringify(selectedUsers)} />
           <div className="space-y-3">
             <div>
@@ -99,8 +99,9 @@ export function AdminEventsManager({ users, events, invitations }: any) {
             const timeOnly = localObj.toISOString().split('T')[1].slice(0, 5)
 
             return (
-              <form key={evt.id} action={async (fd) => { await updateEvent(fd); setEditingEventId(null) }} className="p-5 sm:p-6 border border-emerald-500/20 rounded-2xl sm:rounded-3xl bg-zinc-900/80 backdrop-blur-[40px] shadow-2xl space-y-4 animate-in slide-in-from-top-4 duration-300">
+              <form key={evt.id} action={async (fd) => { await updateEvent(fd); setEditingEventId(null) }} encType="multipart/form-data" className="p-5 sm:p-6 border border-emerald-500/20 rounded-2xl sm:rounded-3xl bg-zinc-900/80 backdrop-blur-[40px] shadow-2xl space-y-4 animate-in slide-in-from-top-4 duration-300">
                 <input type="hidden" name="eventId" value={evt.id} />
+                <input type="hidden" name="userIds" value={JSON.stringify(selectedUsers)} />
                 <div className="flex justify-between items-center mb-2">
                    <h4 className="text-emerald-400 font-bold">Edit Event</h4>
                    <button type="button" onClick={() => setEditingEventId(null)} className="p-1 hover:bg-white/10 rounded-lg text-zinc-400"><X className="w-4 h-4"/></button>
@@ -130,6 +131,23 @@ export function AdminEventsManager({ users, events, invitations }: any) {
                       <input type="file" accept="image/*" name="posterFile" className="mt-1 w-full px-4 py-1.5 border border-white/10 bg-black/40 rounded-xl text-white text-xs" />
                     </div>
                   </div>
+                  
+                  <div>
+                    <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest pl-1 flex items-center gap-1 mt-2 mb-2">
+                      <Users className="w-3 h-3"/> Update Users ({selectedUsers.length} selected)
+                    </label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+                      {users.map((u: any) => (
+                        <button
+                          key={u.id} type="button"
+                          onClick={() => toggleUser(u.id)}
+                          className={`px-3 py-2 rounded-lg text-xs font-bold transition-all border text-left truncate ${selectedUsers.includes(u.id) ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300' : 'bg-black/30 border-white/5 text-zinc-500 hover:border-white/20'}`}
+                        >
+                          {u.username || u.email}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
                 <SubmitButton loadingText="Saving..." className="w-full mt-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black tracking-widest uppercase rounded-xl transition-all">
                   Save Changes
@@ -142,7 +160,11 @@ export function AdminEventsManager({ users, events, invitations }: any) {
             <div key={evt.id} className="p-4 border border-white/10 rounded-2xl bg-zinc-900/30 backdrop-blur-[40px] flex flex-col sm:flex-row gap-4 relative group">
               
               <div className="absolute top-3 right-3 flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onClick={() => {setEditingEventId(evt.id); setShowForm(false)}} className="p-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-lg transition-colors border border-emerald-500/20"><Edit2 className="w-4 h-4"/></button>
+                <button onClick={() => {
+                  setEditingEventId(evt.id); 
+                  setShowForm(false);
+                  setSelectedUsers(evt.invitations.map((inv: any) => inv.user_id));
+                }} className="p-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-lg transition-colors border border-emerald-500/20"><Edit2 className="w-4 h-4"/></button>
                 <form action={deleteEvent}>
                    <input type="hidden" name="eventId" value={evt.id} />
                    <SubmitButton className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors border border-red-500/20"><Trash2 className="w-4 h-4"/></SubmitButton>

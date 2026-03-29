@@ -338,6 +338,7 @@ export async function updateEvent(formData: FormData) {
   const timeStr = formData.get('time') as string
   const location = formData.get('location') as string || 'Mojo Dojo Casa House'
   const posterFile = formData.get('posterFile') as File | null
+  const userIds = JSON.parse(formData.get('userIds') as string || '[]')
 
   const eventDate = new Date(`${dateStr}T${timeStr}:00-05:00`).toISOString()
 
@@ -373,6 +374,21 @@ export async function updateEvent(formData: FormData) {
     visit_date: dateOnly,
     arrival_time: `${timeOnly}:00`
   }).eq('event_id', eventId)
+
+  // Sync users
+  const { data: existing } = await supabase.from('event_invitations').select('user_id').eq('event_id', eventId)
+  const existingIds = existing?.map((i: any) => i.user_id) || []
+  
+  const toDelete = existingIds.filter(id => !userIds.includes(id))
+  if (toDelete.length > 0) {
+     await supabase.from('event_invitations').delete().eq('event_id', eventId).in('user_id', toDelete)
+  }
+
+  const toAdd = userIds.filter((id: string) => !existingIds.includes(id))
+  if (toAdd.length > 0) {
+     const inserts = toAdd.map((id: string) => ({ event_id: eventId, user_id: id, status: 'pending' }))
+     await supabase.from('event_invitations').insert(inserts)
+  }
 
   revalidatePath('/admin')
   revalidatePath('/dashboard')

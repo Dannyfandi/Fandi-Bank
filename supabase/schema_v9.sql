@@ -7,3 +7,6 @@ ALTER TABLE public.visit_requests ADD COLUMN IF NOT EXISTS event_id uuid REFEREN
 
 -- Note: The ON DELETE CASCADE ensures that if an admin deletes an event from the events table,
 -- any automatically generated house visits tied to that event are immediately deleted too.
+
+-- 2. Allow users to cancel/delete their own visit requests
+CREATE POLICY "Users delete own visits" ON visit_requests FOR DELETE USING (auth.uid() = user_id);
