@@ -97,7 +97,7 @@ export async function rsvpEvent(formData: FormData) {
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return 'Unauthorized'
+  if (!user) throw new Error('Unauthorized')
 
   const { data: inv } = await supabase
     .from('event_invitations')
@@ -105,7 +105,7 @@ export async function rsvpEvent(formData: FormData) {
     .eq('id', invId)
     .single()
 
-  if (!inv || inv.user_id !== user.id) return 'Not found'
+  if (!inv || inv.user_id !== user.id) throw new Error('Not found')
 
   // Auto-generate visit request when accepting an event at Mojo Dojo Casa House
   if (inv.status === 'pending' && newStatus === 'accepted') {
@@ -150,7 +150,6 @@ export async function rsvpEvent(formData: FormData) {
 
   revalidatePath('/dashboard')
   revalidatePath('/admin')
-  return null
 }
 
 export async function cancelVisitRequest(formData: FormData) {
@@ -158,7 +157,7 @@ export async function cancelVisitRequest(formData: FormData) {
   
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return 'Unauthorized'
+  if (!user) throw new Error('Unauthorized')
 
   const { data: visit } = await supabase
     .from('visit_requests')
@@ -166,7 +165,7 @@ export async function cancelVisitRequest(formData: FormData) {
     .eq('id', visitId)
     .single()
 
-  if (!visit || visit.user_id !== user.id) return 'Not found'
+  if (!visit || visit.user_id !== user.id) throw new Error('Not found')
 
   // Standard standalone visit cancellation 48h penalty
   const visitDateLocal = new Date(`${visit.visit_date}T${visit.arrival_time}-05:00`)
@@ -193,5 +192,4 @@ export async function cancelVisitRequest(formData: FormData) {
 
   revalidatePath('/dashboard')
   revalidatePath('/admin')
-  return null
 }
