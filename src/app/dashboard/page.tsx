@@ -10,7 +10,8 @@ import { LanguageToggle } from '@/components/LanguageToggle'
 import { DashboardClient } from '@/components/DashboardClient'
 import { LoanSimulator } from '@/components/LoanSimulator'
 import { ExperimentalTab } from '@/components/ExperimentalTab'
-import { Ticket, Calendar, Landmark, Sparkles, Star, User, Users, MapPin, Clock } from 'lucide-react'
+import { EventInvitationsClient } from '@/components/EventInvitationsClient'
+import { Ticket, Calendar, Landmark, Sparkles, Star, User, Users, MapPin, Clock, HelpCircle } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { formatCOP } from '@/utils/currency'
@@ -93,6 +94,14 @@ export default async function DashboardPage() {
     .eq('user_id', user.id)
     .order('visit_date', { ascending: false })
 
+  // Fetch event invitations
+  const { data: invitations } = await supabase
+    .from('event_invitations')
+    .select('*, events(*)')
+    .eq('user_id', user.id)
+    .in('status', ['pending', 'accepted'])
+    .order('created_at', { ascending: false })
+
   const { score, isSuspended } = calculateCreditScore((debts || []) as DebtForCredit[])
 
   const interestMap: Record<string, number> = {}
@@ -124,6 +133,9 @@ export default async function DashboardPage() {
               <Star className="w-4 h-4" /> {t.score} {score}
             </div>
             <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 border-l border-white/10">
+              <Link href="/faq" className="p-2 rounded-lg hover:bg-white/5 transition-colors text-zinc-400 hover:text-emerald-400" title="FAQ">
+                <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+              </Link>
               <Link href="/friends" className="p-2 rounded-lg hover:bg-white/5 transition-colors text-zinc-400 hover:text-purple-400" title="Friends">
                 <Users className="w-4 h-4 sm:w-5 sm:h-5" />
               </Link>
@@ -149,12 +161,15 @@ export default async function DashboardPage() {
         {/* Main Content */}
         <main className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 relative z-10">
           
-          {/* Debt Section */}
+          {/* Debt & Events Section */}
           <div className="lg:col-span-2 space-y-4">
             {/* Mobile: score badge */}
             <div className={`sm:hidden flex px-3 py-1.5 rounded-full border text-sm font-black items-center gap-2 w-fit ${score >= 0 ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
               <Star className="w-4 h-4" /> {t.score} {score}
             </div>
+            
+            <EventInvitationsClient invitations={invitations || []} lang={lang} />
+
             <Suspense fallback={<LoadingBlock />}>
               <DashboardClient
                 profile={profile}

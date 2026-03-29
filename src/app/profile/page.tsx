@@ -5,6 +5,7 @@ import { updateProfile } from './actions'
 import { LanguageToggle } from '@/components/LanguageToggle'
 import { User, Camera, AlignLeft, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import { SubmitButton } from '@/components/SubmitButton'
 
 const dict = {
   en: {
@@ -126,12 +127,12 @@ export default async function ProfilePage() {
                    </div>
                  </div>
 
-                 <button
-                   type="submit"
-                   className="w-full flex justify-center py-3 sm:py-4 px-4 border border-transparent rounded-2xl text-sm font-black tracking-widest uppercase text-white bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 focus:ring-offset-black transition-all active:scale-[0.98] mt-4 shadow-lg shadow-purple-500/25"
+                 <SubmitButton
+                   className="w-full py-3 sm:py-4 px-4 border border-transparent rounded-2xl text-sm font-black tracking-widest uppercase text-white bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 focus:ring-offset-black transition-all active:scale-[0.98] mt-4 shadow-lg shadow-purple-500/25"
+                   loadingText="Saving..."
                  >
                    {t.saveBtn}
-                 </button>
+                 </SubmitButton>
 
                </form>
              </div>

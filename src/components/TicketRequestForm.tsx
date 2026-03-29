@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Ticket } from 'lucide-react'
 import { submitTicketRequest } from '@/app/dashboard/actions'
+import { SubmitButton } from './SubmitButton'
 
 export function TicketRequestForm() {
   const [loading, setLoading] = useState(false)
@@ -54,13 +55,13 @@ export function TicketRequestForm() {
           <p className="mt-1 text-[10px] text-zinc-500 px-1">Helps me buy the exact right days!</p>
         </div>
 
-        <button
-          disabled={loading}
+        <SubmitButton
           className="w-full py-3 px-4 bg-gradient-to-r from-fuchsia-600 to-violet-600 hover:from-fuchsia-500 hover:to-violet-500 shadow-lg shadow-fuchsia-500/20 text-zinc-50 font-bold rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
+          loadingText="Submitting..."
         >
           <Ticket className="w-5 h-5" />
-          {loading ? 'Submitting...' : 'Submit Request'}
-        </button>
+          Submit Request
+        </SubmitButton>
         {message && (
           <p className={`text-sm text-center font-bold ${message.includes('success') ? 'text-purple-400' : 'text-red-400'}`}>
             {message}

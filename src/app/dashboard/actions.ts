@@ -67,3 +67,66 @@ export async function submitLoanRequest(formData: FormData) {
   revalidatePath('/admin')
   return null
 }
+
+export async function submitSuggestion(formData: FormData) {
+  const type = formData.get('type') as string
+  const description = formData.get('description') as string
+  
+  if (!description) return { error: 'Description is required' }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Unauthorized' }
+
+  const { error } = await supabase
+    .from('user_suggestions')
+    .insert({ user_id: user.id, type, description })
+
+  if (error) {
+    console.error(error)
+    return { error: 'Failed to submit' }
+  }
+
+  revalidatePath('/admin')
+  return { success: 'Suggestion submitted! 🎉' }
+}
+
+export async function rsvpEvent(formData: FormData) {
+  const invId = formData.get('invitationId') as string
+  const newStatus = formData.get('status') as string
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return 'Unauthorized'
+
+  const { data: inv } = await supabase
+    .from('event_invitations')
+    .select('*, events(*)')
+    .eq('id', invId)
+    .single()
+
+  if (!inv || inv.user_id !== user.id) return 'Not found'
+
+  // If canceling an accepted invitation near the event
+  if (inv.status === 'accepted' && newStatus === 'declined') {
+    const eventDate = new Date(inv.events.event_date)
+    const now = new Date()
+    const diffHours = (eventDate.getTime() - now.getTime()) / (1000 * 60 * 60)
+    
+    if (diffHours >= 0 && diffHours < 24) {
+      // Create penalty debt
+      await supabase.from('debts').insert({
+        user_id: user.id,
+        amount: 2000,
+        description: `Late Cancellation Penalty: ${inv.events.title}`,
+        status: 'pending'
+      })
+    }
+  }
+
+  await supabase.from('event_invitations').update({ status: newStatus }).eq('id', invId)
+
+  revalidatePath('/dashboard')
+  revalidatePath('/admin')
+  return null
+}

@@ -44,27 +44,27 @@ export default function RootLayout({
         <style dangerouslySetInnerHTML={{__html: `
           @keyframes drift1 {
             0% { transform: translate(0, 0) scale(1); }
-            25% { transform: translate(8vw, -6vh) scale(1.08); }
-            50% { transform: translate(-3vw, 10vh) scale(0.95); }
-            75% { transform: translate(5vw, -3vh) scale(1.05); }
+            25% { transform: translate(15vw, -12vh) scale(1.1); }
+            50% { transform: translate(-6vw, 15vh) scale(0.9); }
+            75% { transform: translate(10vw, -8vh) scale(1.15); }
             100% { transform: translate(0, 0) scale(1); }
           }
           @keyframes drift2 {
             0% { transform: translate(0, 0) scale(1); }
-            25% { transform: translate(-6vw, 8vh) scale(1.1); }
-            50% { transform: translate(4vw, -5vh) scale(0.92); }
-            75% { transform: translate(-3vw, 4vh) scale(1.06); }
+            25% { transform: translate(-12vw, 15vh) scale(1.15); }
+            50% { transform: translate(8vw, -10vh) scale(0.85); }
+            75% { transform: translate(-6vw, 10vh) scale(1.1); }
             100% { transform: translate(0, 0) scale(1); }
           }
           @keyframes drift3 {
             0% { transform: translate(0, 0) scale(1) rotate(0deg); }
-            33% { transform: translate(6vw, 7vh) scale(1.08) rotate(2deg); }
-            66% { transform: translate(-5vw, -4vh) scale(0.94) rotate(-1deg); }
+            33% { transform: translate(12vw, 15vh) scale(1.1) rotate(5deg); }
+            66% { transform: translate(-10vw, -8vh) scale(0.9) rotate(-3deg); }
             100% { transform: translate(0, 0) scale(1) rotate(0deg); }
           }
           @keyframes drift4 {
             0% { transform: translate(0, 0) scale(1); }
-            50% { transform: translate(-8vw, -6vh) scale(1.15); }
+            50% { transform: translate(-15vw, -12vh) scale(1.2); }
             100% { transform: translate(0, 0) scale(1); }
           }
           .animate-glass-1 { animation: drift1 20s infinite ease-in-out; will-change: transform; }

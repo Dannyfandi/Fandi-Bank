@@ -210,3 +210,90 @@ export async function updateVisitStatus(formData: FormData) {
   revalidatePath('/admin')
   revalidatePath('/dashboard')
 }
+
+export async function reversePayment(formData: FormData) {
+  const supabase = await checkAdmin()
+  const paymentId = formData.get('paymentId') as string
+
+  // Get the payment
+  const { data: payment } = await supabase.from('payments').select('*').eq('id', paymentId).single()
+  if (!payment) throw new Error('Payment not found')
+
+  const userId = payment.user_id
+  const totalAmount = Number(payment.total_amount)
+
+  // Get allocations
+  const { data: allocations } = await supabase.from('payment_allocations').select('*').eq('payment_id', paymentId)
+  
+  let allocatedSum = 0
+
+  if (allocations && allocations.length > 0) {
+    for (const alloc of allocations) {
+      allocatedSum += Number(alloc.allocated_amount)
+      
+      // Revert debt
+      const { data: debt } = await supabase.from('debts').select('*').eq('id', alloc.debt_id).single()
+      if (debt) {
+        const newPaidAmount = Math.max(0, Number(debt.paid_amount || 0) - Number(alloc.allocated_amount))
+        await supabase.from('debts').update({
+          paid_amount: newPaidAmount,
+          status: 'pending',
+          fully_paid_at: null
+        }).eq('id', debt.id)
+      }
+    }
+  }
+
+  // Calculate if any portion went to credit 
+  // (the logic in applyBulkDebtsAndPayments puts remainder to credit)
+  const creditToRevert = totalAmount - allocatedSum
+  
+  if (creditToRevert > 0) {
+    const { data: profile } = await supabase.from('profiles').select('credit_balance').eq('id', userId).single()
+    if (profile) {
+      const currentCredit = Number(profile.credit_balance || 0)
+      const newCredit = Math.max(0, currentCredit - creditToRevert)
+      await supabase.from('profiles').update({ credit_balance: newCredit }).eq('id', userId)
+    }
+  }
+
+  // Delete payment allocations and payment
+  await supabase.from('payment_allocations').delete().eq('payment_id', paymentId)
+  await supabase.from('payments').delete().eq('id', paymentId)
+
+  revalidatePath('/admin')
+  revalidatePath('/dashboard')
+}
+
+export async function createEvent(formData: FormData) {
+  const supabase = await checkAdmin()
+  const title = formData.get('title') as string
+  const dateStr = formData.get('date') as string
+  const timeStr = formData.get('time') as string
+  const location = formData.get('location') as string || 'Mojo Dojo Casa House'
+  const poster = formData.get('poster') as string
+  const userIds = JSON.parse(formData.get('userIds') as string || '[]')
+
+  const eventDate = new Date(`${dateStr}T${timeStr}:00`).toISOString()
+
+  const { data: event, error: evtErr } = await supabase.from('events').insert({
+    title,
+    event_date: eventDate,
+    location,
+    poster_url: poster || null
+  }).select('id').single()
+
+  if (evtErr || !event) throw new Error('Error creating event')
+
+  if (userIds && userIds.length > 0) {
+    const invites = userIds.map((uid: string) => ({
+      event_id: event.id,
+      user_id: uid,
+      status: 'pending'
+    }))
+    await supabase.from('event_invitations').insert(invites)
+  }
+
+  revalidatePath('/admin')
+  revalidatePath('/dashboard')
+}

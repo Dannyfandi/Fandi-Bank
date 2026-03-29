@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Landmark } from 'lucide-react'
 import { submitLoanRequest } from '@/app/dashboard/actions'
+import { SubmitButton } from './SubmitButton'
 
 export function LoanRequestForm() {
   const [loading, setLoading] = useState(false)
@@ -31,9 +32,9 @@ export function LoanRequestForm() {
         <input name="amount" type="number" required placeholder="Max 500000" max="500000" min="1000" className="mt-1 w-full px-4 py-3 bg-transparent border border-white/10 rounded-xl text-zinc-100 placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
       </div>
       
-      <button disabled={loading} className="w-full py-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-zinc-50 font-bold rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98]">
-        <Landmark className="w-5 h-5" /> {loading ? 'Requesting...' : 'Request Loan'}
-      </button>
+      <SubmitButton loadingText="Requesting..." className="w-full py-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-zinc-50 font-bold rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98]">
+        <Landmark className="w-5 h-5" /> Request Loan
+      </SubmitButton>
       {msg && <p className={`text-sm text-center font-bold ${msg.includes('🎉') ? 'text-purple-400' : 'text-red-400'}`}>{msg}</p>}
     </form>
   )

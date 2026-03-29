@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { MapPin, CalendarClock, CheckCircle } from 'lucide-react'
 import { submitVisitRequest } from '@/app/dashboard/actions'
+import { SubmitButton } from './SubmitButton'
 
 export function VisitForm() {
   const [loading, setLoading] = useState(false)
@@ -46,9 +47,9 @@ export function VisitForm() {
              <option value="I will 90% go but not sure">I will 90% go but not sure</option>
            </select>
          </div>
-         <button disabled={loading} className="w-full py-3 bg-neutral-800 hover:bg-neutral-700 text-fuchsia-400 font-bold rounded-xl flex items-center justify-center gap-2 transition-all">
-           <CalendarClock className="w-4 h-4" /> {loading ? 'Sending...' : 'Request Visit'}
-         </button>
+         <SubmitButton loadingText="Sending..." fallbackLoading={loading} className="w-full py-3 bg-neutral-800 hover:bg-neutral-700 text-fuchsia-400 font-bold rounded-xl flex items-center justify-center gap-2 transition-all">
+           <CalendarClock className="w-4 h-4" /> Request Visit
+         </SubmitButton>
          {msg && <p className={`text-sm text-center font-bold ${msg.includes('🎉') ? 'text-purple-400' : 'text-red-400'}`}>{msg}</p>}
        </form>
 

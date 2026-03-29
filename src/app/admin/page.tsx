@@ -2,7 +2,7 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createDebt, createPayment, deleteDebt, markDebtPaid, updateTicketRequestStatus, updateLoanStatus, updateVisitStatus } from './actions'
-import { User, Receipt, Shield, Check, X, Ticket, MapPin, Wallet, ChevronDown, Landmark, Star, Users } from 'lucide-react'
+import { User, Shield, Ticket, MapPin, Landmark, Star, Users, Briefcase, ChevronDown, Wallet, HelpCircle } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { formatCOP } from '@/utils/currency'
@@ -11,6 +11,10 @@ import { AdminHelpCenter } from '@/components/AdminHelpCenter'
 import { LanguageToggle } from '@/components/LanguageToggle'
 import { ExperimentalTab } from '@/components/ExperimentalTab'
 import { calculateCreditScore, calculateDebtInterest, DebtForCredit } from '@/utils/credit'
+import { SubmitButton } from '@/components/SubmitButton'
+import { AdminPaymentsTracker } from '@/components/AdminPaymentsTracker'
+import { AdminDebtReceipts } from '@/components/AdminDebtReceipts'
+import { AdminEventsManager } from '@/components/AdminEventsManager'
 
 const dict = {
   en: {
@@ -34,7 +38,7 @@ const dict = {
     noVisits: 'No visits requested.',
     eta: 'ETA:',
     tracking: 'Total Debt Tracking Per User',
-    grandTotal: 'Grand Total Owed To Fandi Bank',
+    grandTotal: 'Grand Total PENDING Owed',
     suspended: 'Suspended',
     score: 'Score',
     totalOwedPending: 'Total Owed Pending',
@@ -113,10 +117,13 @@ export default async function AdminPage() {
   const { data: profiles } = await supabase.from('profiles').select('*').order('created_at', { ascending: false })
   const { data: debts } = await supabase.from('debts').select('*, profiles(username, avatar_url)').order('created_at', { ascending: false })
   const { data: allocations } = await supabase.from('payment_allocations').select('*, payments(created_at, total_amount)')
+  const { data: paymentsInfo } = await supabase.from('payments').select('*').order('created_at', { ascending: false })
   const { data: requests } = await supabase.from('ticket_requests').select('*, profiles(username)').order('created_at', { ascending: false })
   const { data: visits } = await supabase.from('visit_requests').select('*, profiles(username)').order('created_at', { ascending: false })
   const { data: loans } = await supabase.from('loan_requests').select('*, profiles(username)').order('created_at', { ascending: false })
   const { data: allMessages } = await supabase.from('messages').select('*').order('created_at', { ascending: true })
+  const { data: events } = await supabase.from('events').select('*').order('created_at', { ascending: false })
+  const { data: invitations } = await supabase.from('event_invitations').select('*')
 
   // Build profile avatar lookup
   const avatarMap: Record<string, string> = {}
@@ -156,7 +163,7 @@ export default async function AdminPage() {
     <div className="min-h-screen bg-transparent text-zinc-50 p-3 sm:p-4 md:p-8 font-sans">
       <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
         
-        {/* Header — bigger logo, no Fandi Bank text */}
+        {/* Header */}
         <header className="flex items-center justify-between pb-4 sm:pb-6 border-b border-white/10">
           <div className="flex items-center gap-3 sm:gap-4">
             <div className="w-14 h-14 sm:w-20 sm:h-20 relative shrink-0">
@@ -169,6 +176,9 @@ export default async function AdminPage() {
           <div className="flex items-center gap-2 sm:gap-4">
             <LanguageToggle />
             <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 border-l border-white/10">
+              <Link href="/faq" className="p-2 rounded-lg hover:bg-white/5 transition-colors text-zinc-400 hover:text-emerald-400" title="FAQ">
+                <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+              </Link>
               <Link href="/friends" className="p-2 rounded-lg hover:bg-white/5 transition-colors text-zinc-400 hover:text-purple-400" title="Friends">
                 <Users className="w-4 h-4 sm:w-5 sm:h-5" />
               </Link>
@@ -193,7 +203,7 @@ export default async function AdminPage() {
 
         <main className="grid grid-cols-1 lg:grid-cols-4 gap-6 sm:gap-8">
           
-          {/* Left Column */}
+          {/* Left Column - Forms & Actions */}
           <div className="space-y-6 sm:space-y-8 lg:col-span-1">
             <AdminParser users={profiles || []} />
 
@@ -201,7 +211,7 @@ export default async function AdminPage() {
               {/* Add Manual Debt */}
               <div className="p-4 sm:p-6 border border-red-500/20 rounded-2xl sm:rounded-3xl bg-zinc-900/30 backdrop-blur-[40px] shadow-xl overflow-hidden relative">
                  <h2 className="text-sm sm:text-base font-bold text-zinc-100 flex items-center gap-2 mb-3 sm:mb-4">
-                   <Receipt className="w-4 h-4 text-red-500" />
+                   <Briefcase className="w-4 h-4 text-red-500" />
                    {t.addDebt}
                  </h2>
                  <form action={createDebt} className="space-y-2 sm:space-y-3">
@@ -211,14 +221,14 @@ export default async function AdminPage() {
                    </select>
                    <input name="description" type="text" required placeholder={t.desc} className="w-full px-3 py-2 bg-black border border-white/10 rounded-lg text-sm text-zinc-100 focus:ring-1 focus:ring-red-500 outline-none" />
                    <input name="amount" type="number" required placeholder={t.amount} className="w-full px-3 py-2 bg-black border border-white/10 rounded-lg text-sm text-zinc-100 focus:ring-1 focus:ring-red-500 outline-none" />
-                   <button className="w-full py-2.5 sm:py-3 bg-red-500/20 hover:bg-red-500/30 text-red-500 font-bold rounded-lg text-sm transition-all border border-red-500/10 tracking-widest uppercase">{t.addBtn}</button>
+                   <SubmitButton loadingText="Adding..." className="w-full py-2.5 sm:py-3 bg-red-500/20 hover:bg-red-500/30 text-red-500 font-bold rounded-lg text-sm transition-all border border-red-500/10 tracking-widest uppercase">{t.addBtn}</SubmitButton>
                  </form>
               </div>
 
               {/* Add Manual Payment */}
               <div className="p-4 sm:p-6 border border-purple-500/20 rounded-2xl sm:rounded-3xl bg-zinc-900/30 backdrop-blur-[40px] shadow-xl overflow-hidden relative">
                  <h2 className="text-sm sm:text-base font-bold text-zinc-100 flex items-center gap-2 mb-3 sm:mb-4">
-                   <Wallet className="w-4 h-4 text-purple-500" />
+                   <Briefcase className="w-4 h-4 text-purple-500" />
                    {t.addPayment}
                  </h2>
                  <form action={createPayment} className="space-y-2 sm:space-y-3">
@@ -228,17 +238,18 @@ export default async function AdminPage() {
                    </select>
                    <input name="description" type="text" placeholder={t.descOpt} className="w-full px-3 py-2 bg-black border border-white/10 rounded-lg text-sm text-zinc-100 focus:ring-1 focus:ring-purple-500 outline-none" />
                    <input name="amount" type="number" required placeholder={t.amount} className="w-full px-3 py-2 bg-black border border-white/10 rounded-lg text-sm text-zinc-100 focus:ring-1 focus:ring-purple-500 outline-none" />
-                   <button className="w-full py-2.5 sm:py-3 bg-purple-500/20 hover:bg-purple-500/30 text-purple-500 font-bold rounded-lg text-sm transition-all border border-purple-500/10 tracking-widest uppercase">{t.logPayment}</button>
+                   <SubmitButton loadingText="Adding..." className="w-full py-2.5 sm:py-3 bg-purple-500/20 hover:bg-purple-500/30 text-purple-500 font-bold rounded-lg text-sm transition-all border border-purple-500/10 tracking-widest uppercase">{t.logPayment}</SubmitButton>
                  </form>
               </div>
             </div>
 
-            {/* Loan Requests */}
-            <div className="space-y-3 sm:space-y-4">
-              <h3 className="text-base sm:text-lg font-bold text-zinc-100 flex items-center gap-2">
-                <Landmark className="w-5 h-5 text-amber-500" /> {t.loans}
-              </h3>
-              <div className="space-y-3">
+            {/* Dropdown for Loans */}
+            <details className="group/loans space-y-3 sm:space-y-4">
+              <summary className="text-base sm:text-lg font-bold text-zinc-100 flex items-center justify-between gap-2 p-3 bg-white/5 hover:bg-white/10 rounded-xl cursor-pointer list-none transition-colors">
+                <span className="flex items-center gap-2"><Landmark className="w-5 h-5 text-amber-500" /> {t.loans} ({loans?.length || 0})</span>
+                <ChevronDown className="w-4 h-4 group-open/loans:rotate-180 transition-transform" />
+              </summary>
+              <div className="space-y-3 p-1">
                 {(!loans || loans.length === 0) && <p className="text-zinc-500 text-sm">{t.noLoans}</p>}
                 {loans?.map(req => (
                   <div key={req.id} className="p-3 sm:p-4 border border-white/10 rounded-xl sm:rounded-2xl bg-zinc-900/30 backdrop-blur-[40px] flex flex-col justify-between">
@@ -251,21 +262,22 @@ export default async function AdminPage() {
                     </div>
                     {req.status === 'pending' && (
                       <div className="flex gap-2">
-                         <form action={updateLoanStatus} className="flex-1"><input type="hidden" name="loanId" value={req.id} /><input type="hidden" name="status" value="approved" /><button className="w-full py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 rounded-lg text-xs font-bold transition-colors border border-purple-500/30">{t.approve}</button></form>
-                         <form action={updateLoanStatus} className="flex-1"><input type="hidden" name="loanId" value={req.id} /><input type="hidden" name="status" value="rejected" /><button className="w-full py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg text-xs font-bold transition-colors border border-red-500/30">{t.reject}</button></form>
+                         <form action={updateLoanStatus} className="flex-1"><input type="hidden" name="loanId" value={req.id} /><input type="hidden" name="status" value="approved" /><SubmitButton loadingText="." className="w-full py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 rounded-lg text-xs font-bold transition-colors border border-purple-500/30">{t.approve}</SubmitButton></form>
+                         <form action={updateLoanStatus} className="flex-1"><input type="hidden" name="loanId" value={req.id} /><input type="hidden" name="status" value="rejected" /><SubmitButton loadingText="." className="w-full py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg text-xs font-bold transition-colors border border-red-500/30">{t.reject}</SubmitButton></form>
                       </div>
                     )}
                   </div>
                 ))}
               </div>
-            </div>
+            </details>
 
-            {/* Ticket Requests */}
-            <div className="space-y-3 sm:space-y-4">
-              <h3 className="text-base sm:text-lg font-bold text-zinc-100 flex items-center gap-2">
-                <Ticket className="w-5 h-5 text-indigo-400" /> {t.tickets}
-              </h3>
-              <div className="space-y-3">
+            {/* Dropdown for Tickets */}
+            <details className="group/tickets space-y-3 sm:space-y-4">
+              <summary className="text-base sm:text-lg font-bold text-zinc-100 flex items-center justify-between gap-2 p-3 bg-white/5 hover:bg-white/10 rounded-xl cursor-pointer list-none transition-colors">
+                <span className="flex items-center gap-2"><Ticket className="w-5 h-5 text-indigo-400" /> {t.tickets} ({requests?.length || 0})</span>
+                <ChevronDown className="w-4 h-4 group-open/tickets:rotate-180 transition-transform" />
+              </summary>
+              <div className="space-y-3 p-1">
                 {(!requests || requests.length === 0) && <p className="text-zinc-500 text-sm">{t.noTickets}</p>}
                 {requests?.map(req => (
                   <div key={req.id} className="p-3 sm:p-4 border border-white/10 rounded-xl sm:rounded-2xl bg-zinc-900/30 backdrop-blur-[40px] flex flex-col justify-between">
@@ -278,21 +290,22 @@ export default async function AdminPage() {
                     </div>
                     {req.status === 'pending' && (
                       <div className="flex gap-2">
-                         <form action={updateTicketRequestStatus} className="flex-1"><input type="hidden" name="reqId" value={req.id} /><input type="hidden" name="status" value="approved" /><button className="w-full py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 rounded-lg text-xs font-bold transition-colors border border-purple-500/30">{t.approve}</button></form>
-                         <form action={updateTicketRequestStatus} className="flex-1"><input type="hidden" name="reqId" value={req.id} /><input type="hidden" name="status" value="rejected" /><button className="w-full py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg text-xs font-bold transition-colors border border-red-500/30">{t.reject}</button></form>
+                         <form action={updateTicketRequestStatus} className="flex-1"><input type="hidden" name="reqId" value={req.id} /><input type="hidden" name="status" value="approved" /><SubmitButton loadingText="." className="w-full py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 rounded-lg text-xs font-bold transition-colors border border-purple-500/30">{t.approve}</SubmitButton></form>
+                         <form action={updateTicketRequestStatus} className="flex-1"><input type="hidden" name="reqId" value={req.id} /><input type="hidden" name="status" value="rejected" /><SubmitButton loadingText="." className="w-full py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg text-xs font-bold transition-colors border border-red-500/30">{t.reject}</SubmitButton></form>
                       </div>
                     )}
                   </div>
                 ))}
               </div>
-            </div>
+            </details>
 
-            {/* Visit Requests — with Accept/Reject, sorted newest first */}
-            <div className="space-y-3 sm:space-y-4">
-              <h3 className="text-base sm:text-lg font-bold text-zinc-100 flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-fuchsia-400" /> {t.visits}
-              </h3>
-              <div className="space-y-3">
+            {/* Dropdown for Visits  */}
+            <details className="group/visits space-y-3 sm:space-y-4">
+              <summary className="text-base sm:text-lg font-bold text-zinc-100 flex items-center justify-between gap-2 p-3 bg-white/5 hover:bg-white/10 rounded-xl cursor-pointer list-none transition-colors">
+                <span className="flex items-center gap-2"><MapPin className="w-5 h-5 text-fuchsia-400" /> {t.visits} ({visits?.length || 0})</span>
+                <ChevronDown className="w-4 h-4 group-open/visits:rotate-180 transition-transform" />
+              </summary>
+              <div className="space-y-3 p-1">
                 {(!visits || visits.length === 0) && <p className="text-zinc-500 text-sm">{t.noVisits}</p>}
                 {visits?.map(visit => (
                   <div key={visit.id} className="p-3 sm:p-4 border border-white/10 rounded-xl sm:rounded-2xl bg-zinc-900/30 backdrop-blur-[40px]">
@@ -310,33 +323,43 @@ export default async function AdminPage() {
                     <p className="text-sm text-fuchsia-400 font-medium break-words mt-1">{visit.stay_status}</p>
                     {(!visit.status || visit.status === 'pending') && (
                       <div className="flex gap-2 mt-3">
-                        <form action={updateVisitStatus} className="flex-1"><input type="hidden" name="visitId" value={visit.id} /><input type="hidden" name="status" value="approved" /><button className="w-full py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 rounded-lg text-xs font-bold transition-colors border border-purple-500/30">{t.approve}</button></form>
-                        <form action={updateVisitStatus} className="flex-1"><input type="hidden" name="visitId" value={visit.id} /><input type="hidden" name="status" value="rejected" /><button className="w-full py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg text-xs font-bold transition-colors border border-red-500/30">{t.reject}</button></form>
+                        <form action={updateVisitStatus} className="flex-1"><input type="hidden" name="visitId" value={visit.id} /><input type="hidden" name="status" value="approved" /><SubmitButton loadingText="." className="w-full py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 rounded-lg text-xs font-bold transition-colors border border-purple-500/30">{t.approve}</SubmitButton></form>
+                        <form action={updateVisitStatus} className="flex-1"><input type="hidden" name="visitId" value={visit.id} /><input type="hidden" name="status" value="rejected" /><SubmitButton loadingText="." className="w-full py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg text-xs font-bold transition-colors border border-red-500/30">{t.reject}</SubmitButton></form>
                       </div>
                     )}
                   </div>
                 ))}
               </div>
-            </div>
+            </details>
           </div>
 
           {/* Right Column */}
           <div className="lg:col-span-3 space-y-6">
-            <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-3">
-              <User className="w-5 h-5 sm:w-6 sm:h-6 text-violet-500" /> {t.tracking}
-            </h2>
+            
+            {/* Grand Total tracking */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1 p-6 sm:p-8 bg-gradient-to-br from-violet-900/40 to-indigo-900/40 border border-violet-500/30 rounded-2xl sm:rounded-3xl shadow-2xl shadow-violet-500/5 mb-6 sm:mb-8">
+                <p className="text-xs sm:text-sm font-bold text-violet-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                  <Shield className="w-4 h-4 sm:w-5 sm:h-5" /> {t.grandTotal}
+                </p>
+                <p className="text-4xl sm:text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-indigo-400 tracking-tighter">
+                  {formatCOP(grandTotal)}
+                </p>
+              </div>
+            </div>
 
-            {/* Grand Total */}
-            <div className="p-6 sm:p-8 bg-gradient-to-br from-violet-900/40 to-indigo-900/40 border border-violet-500/30 rounded-2xl sm:rounded-3xl shadow-2xl shadow-violet-500/5 mb-6 sm:mb-8">
-              <p className="text-xs sm:text-sm font-bold text-violet-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                <Shield className="w-4 h-4 sm:w-5 sm:h-5" /> {t.grandTotal}
-              </p>
-              <p className="text-4xl sm:text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-indigo-400 tracking-tighter">
-                {formatCOP(grandTotal)}
-              </p>
+            {/* Events Manager */}
+            <AdminEventsManager users={profiles || []} events={events || []} invitations={invitations || []} />
+
+            {/* Payments Tracker */}
+            <div className="pt-6 sm:pt-8 border-t border-white/10">
+              <AdminPaymentsTracker payments={paymentsInfo || []} allocations={allocations || []} users={profiles || []} />
             </div>
 
             {/* User Cards Grid */}
+            <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-3 pt-6 sm:pt-8 border-t border-white/10">
+              <User className="w-5 h-5 sm:w-6 sm:h-6 text-violet-500" /> {t.tracking}
+            </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
               {userTotals.map(u => {
                 const total = u.totalRemaining
@@ -366,86 +389,9 @@ export default async function AdminPage() {
               })}
             </div>
 
-            {/* Grouped Debt Receipts by User — with avatars */}
-            <h2 className="text-lg sm:text-xl font-bold flex items-center gap-3 mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-white/10">
-              <Receipt className="w-5 h-5 text-zinc-500" /> {t.receipts}
-            </h2>
+            {/* Individual Debt Receipts (Client Component with Search) */}
+            <AdminDebtReceipts debtsByUser={debtsByUser} allocations={allocations || []} t={t} />
 
-            <div className="space-y-3">
-              {Object.keys(debtsByUser).length === 0 ? (
-                <div className="p-8 sm:p-12 text-center text-zinc-500 border border-white/10 rounded-2xl bg-zinc-900/10">{t.noDebts}</div>
-              ) : (
-                Object.entries(debtsByUser).map(([uid, group]) => (
-                  <details key={uid} className="border border-white/10 rounded-2xl sm:rounded-3xl bg-zinc-900/30 backdrop-blur-[40px] overflow-hidden shadow-lg group/userDebts">
-                    <summary className="cursor-pointer list-none flex items-center justify-between p-4 sm:p-5 hover:bg-white/5 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-purple-500/20 bg-black flex items-center justify-center shrink-0">
-                          {group.avatarUrl ? (
-                            <img src={group.avatarUrl} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <User className="w-4 h-4 text-purple-400" />
-                          )}
-                        </div>
-                        <span className="font-bold text-zinc-200">{group.username}</span>
-                        <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 bg-white/5 px-2 py-1 rounded-full">{group.debts.length} debts</span>
-                      </div>
-                      <ChevronDown className="w-4 h-4 text-zinc-500 group-open/userDebts:rotate-180 transition-transform" />
-                    </summary>
-
-                    <div className="border-t border-white/10 divide-y divide-white/5">
-                      {group.debts.map(debt => {
-                        const amount = Number(debt.amount)
-                        const paid = Number(debt.paid_amount || 0)
-                        const interest = calculateDebtInterest(debt as DebtForCredit)
-                        const debtAllocs = allocations?.filter(a => a.debt_id === debt.id) || []
-                        const createdDate = new Date(debt.created_at).toLocaleDateString()
-
-                        return (
-                          <div key={debt.id} className="p-3 sm:p-4 hover:bg-white/5 transition-colors">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="font-bold text-zinc-200 text-sm">{debt.description}</span>
-                                {debt.is_loan && <span className="px-1.5 py-0.5 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded text-[9px] uppercase tracking-widest font-black">{t.loanBadge}</span>}
-                                <span className="text-[10px] text-zinc-600">{t.created}: {createdDate}</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest rounded-full border ${debt.status === 'paid' ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20'}`}>
-                                  {debt.status === 'paid' ? t.paidStatus : t.pendingStatus}
-                                </span>
-                                {debt.status === 'pending' && (
-                                  <form action={markDebtPaid} className="inline"><input type="hidden" name="debtId" value={debt.id} /><button title="Mark Paid" className="p-1.5 border border-purple-500/20 bg-purple-500/10 hover:bg-purple-500/20 text-purple-500 rounded-lg transition-colors"><Check className="w-3 h-3" /></button></form>
-                                )}
-                                <form action={deleteDebt} className="inline"><input type="hidden" name="debtId" value={debt.id} /><button title="Delete" className="p-1.5 border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-lg transition-colors"><X className="w-3 h-3" /></button></form>
-                              </div>
-                            </div>
-                            <div className="flex flex-wrap gap-4 text-xs">
-                              <span className="text-zinc-500">{t.initialLabel}: <span className="text-zinc-300">{formatCOP(amount)}</span></span>
-                              {interest > 0 && <span className="text-amber-500/70">+{formatCOP(interest)} {t.interestLabel}</span>}
-                              <span className="text-zinc-500">{t.paidLabel}: <span className="text-zinc-300">{formatCOP(paid)}</span></span>
-                            </div>
-                            {debtAllocs.length > 0 && (
-                              <details className="mt-2 group/allocs">
-                                <summary className="cursor-pointer text-[10px] uppercase tracking-widest text-purple-500 font-bold list-none flex items-center gap-1 hover:text-purple-400">
-                                  {t.paymentHistory} <ChevronDown className="w-2.5 h-2.5 group-open/allocs:rotate-180 transition-transform" />
-                                </summary>
-                                <div className="mt-2 space-y-1">
-                                  {debtAllocs.map(alloc => (
-                                    <div key={alloc.id} className="flex justify-between text-xs text-zinc-400 bg-black/20 p-1.5 rounded">
-                                      <span>{new Date(alloc.payments?.created_at || alloc.created_at).toLocaleDateString()}</span>
-                                      <span className="font-bold text-purple-400">+{formatCOP(alloc.allocated_amount)}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </details>
-                            )}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </details>
-                ))
-              )}
-            </div>
           </div>
         </main>
 
