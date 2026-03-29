@@ -14,21 +14,21 @@ export function EventInvitationsClient({ invitations, lang }: { invitations: any
   const t = {
     en: {
       title: 'Upcoming Events',
-      accept: 'Accept RSVP',
+      accept: 'Accept Invitation',
       decline: 'Decline',
-      cancel: 'Cancel RSVP',
+      cancel: 'Cancel Attendance',
       penaltyWarning: 'Canceling less than 24h before the event incurs a $2,000 COP penalty to your debt balance.',
-      accepted: 'You are going!',
+      accepted: 'You are attending!',
     },
     es: {
       title: 'Próximos Eventos',
-      accept: 'Aceptar RSVP',
+      accept: 'Aceptar Invitación',
       decline: 'Rechazar',
-      cancel: 'Cancelar RSVP',
+      cancel: 'Cancelar Asistencia',
       penaltyWarning: 'Cancelar a menos de 24h del evento genera una multa de $2,000 COP en tu saldo.',
       accepted: '¡Vas a asistir!',
     }
-  }[lang] || { title: 'Upcoming Events', accept: 'Accept RSVP', decline: 'Decline', cancel: 'Cancel RSVP', penaltyWarning: 'Canceling less than 24h before the event incurs a $2k COP penalty.', accepted: 'You are going!' }
+  }[lang] || { title: 'Upcoming Events', accept: 'Accept Invitation', decline: 'Decline', cancel: 'Cancel Attendance', penaltyWarning: 'Canceling less than 24h before the event incurs a $2k COP penalty.', accepted: 'You are attending!' }
 
   // Only show pending or accepted
   const activeInvs = invitations.filter((inv: any) => inv.status === 'pending' || inv.status === 'accepted')

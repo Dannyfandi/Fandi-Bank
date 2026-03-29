@@ -11,7 +11,8 @@ import { DashboardClient } from '@/components/DashboardClient'
 import { LoanSimulator } from '@/components/LoanSimulator'
 import { ExperimentalTab } from '@/components/ExperimentalTab'
 import { EventInvitationsClient } from '@/components/EventInvitationsClient'
-import { Ticket, Calendar, Landmark, Sparkles, Star, User, Users, MapPin, Clock, HelpCircle } from 'lucide-react'
+import { SubmitButton } from '@/components/SubmitButton'
+import { Ticket, Calendar, Landmark, Sparkles, Star, User, Users, MapPin, Clock, HelpCircle, X } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { formatCOP } from '@/utils/currency'
@@ -32,6 +33,7 @@ const sideDict = {
     noVisits: 'No visit requests yet.',
     pending: 'Pending',
     approved: 'Approved',
+    cancelVisit: 'Cancel Visit',
   },
   es: {
     actions: 'Acciones Rápidas',
@@ -47,8 +49,11 @@ const sideDict = {
     noVisits: 'No hay solicitudes.',
     pending: 'Pendiente',
     approved: 'Aprobado',
+    cancelVisit: 'Cancelar',
   }
 }
+
+import { cancelVisitRequest } from './actions'
 
 function LoadingBlock() {
   return <div className="p-6 rounded-2xl bg-zinc-900/20 border border-white/5 animate-pulse h-32" />
@@ -234,11 +239,19 @@ export default async function DashboardPage() {
                       <span className="text-zinc-300">{new Date(v.visit_date).toLocaleDateString()}</span>
                       <span className="text-zinc-500 flex items-center gap-1"><Clock className="w-3 h-3" />{v.arrival_time?.slice(0, 5)}</span>
                     </div>
-                    <span className={`text-[10px] uppercase tracking-widest font-black px-2 py-0.5 rounded-full border w-fit ${
-                      v.status === 'approved' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20'
-                    }`}>
-                      {v.status === 'approved' ? t.approved : t.pending}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] uppercase tracking-widest font-black px-2 py-0.5 rounded-full border w-fit ${
+                        v.status === 'approved' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                      }`}>
+                        {v.status === 'approved' ? t.approved : t.pending}
+                      </span>
+                      <form action={cancelVisitRequest}>
+                        <input type="hidden" name="visitId" value={v.id} />
+                        <SubmitButton title={t.cancelVisit} className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-500 transition-colors group">
+                          <X className="w-3 h-3 group-hover:rotate-90 transition-transform" />
+                        </SubmitButton>
+                      </form>
+                    </div>
                   </div>
                 ))}
               </div>

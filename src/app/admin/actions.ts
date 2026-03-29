@@ -271,16 +271,39 @@ export async function createEvent(formData: FormData) {
   const dateStr = formData.get('date') as string
   const timeStr = formData.get('time') as string
   const location = formData.get('location') as string || 'Mojo Dojo Casa House'
-  const poster = formData.get('poster') as string
   const userIds = JSON.parse(formData.get('userIds') as string || '[]')
+  const posterFile = formData.get('posterFile') as File | null
 
-  const eventDate = new Date(`${dateStr}T${timeStr}:00`).toISOString()
+  // Ensure parsing uses Bogota, Colombia time (-05:00) so it saves the correct hour
+  const eventDate = new Date(`${dateStr}T${timeStr}:00-05:00`).toISOString()
+
+  let posterUrl: string | null = null
+
+  if (posterFile && posterFile.size > 0) {
+    let fileExt = posterFile.name.split('.').pop()?.toLowerCase() || 'jpg'
+    if (!['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif'].includes(fileExt)) fileExt = 'jpg'
+    const fileName = `event-${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExt}`
+    
+    const arrayBuffer = await posterFile.arrayBuffer()
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(fileName, new Uint8Array(arrayBuffer), {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: posterFile.type || 'image/jpeg'
+      })
+
+    if (!uploadError && uploadData) {
+       const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(uploadData.path)
+       posterUrl = publicUrl
+    }
+  }
 
   const { data: event, error: evtErr } = await supabase.from('events').insert({
     title,
     event_date: eventDate,
     location,
-    poster_url: poster || null
+    poster_url: posterUrl
   }).select('id').single()
 
   if (evtErr || !event) throw new Error('Error creating event')
@@ -293,6 +316,63 @@ export async function createEvent(formData: FormData) {
     }))
     await supabase.from('event_invitations').insert(invites)
   }
+
+  revalidatePath('/admin')
+  revalidatePath('/dashboard')
+}
+
+export async function deleteEvent(formData: FormData) {
+  const supabase = await checkAdmin()
+  const eventId = formData.get('eventId') as string
+  await supabase.from('events').delete().eq('id', eventId)
+  // visit_requests handles cascading deletes based on schema V9 ON DELETE CASCADE
+  revalidatePath('/admin')
+  revalidatePath('/dashboard')
+}
+
+export async function updateEvent(formData: FormData) {
+  const supabase = await checkAdmin()
+  const eventId = formData.get('eventId') as string
+  const title = formData.get('title') as string
+  const dateStr = formData.get('date') as string
+  const timeStr = formData.get('time') as string
+  const location = formData.get('location') as string || 'Mojo Dojo Casa House'
+  const posterFile = formData.get('posterFile') as File | null
+
+  const eventDate = new Date(`${dateStr}T${timeStr}:00-05:00`).toISOString()
+
+  let posterUrl: string | null = null
+  if (posterFile && posterFile.size > 0) {
+    let fileExt = posterFile.name.split('.').pop()?.toLowerCase() || 'jpg'
+    if (!['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif'].includes(fileExt)) fileExt = 'jpg'
+    const fileName = `event-${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExt}`
+    const arrayBuffer = await posterFile.arrayBuffer()
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(fileName, new Uint8Array(arrayBuffer), {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: posterFile.type || 'image/jpeg'
+      })
+    if (!uploadError && uploadData) {
+       const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(uploadData.path)
+       posterUrl = publicUrl
+    }
+  }
+
+  const updatePayload: any = { title, event_date: eventDate, location }
+  if (posterUrl) updatePayload.poster_url = posterUrl
+
+  await supabase.from('events').update(updatePayload).eq('id', eventId)
+
+  // Sync the change to derived visit_requests dates
+  const eventDateObj = new Date(eventDate)
+  const dateOnly = eventDateObj.toISOString().split('T')[0]
+  const timeOnly = eventDateObj.toISOString().split('T')[1].slice(0, 5) // HH:MM
+  await supabase.from('visit_requests').update({
+    visit_date: dateOnly,
+    arrival_time: `${timeOnly}:00`
+  }).eq('event_id', eventId)
 
   revalidatePath('/admin')
   revalidatePath('/dashboard')
