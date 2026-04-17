@@ -173,9 +173,9 @@ export default async function AdminPage() {
         <header className="flex items-center justify-between pb-4 sm:pb-6 border-b border-white/10">
           <div className="flex items-center gap-3 sm:gap-4">
             <div className="w-14 h-14 sm:w-20 sm:h-20 relative shrink-0">
-               <Image src="/logo.png" alt="Fandi Bank" fill className="object-cover rounded-full shadow-lg shadow-purple-900/30" priority />
+               <Image src={profile?.active_theme === 'smiling_friends' ? '/sf_logo.png' : '/logo.png'} alt="Fandi Bank" fill className="object-cover rounded-full shadow-lg shadow-purple-900/30" priority />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tighter bg-gradient-to-r from-purple-400 to-fuchsia-600 bg-clip-text text-transparent">
+            <h1 className={`text-2xl sm:text-3xl font-black tracking-tighter bg-clip-text text-transparent ${profile?.active_theme === 'smiling_friends' ? 'bg-gradient-to-r from-yellow-400 to-orange-500' : 'bg-gradient-to-r from-purple-400 to-fuchsia-600'}`}>
               {t.adminHq}
             </h1>
           </div>

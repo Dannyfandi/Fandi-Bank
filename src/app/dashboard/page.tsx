@@ -130,7 +130,7 @@ export default async function DashboardPage() {
         <header className="flex items-center justify-between pb-4 sm:pb-6 border-b border-zinc-800/50">
           <div className="flex items-center gap-2">
             <div className="w-14 h-14 sm:w-20 sm:h-20 relative shrink-0">
-              <Image src="/logo.png" alt="Fandi Bank" fill className="object-cover rounded-full shadow-lg shadow-purple-900/30" priority />
+              <Image src={profile?.active_theme === 'smiling_friends' ? '/sf_logo.png' : '/logo.png'} alt="Fandi Bank" fill className="object-cover rounded-full shadow-lg shadow-purple-900/30" priority />
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">

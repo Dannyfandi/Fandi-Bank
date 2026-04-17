@@ -220,6 +220,11 @@ export async function updateSmilingFriendsProgress(formData: FormData) {
   const updates: any = { sf_progress: progress }
   if (themeUnlocked) updates.active_theme = 'smiling_friends'
   await supabase.from('profiles').update(updates).eq('id', user.id)
+
+  // Force layout re-render so the theme applies immediately without manual refresh
+  if (themeUnlocked) {
+    revalidatePath('/', 'layout')
+  }
 }
 
 export async function resetSmilingFriends() {

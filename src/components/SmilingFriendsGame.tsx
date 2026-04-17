@@ -257,16 +257,18 @@ export function SmilingFriendsGame({ initialProgress, lang }: { initialProgress?
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 relative z-10">
         {MAINS.map(m => {
           const isUnlocked = unlockedMains.includes(m.id)
+          const isGlep = m.id === 'glep'
           return (
-            <div key={m.id} className={`p-2 border rounded-2xl flex flex-col items-center text-center transition-all ${isUnlocked ? 'border-[#eab308]/50 bg-black/60 shadow-[0_0_20px_rgba(234,179,8,0.2)]' : 'border-white/5 bg-black/20 grayscale opacity-40'}`}>
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden mb-2 border-2 border-white/10 bg-zinc-900 shrink-0">
+            <div key={m.id} className={`p-2 border rounded-2xl flex flex-col items-center text-center transition-all ${isUnlocked ? 'border-[#eab308]/50 bg-black/60 shadow-[0_0_20px_rgba(234,179,8,0.2)]' : 'border-white/5 bg-black/20 grayscale opacity-40'} ${isGlep && isUnlocked ? 'animate-pulse' : ''}`}>
+              <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden mb-2 border-2 bg-zinc-900 shrink-0 ${isGlep && isUnlocked ? 'border-[#84cc16]/50' : 'border-white/10'}`}>
                  {isUnlocked ? (
-                   <img src={m.url} alt={m.name} className="w-full h-full object-cover" />
+                   // eslint-disable-next-line @next/next/no-img-element
+                   <img src={m.url} alt={m.name} className="w-full h-full object-cover" unoptimized-gif={isGlep ? 'true' : undefined} />
                  ) : (
                    <div className="w-full h-full flex items-center justify-center font-black text-2xl text-zinc-800">?</div>
                  )}
               </div>
-              <p className={`text-xs font-black uppercase tracking-widest ${isUnlocked ? 'text-[#eab308]' : 'text-zinc-500'}`}>{m.name}</p>
+              <p className={`text-xs font-black uppercase tracking-widest ${isUnlocked ? (isGlep ? 'text-[#84cc16]' : 'text-[#eab308]') : 'text-zinc-500'}`}>{m.name}{isGlep && isUnlocked ? ' ⭐' : ''}</p>
             </div>
           )
         })}
