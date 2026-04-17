@@ -47,10 +47,15 @@ export default async function RootLayout({
         {/* Abstract / Animated Background Layer */}
         <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none bg-black">
           {isSmiling ? (
-            <div className="absolute inset-0 z-[-1] opacity-40">
-               <img src="https://static.wikia.nocookie.net/smiling-friends/images/2/2f/Smiling_Friends_HQ_Day.png/revision/latest" alt="Smiling Friends Background" className="w-full h-full object-cover blur-sm" />
-               <div className="absolute inset-0 bg-black/60" />
-            </div>
+            <>
+              {/* Blurred artwork background */}
+              <img src="/sf_bg.jpg" alt="" className="absolute inset-0 w-full h-full object-cover blur-[40px] opacity-30 scale-110" />
+              <div className="absolute inset-0 bg-black/50" />
+              {/* Warm animated blobs on top */}
+              <div className="absolute -top-[20%] -left-[10%] w-[70vw] h-[70vh] rounded-full bg-yellow-500/20 mix-blend-screen filter blur-[120px] opacity-80 animate-glass-1" />
+              <div className="absolute top-[20%] -right-[20%] w-[60vw] h-[80vh] rounded-full bg-orange-500/15 mix-blend-screen filter blur-[140px] opacity-70 animate-glass-2" />
+              <div className="absolute -bottom-[20%] left-[20%] w-[80vw] h-[60vh] rounded-full bg-amber-600/15 mix-blend-screen filter blur-[130px] opacity-60 animate-glass-3" />
+            </>
           ) : (
             <>
               <div className="absolute -top-[20%] -left-[10%] w-[70vw] h-[70vh] rounded-full bg-purple-600/30 mix-blend-screen filter blur-[120px] opacity-80 animate-glass-1" />

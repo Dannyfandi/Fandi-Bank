@@ -24,3 +24,53 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ===== Smiling Friends Theme Overrides ===== */
+body.smiling-theme {
+  --background: #0a0800;
+}
+
+/* Recolor purple accents → gold/amber */
+body.smiling-theme .border-purple-500\/30,
+body.smiling-theme .border-purple-500\/20 {
+  border-color: rgba(234, 179, 8, 0.3) !important;
+}
+body.smiling-theme .bg-purple-500\/10,
+body.smiling-theme .bg-purple-500\/5 {
+  background-color: rgba(234, 179, 8, 0.1) !important;
+}
+body.smiling-theme .text-purple-400,
+body.smiling-theme .text-purple-300,
+body.smiling-theme .text-purple-500 {
+  color: #eab308 !important;
+}
+body.smiling-theme .shadow-purple-900\/40 {
+  --tw-shadow-color: rgba(120, 80, 0, 0.4) !important;
+}
+body.smiling-theme .shadow-lg.shadow-purple-900\/40 {
+  --tw-shadow-color: rgba(120, 80, 0, 0.4) !important;
+}
+body.smiling-theme .ring-purple-500\/50 {
+  --tw-ring-color: rgba(234, 179, 8, 0.5) !important;
+}
+body.smiling-theme .focus\:ring-purple-500\/50:focus {
+  --tw-ring-color: rgba(234, 179, 8, 0.5) !important;
+}
+body.smiling-theme .focus\:border-purple-500\/50:focus {
+  border-color: rgba(234, 179, 8, 0.5) !important;
+}
+
+/* Recolor fuchsia/violet blobs that might leak through */
+body.smiling-theme .bg-fuchsia-500\/10,
+body.smiling-theme .border-fuchsia-500\/20 {
+  background-color: rgba(234, 179, 8, 0.1) !important;
+  border-color: rgba(234, 179, 8, 0.2) !important;
+}
+body.smiling-theme .text-fuchsia-400 {
+  color: #f59e0b !important;
+}
+
+/* Header & nav gold glow */
+body.smiling-theme header {
+  border-color: rgba(234, 179, 8, 0.15) !important;
+}

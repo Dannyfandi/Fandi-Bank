@@ -6,12 +6,12 @@ import { SubmitButton } from './SubmitButton'
 import { updateSmilingFriendsProgress } from '@/app/dashboard/actions'
 
 const MAINS = [
-  { id: 'mrfrog', name: 'Mr. Frog', url: '/characters/mrfrog.png' },
-  { id: 'mrboss', name: 'Mr. Boss', url: '/characters/mrboss.png' },
-  { id: 'alan', name: 'Alan', url: '/characters/alan.png' },
-  { id: 'pim', name: 'Pim', url: '/characters/pim.png' },
-  { id: 'charlie', name: 'Charlie', url: '/characters/charlie.png' },
-  { id: 'glep', name: 'Glep', url: '/characters/glep.png' }
+  { id: 'mrfrog', name: 'Mr. Frog', url: '/characters/mrfrog.jpg' },
+  { id: 'mrboss', name: 'Mr. Boss', url: '/characters/mrboss.jpg' },
+  { id: 'alan', name: 'Alan', url: '/characters/alan.jpg' },
+  { id: 'pim', name: 'Pim', url: '/characters/pim.jpg' },
+  { id: 'charlie', name: 'Charlie', url: '/characters/charlie.jpg' },
+  { id: 'glep', name: 'Glep', url: '/characters/glep.gif' }
 ]
 
 const RANDOMS = [
@@ -130,7 +130,7 @@ export function SmilingFriendsGame({ initialProgress, lang }: { initialProgress?
              😁 Smiling Friends Inc.
           </h2>
           <p className="text-xs sm:text-sm text-zinc-400 font-bold mt-1 max-w-sm">
-            Help people smile! Bring 2 random characters joy to summon a Smiling Friend.
+            Help people smile! Bring 4 random characters joy to summon a Smiling Friend.
           </p>
         </div>
         <div className="mt-3 sm:mt-0 px-4 py-2 bg-black/40 border border-[#eab308]/40 rounded-xl">
