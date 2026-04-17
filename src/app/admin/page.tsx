@@ -112,7 +112,7 @@ export default async function AdminPage() {
   const lang = (langCookie === 'en' ? 'en' : 'es') as 'en' | 'es'
   const t = dict[lang]
 
-  const { data: profile } = await supabase.from('profiles').select('role, username, avatar_url, credit_balance').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('role, username, avatar_url, credit_balance, sf_progress').eq('id', user.id).single()
   if (profile?.role !== 'admin') return redirect('/dashboard')
 
   const { data: profiles } = await supabase.from('profiles').select('*').order('created_at', { ascending: false })
