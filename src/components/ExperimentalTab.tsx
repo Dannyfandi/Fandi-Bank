@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { Zap, Gift, ShoppingBag, Trophy, Clock, Target, Lightbulb, Gamepad2, ArrowLeft } from 'lucide-react'
 import { submitSuggestion } from '@/app/dashboard/actions'
 import { SubmitButton } from './SubmitButton'
+import { SmilingFriendsGame } from './SmilingFriendsGame'
 
 interface Reward {
   name: string
@@ -71,10 +72,10 @@ const dict = {
   }
 }
 
-export function ExperimentalTab({ lang }: { lang: 'en' | 'es' }) {
+export function ExperimentalTab({ lang, initialProgress }: { lang: 'en' | 'es', initialProgress?: any }) {
   const t = dict[lang]
   
-  const [menu, setMenu] = useState<'main' | 'points' | 'fandi-tap' | 'mole-whack' | 'suggest-feature' | 'suggest-game'>('main')
+  const [menu, setMenu] = useState<'main' | 'points' | 'fandi-tap' | 'mole-whack' | 'smiling-friends' | 'suggest-feature' | 'suggest-game'>('main')
   const [points, setPoints] = useState(0)
   const [highScore, setHighScore] = useState(0)
   const [suggMsg, setSuggMsg] = useState('')
@@ -159,7 +160,11 @@ export function ExperimentalTab({ lang }: { lang: 'en' | 'es' }) {
              <Target className="w-16 h-16 text-amber-500 mb-4 group-hover:scale-110 transition-transform" />
              <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">{t.game2}</h3>
           </button>
-          <div className="p-6 rounded-3xl bg-zinc-900/30 backdrop-blur-[40px] border border-white/10 shadow-xl space-y-4 lg:col-span-1 sm:col-span-2">
+          <button onClick={() => setMenu('smiling-friends')} className="group relative overflow-hidden rounded-3xl aspect-[4/3] border border-white/10 flex flex-col items-center justify-center p-6 bg-gradient-to-br from-[#eab308]/40 to-black hover:border-[#eab308]/50 transition-all hover:scale-[1.02] sm:col-span-2 lg:col-span-1">
+             <span className="text-6xl mb-4 group-hover:scale-110 transition-transform block">😁</span>
+             <h3 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#eab308] to-red-400 text-center">Smiling Friends Labs</h3>
+          </button>
+          <div className="p-6 rounded-3xl bg-zinc-900/30 backdrop-blur-[40px] border border-white/10 shadow-xl space-y-4 lg:col-span-3 sm:col-span-2">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-bold text-base flex items-center gap-2 text-zinc-200">
                 <ShoppingBag className="w-5 h-5 text-emerald-400" /> {t.shopTitle}
@@ -203,6 +208,8 @@ export function ExperimentalTab({ lang }: { lang: 'en' | 'es' }) {
       {menu === 'fandi-tap' && <FandiTap gameTitle={t.game1} tapBtn={t.tapBtn} cooldown={t.cooldown} maxRate={t.maxRate} pointsLabel={t.points} scoreLabel={t.score} comboLabel={t.combo} highScoreLabel={t.highScore} points={points} addPoints={addPoints} />}
       
       {menu === 'mole-whack' && <MoleWhack gameTitle={t.game2} scoreLabel={t.score} pointsLabel={t.points} points={points} addPoints={addPoints} />}
+
+      {menu === 'smiling-friends' && <SmilingFriendsGame initialProgress={initialProgress} lang={lang} />}
       
     </div>
   )

@@ -12,7 +12,41 @@ export async function submitTicketRequest(formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user) return 'Unauthorized'
+export async function updateSmilingFriendsProgress(formData: FormData) {
+  const randomsSmiled = parseInt(formData.get('randomsSmiled') as string || '0', 10)
+  const newlyUnlocked = formData.get('newlyUnlocked') as string | null
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const { data: profile } = await supabase.from('profiles').select('sf_progress, active_theme').eq('id', user.id).single()
+  const progress = profile?.sf_progress || { unlocked_mains: [], randoms_smiled: 0 }
+  
+  progress.randoms_smiled = randomsSmiled
+  let bonusAmount = 0
+  let themeUnlocked = false
+
+  if (newlyUnlocked && !progress.unlocked_mains.includes(newlyUnlocked)) {
+     progress.unlocked_mains.push(newlyUnlocked)
+     bonusAmount += 20 // 20 points per main unlock
+     
+     // The game gives a 200 pts bonus if all 6 are unlocked
+     if (progress.unlocked_mains.length >= 6) {
+        bonusAmount += 200
+        themeUnlocked = true
+     }
+  }
+
+  // Update profile progress
+  const updates: any = { sf_progress: progress }
+  // Only override theme if strictly completing it now, else preserve
+  if (themeUnlocked) updates.active_theme = 'smiling_friends'
+  await supabase.from('profiles').update(updates).eq('id', user.id)
+
+  // Wait, if Fandi Bank points are calculated based on paid debts? Or does it use a separate points table?
+  // I must check how points are awarded in Fandi Tap
+}
 
   const { error } = await supabase
     .from('ticket_requests')

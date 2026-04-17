@@ -15,6 +15,7 @@ import { SubmitButton } from '@/components/SubmitButton'
 import { AdminPaymentsTracker } from '@/components/AdminPaymentsTracker'
 import { AdminDebtReceipts } from '@/components/AdminDebtReceipts'
 import { AdminEventsManager } from '@/components/AdminEventsManager'
+import { AdminSuggestionsManager } from '@/components/AdminSuggestionsManager'
 
 const dict = {
   en: {
@@ -111,7 +112,7 @@ export default async function AdminPage() {
   const lang = (langCookie === 'en' ? 'en' : 'es') as 'en' | 'es'
   const t = dict[lang]
 
-  const { data: profile } = await supabase.from('profiles').select('role, username, avatar_url').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('role, username, avatar_url, credit_balance').eq('id', user.id).single()
   if (profile?.role !== 'admin') return redirect('/dashboard')
 
   const { data: profiles } = await supabase.from('profiles').select('*').order('created_at', { ascending: false })
@@ -124,6 +125,7 @@ export default async function AdminPage() {
   const { data: allMessages } = await supabase.from('messages').select('*').order('created_at', { ascending: true })
   const { data: events } = await supabase.from('events').select('*').order('created_at', { ascending: false })
   const { data: invitations } = await supabase.from('event_invitations').select('*')
+  const { data: suggestions } = await supabase.from('user_suggestions').select('*, profiles(username)').order('created_at', { ascending: false })
 
   // Build profile avatar lookup
   const avatarMap: Record<string, string> = {}
@@ -141,8 +143,11 @@ export default async function AdminPage() {
       const interest = calculateDebtInterest(pd as DebtForCredit)
       totalRemaining += ((Number(pd.amount) + interest) - Number(pd.paid_amount || 0))
     })
+    const userCredits = Number(p.credit_balance || 0)
+    // We do NOT subtract credit from totalRemaining mathematically here because totalRemaining means the sum of pending debts,
+    // but the credit is visually distinct until a debt consumes it.
     grandTotal += totalRemaining
-    return { ...p, totalRemaining, debts: userDebts, score, isSuspended }
+    return { ...p, totalRemaining, userCredits, debts: userDebts, score, isSuspended }
   })
 
   // Group debts by user
@@ -191,6 +196,9 @@ export default async function AdminPage() {
                    )}
                 </div>
                 <span className="text-sm font-bold text-zinc-200 hidden md:block">{profile?.username || 'Profile'}</span>
+              </Link>
+              <Link href="/dashboard" className="hidden sm:flex px-4 py-1.5 rounded-full border border-fuchsia-500/20 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 text-fuchsia-400 text-[10px] uppercase font-bold items-center gap-1 transition-colors tracking-widest shrink-0">
+                 View as User
               </Link>
               <form action="/auth/signout" method="post">
                 <button className="text-[10px] sm:text-xs font-bold text-zinc-500 hover:text-red-400 transition-colors uppercase tracking-widest hidden sm:block">
@@ -400,7 +408,12 @@ export default async function AdminPage() {
         </div>
 
         {/* Experimental Tab */}
-        <ExperimentalTab lang={lang} />
+        <ExperimentalTab lang={lang} initialProgress={profile?.sf_progress} />
+
+        {/* Suggestions Inbox */}
+        <div className="pb-12">
+          <AdminSuggestionsManager suggestions={suggestions || []} />
+        </div>
       </div>
     </div>
   )

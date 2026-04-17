@@ -70,7 +70,7 @@ export default async function DashboardPage() {
   const t = sideDict[lang]
 
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-  if (profile?.role === 'admin') return redirect('/admin')
+  // Admin is now allowed to view dashboard via the View as User button
 
   const { data: debts } = await supabase.from('debts').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
 
@@ -154,6 +154,11 @@ export default async function DashboardPage() {
                 </div>
                 <span className="text-sm font-bold text-zinc-200 hidden md:block">{profile?.username || 'Profile'}</span>
               </Link>
+              {profile?.role === 'admin' && (
+                <Link href="/admin" className="hidden sm:flex px-4 py-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 text-[10px] uppercase font-bold items-center gap-1 transition-colors tracking-widest shrink-0">
+                   Admin Panel
+                </Link>
+              )}
               <form action="/auth/signout" method="post">
                 <button className="text-[10px] sm:text-xs font-bold text-zinc-500 hover:text-red-400 transition-colors uppercase tracking-widest hidden sm:block">
                   {t.logout}
@@ -265,7 +270,7 @@ export default async function DashboardPage() {
         </main>
 
         {/* Experimental Tab */}
-        <ExperimentalTab lang={lang} />
+        <ExperimentalTab lang={lang} initialProgress={profile?.sf_progress} />
 
       </div>
       
