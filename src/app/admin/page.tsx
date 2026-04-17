@@ -411,13 +411,7 @@ export default async function AdminPage() {
 
         {/* Experimental Tab */}
         <div className="relative">
-          <form action="/api/actions/dummy" method="post" onSubmit={async (e) => {
-             e.preventDefault()
-             // Use browser action bypass
-             // Wait, Next.js server actions can be imported!
-          }} className="absolute top-4 right-4 z-20 hidden md:block">
-            {/* The actual Server Action import needs a client component or inline 'use server' which we can't easily do inline safely, let's just create an endpoint or make a client-component reset button! Wait, better approach: a small client component or a server action form. */}
-          </form>
+
           <div className="flex justify-end pr-4 sm:pr-8 md:pr-12 pt-4">
              <form action={async () => {
                'use server'
