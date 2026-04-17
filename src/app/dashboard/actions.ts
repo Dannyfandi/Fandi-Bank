@@ -221,3 +221,30 @@ export async function updateSmilingFriendsProgress(formData: FormData) {
   if (themeUnlocked) updates.active_theme = 'smiling_friends'
   await supabase.from('profiles').update(updates).eq('id', user.id)
 }
+
+export async function resetSmilingFriends() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'admin') throw new Error('Unauthorized')
+
+  await supabase.from('profiles').update({
+    sf_progress: { unlocked_mains: [], randoms_smiled: 0 },
+    active_theme: 'normal'
+  }).eq('id', user.id)
+
+  revalidatePath('/admin')
+  revalidatePath('/dashboard')
+}
+
+export async function updateTheme(themeStr: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  await supabase.from('profiles').update({ active_theme: themeStr }).eq('id', user.id)
+
+  revalidatePath('/', 'layout')
+}

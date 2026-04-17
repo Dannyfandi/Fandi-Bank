@@ -15,6 +15,7 @@ import { SubmitButton } from '@/components/SubmitButton'
 import { AdminPaymentsTracker } from '@/components/AdminPaymentsTracker'
 import { AdminDebtReceipts } from '@/components/AdminDebtReceipts'
 import { AdminEventsManager } from '@/components/AdminEventsManager'
+import { ThemeSettings } from '@/components/ThemeSettings'
 import { AdminSuggestionsManager } from '@/components/AdminSuggestionsManager'
 
 const dict = {
@@ -112,7 +113,7 @@ export default async function AdminPage() {
   const lang = (langCookie === 'en' ? 'en' : 'es') as 'en' | 'es'
   const t = dict[lang]
 
-  const { data: profile } = await supabase.from('profiles').select('role, username, avatar_url, credit_balance, sf_progress').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('role, username, avatar_url, credit_balance, sf_progress, active_theme').eq('id', user.id).single()
   if (profile?.role !== 'admin') return redirect('/dashboard')
 
   const { data: profiles } = await supabase.from('profiles').select('*').order('created_at', { ascending: false })
@@ -205,6 +206,7 @@ export default async function AdminPage() {
                   {t.logout}
                 </button>
               </form>
+              <ThemeSettings activeTheme={profile?.active_theme || 'normal'} hasSmilingFriends={profile?.sf_progress?.unlocked_mains?.length >= 6} />
             </div>
           </div>
         </header>
@@ -408,7 +410,27 @@ export default async function AdminPage() {
         </div>
 
         {/* Experimental Tab */}
-        <ExperimentalTab lang={lang} initialProgress={profile?.sf_progress} />
+        <div className="relative">
+          <form action="/api/actions/dummy" method="post" onSubmit={async (e) => {
+             e.preventDefault()
+             // Use browser action bypass
+             // Wait, Next.js server actions can be imported!
+          }} className="absolute top-4 right-4 z-20 hidden md:block">
+            {/* The actual Server Action import needs a client component or inline 'use server' which we can't easily do inline safely, let's just create an endpoint or make a client-component reset button! Wait, better approach: a small client component or a server action form. */}
+          </form>
+          <div className="flex justify-end pr-4 sm:pr-8 md:pr-12 pt-4">
+             <form action={async () => {
+               'use server'
+               const { resetSmilingFriends } = await import('@/app/dashboard/actions')
+               await resetSmilingFriends()
+             }}>
+               <button className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-xl text-xs font-bold transition-colors">
+                 Reset Game Progress (Admin)
+               </button>
+             </form>
+          </div>
+          <ExperimentalTab lang={lang} initialProgress={profile?.sf_progress} />
+        </div>
 
         {/* Suggestions Inbox */}
         <div className="pb-12">

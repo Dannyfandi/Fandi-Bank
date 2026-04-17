@@ -5,6 +5,7 @@ import { Suspense } from 'react'
 import { TicketRequestForm } from '@/components/TicketRequestForm'
 import { VisitForm } from '@/components/VisitForm'
 import { LoanRequestForm } from '@/components/LoanRequestForm'
+import { ThemeSettings } from '@/components/ThemeSettings'
 import { ChatWidget } from '@/components/ChatWidget'
 import { LanguageToggle } from '@/components/LanguageToggle'
 import { DashboardClient } from '@/components/DashboardClient'
@@ -164,6 +165,7 @@ export default async function DashboardPage() {
                   {t.logout}
                 </button>
               </form>
+              <ThemeSettings activeTheme={profile?.active_theme || 'normal'} hasSmilingFriends={profile?.sf_progress?.unlocked_mains?.length >= 6} />
             </div>
           </div>
         </header>

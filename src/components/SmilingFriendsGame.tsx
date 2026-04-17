@@ -6,12 +6,12 @@ import { SubmitButton } from './SubmitButton'
 import { updateSmilingFriendsProgress } from '@/app/dashboard/actions'
 
 const MAINS = [
-  { id: 'mrfrog', name: 'Mr. Frog', url: 'https://i.imgflip.com/6r0a25.jpg' },
-  { id: 'mrboss', name: 'Mr. Boss', url: 'https://preview.redd.it/mr-boss-v0-x1u48l4h08hc1.jpeg?auto=webp&s=da63a9ebccd9a9ec2b10ab64161eb7ce77869aa7' },
-  { id: 'alan', name: 'Alan', url: 'https://i.redd.it/does-anyone-else-realize-that-alands-job-is-literally-just-v0-v2540m7yvttc1.jpg?width=1003&format=pjpg&auto=webp&s=0fcd14f52e5a7096e2577c2a74c77cddf85d26ff' },
-  { id: 'pim', name: 'Pim', url: 'https://m.media-amazon.com/images/M/MV5BMGUyNmQyODgtODY0OC00N2EzLThmZTMtOGZlN2NhYTNiNmJlXkEyXkFqcGc@._V1_QL75_UX500_CR0,47,500,281_.jpg' },
-  { id: 'charlie', name: 'Charlie', url: 'https://i.ytimg.com/vi/S7Q8Z-zK8e0/hq720.jpg?sqp=-oaymwE7CK4FEIIDSFryq4qpAy0IARUAAAAAGAElAADIQj0AgKJD8AEB-AH-DoACuAiKAgwIABABGDEgUSh_MA8=&rs=AOn4CLB-N1vM-G1lxyr-j5iX_0gA-xXz5A' },
-  { id: 'glep', name: 'Glep', url: 'https://preview.redd.it/idk-why-but-in-my-opinion-glep-is-so-cute-is-just-my-opinion-v0-4kntg1n7z1bd1.png?width=640&crop=smart&auto=webp&s=6b8fd8cf12cd8cc274bf702a0a2561ea9de989cd' }
+  { id: 'mrfrog', name: 'Mr. Frog', url: '/characters/mrfrog.png' },
+  { id: 'mrboss', name: 'Mr. Boss', url: '/characters/mrboss.png' },
+  { id: 'alan', name: 'Alan', url: '/characters/alan.png' },
+  { id: 'pim', name: 'Pim', url: '/characters/pim.png' },
+  { id: 'charlie', name: 'Charlie', url: '/characters/charlie.png' },
+  { id: 'glep', name: 'Glep', url: '/characters/glep.png' }
 ]
 
 const RANDOMS = [
@@ -38,23 +38,46 @@ export function SmilingFriendsGame({ initialProgress, lang }: { initialProgress?
 
   // Sub-minigame states
   const [mathTarget, setMathTarget] = useState(0)
+  const [mathVar2, setMathVar2] = useState(5)
   const [mathOp, setMathOp] = useState('+')
   const [spamCount, setSpamCount] = useState(0)
   const [waitTime, setWaitTime] = useState(10)
+  const [maxWait, setMaxWait] = useState(10)
+
+  // New games states
+  const [reactionGreen, setReactionGreen] = useState(false)
+  const [reactionTimer, setReactionTimer] = useState<NodeJS.Timeout | null>(null)
+  
+  const [memorySeq, setMemorySeq] = useState<number[]>([])
+  const [memoryCur, setMemoryCur] = useState<number>(0)
+  const [memoryShow, setMemoryShow] = useState(false)
 
   const startGame = (type: number) => {
     setActiveMinigame(type)
-    if (type === 0) {
-      setMathTarget(Math.floor(Math.random() * 20) + 10)
+    if (type === 0) { // Math
+      setMathTarget(Math.floor(Math.random() * 50) + 10)
+      setMathVar2(Math.floor(Math.random() * 20) + 1)
       setMathOp(Math.random() > 0.5 ? '+' : '-')
-    } else if (type === 1) {
-      setSpamCount(15) // need to click 15 times
-    } else if (type === 2) {
-      setWaitTime(7) // Need to wait 7 seconds
+    } else if (type === 1) { // Spam Random 10 to 50
+      setSpamCount(Math.floor(Math.random() * 41) + 10)
+    } else if (type === 2) { // Wait Random 10s to 60s
+      const w = Math.floor(Math.random() * 51) + 10
+      setWaitTime(w)
+      setMaxWait(w)
+    } else if (type === 3) { // Reaction
+      setReactionGreen(false)
+      const t = setTimeout(() => setReactionGreen(true), Math.random() * 3000 + 1000)
+      setReactionTimer(t)
+    } else if (type === 4) { // Memory
+      const seq = Array.from({length: 4}, () => Math.floor(Math.random() * 4))
+      setMemorySeq(seq)
+      setMemoryCur(0)
+      setMemoryShow(true)
+      setTimeout(() => setMemoryShow(false), 2000)
     }
   }
 
-  // Minigame 2 Wait logic
+  // Minigame Wait logic
   useEffect(() => {
     if (activeMinigame === 2 && waitTime > 0) {
        const t = setTimeout(() => setWaitTime(w => w - 1), 1000)
@@ -74,7 +97,7 @@ export function SmilingFriendsGame({ initialProgress, lang }: { initialProgress?
 
     // Compute new logic securely on server
     const newRandoms = randomsSmiled + 1
-    const shouldUnlock = newRandoms % 2 === 0
+    const shouldUnlock = newRandoms % 4 === 0 // Requires 4 randoms to unlock 1 character now (Doubled length)
     let newlyUnlocked = null
 
     if (shouldUnlock) {
@@ -131,18 +154,24 @@ export function SmilingFriendsGame({ initialProgress, lang }: { initialProgress?
                <button onClick={() => startGame(2)} disabled={cooldown>0} className="px-4 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 rounded-xl text-sm font-bold transition-all disabled:opacity-50">
                  Soothe Anxiety 😨
                </button>
+               <button onClick={() => startGame(3)} disabled={cooldown>0} className="px-4 py-2 bg-fuchsia-500/20 hover:bg-fuchsia-500/30 text-fuchsia-400 border border-fuchsia-500/30 rounded-xl text-sm font-bold transition-all disabled:opacity-50">
+                 Test Reflex 😲
+               </button>
+               <button onClick={() => startGame(4)} disabled={cooldown>0} className="px-4 py-2 bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 border border-orange-500/30 rounded-xl text-sm font-bold transition-all disabled:opacity-50">
+                 Memory Sync 🧠
+               </button>
             </div>
           ) : (
             <div className="p-4 bg-zinc-800/50 rounded-xl animate-in slide-in-from-top-2 border border-white/10">
                {activeMinigame === 0 && (
                  <div className="space-y-3">
-                   <p className="font-bold text-lg text-white text-center">Random Character is crying because they can't solve: {mathTarget} {mathOp} 5</p>
-                   <div className="flex justify-center gap-4">
-                      {[mathTarget + 5, mathTarget - 5, mathTarget, mathTarget * 2].map((ans, i) => (
+                   <p className="font-bold text-lg text-white text-center">Random Character is crying because they can't solve: {mathTarget} {mathOp} {mathVar2}</p>
+                   <div className="flex justify-center gap-4 flex-wrap">
+                      {[mathTarget + mathVar2, mathTarget - mathVar2, mathTarget + 1, mathTarget * 2].sort(() => Math.random() - 0.5).slice(0,4).map((ans, i) => (
                          <button key={i} onClick={() => {
-                            if ((mathOp === '+' && ans === mathTarget + 5) || (mathOp === '-' && ans === mathTarget - 5)) winMinigame()
-                            else setActiveMinigame(null)
-                         }} className="w-12 h-12 bg-black hover:bg-indigo-500/30 border border-white/20 rounded-xl font-bold flex items-center justify-center">
+                            if ((mathOp === '+' && ans === mathTarget + mathVar2) || (mathOp === '-' && ans === mathTarget - mathVar2)) winMinigame()
+                            else setActiveMinigame(null) // Fail
+                         }} className="w-14 h-14 bg-black hover:bg-indigo-500/30 border border-white/20 rounded-xl font-bold flex items-center justify-center text-lg">
                             {ans}
                          </button>
                       ))}
@@ -164,13 +193,53 @@ export function SmilingFriendsGame({ initialProgress, lang }: { initialProgress?
                  <div className="flex flex-col items-center gap-3">
                    <p className="font-bold text-center text-emerald-300">Just be patient and listen to them vent...</p>
                    <div className="w-full bg-black h-4 rounded-full overflow-hidden border border-white/10">
-                      <div className="h-full bg-emerald-500 transition-all duration-1000" style={{ width: `${(1 - (waitTime/7))*100}%`}} />
+                      <div className="h-full bg-emerald-500 transition-all duration-1000" style={{ width: `${(1 - (waitTime/maxWait))*100}%`}} />
                    </div>
                    {waitTime === 0 ? (
                      <button onClick={() => winMinigame()} className="px-6 py-2 bg-emerald-500 text-black font-black rounded-xl">Smile! 😃</button>
                    ) : (
                      <p className="font-mono text-zinc-500">{waitTime}s remaining</p>
                    )}
+                 </div>
+               )}
+               {activeMinigame === 3 && (
+                 <div className="flex flex-col items-center gap-3">
+                    <p className="font-bold text-center text-fuchsia-300">Wait for it to turn GREEN, then click!</p>
+                    <button 
+                      onClick={() => {
+                        if (reactionGreen) winMinigame()
+                        else {
+                          if (reactionTimer) clearTimeout(reactionTimer)
+                          setActiveMinigame(null)
+                        }
+                      }}
+                      className={`w-full h-32 rounded-2xl font-black text-2xl transition-colors ${reactionGreen ? 'bg-green-500 text-black hover:bg-green-400' : 'bg-red-500 text-white hover:bg-red-600'}`}
+                    >
+                      {reactionGreen ? 'CLICK NOW!' : 'Wait...'}
+                    </button>
+                 </div>
+               )}
+               {activeMinigame === 4 && (
+                 <div className="flex flex-col items-center gap-4">
+                    <p className="font-bold text-center text-orange-300">Sync with their memory! Remember the sequence.</p>
+                    {memoryShow ? (
+                      <div className="flex gap-2 p-4 bg-black rounded-xl">
+                        {memorySeq.map((v, i) => <div key={i} className={`w-8 h-8 rounded-full ${['bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500'][v]}`} />)}
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-3 w-48">
+                         {[0,1,2,3].map(v => (
+                           <button key={v} onClick={() => {
+                             if (v === memorySeq[memoryCur]) {
+                               if (memoryCur === memorySeq.length - 1) winMinigame()
+                               else setMemoryCur(c => c + 1)
+                             } else {
+                               setActiveMinigame(null) // Fail
+                             }
+                           }} className={`w-full h-16 rounded-xl ${['bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500'][v]} hover:brightness-125`}></button>
+                         ))}
+                      </div>
+                    )}
                  </div>
                )}
             </div>
