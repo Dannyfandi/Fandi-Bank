@@ -266,7 +266,10 @@ export function GamesTab({ lang, initialProgress, initialCoins = 0, initialVersi
       
       {menu === 'mole-whack' && <MoleWhack gameTitle={t.game2} scoreLabel={t.score} pointsLabel={t.points} points={totalCoins} addPoints={addPoints} />}
 
-      {menu === 'smiling-friends' && <SmilingFriendsGame initialProgress={initialProgress} lang={lang} />}
+      {/* Keep Smiling Friends always mounted so progress doesn't reset on menu switch */}
+      <div className={menu === 'smiling-friends' ? '' : 'hidden'}>
+        <SmilingFriendsGame initialProgress={initialProgress} lang={lang} addPoints={addPoints} />
+      </div>
 
       {/* Confirmation Modal */}
       {confirmReward && (

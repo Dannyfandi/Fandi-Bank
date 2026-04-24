@@ -20,7 +20,7 @@ const RANDOMS = [
   { emoji: '😨', task: 'Wait', solved: '😎' }
 ]
 
-export function SmilingFriendsGame({ initialProgress, lang }: { initialProgress?: any, lang: 'en' | 'es' }) {
+export function SmilingFriendsGame({ initialProgress, lang, addPoints }: { initialProgress?: any, lang: 'en' | 'es', addPoints?: (p: number) => void }) {
   const [randomsSmiled, setRandomsSmiled] = useState<number>(initialProgress?.randoms_smiled || 0)
   const [unlockedMains, setUnlockedMains] = useState<string[]>(initialProgress?.unlocked_mains || [])
   const [activeMinigame, setActiveMinigame] = useState<number | null>(null)
@@ -109,8 +109,20 @@ export function SmilingFriendsGame({ initialProgress, lang }: { initialProgress?
     }
 
     setRandomsSmiled(newRandoms)
+
+    // Award Fandi Coins: 15 per random smiled
+    if (addPoints) addPoints(15)
+
+    // Award 200 coins per character unlock
+    if (newlyUnlocked && addPoints) {
+      addPoints(200)
+      // If all 6 are now unlocked, award bonus 50
+      if ([...unlockedMains, newlyUnlocked].length >= MAINS.length) {
+        addPoints(50)
+      }
+    }
     
-    // Server action logic handles giving either +20 / +200 bonus and saving JSON
+    // Server action logic handles saving JSON progress
     const data = new FormData()
     data.append('randomsSmiled', newRandoms.toString())
     if (newlyUnlocked) data.append('newlyUnlocked', newlyUnlocked)
