@@ -35,11 +35,12 @@ export function calculateCreditScore(debts: DebtForCredit[]) {
     const diffTime = Math.abs(endDate.getTime() - createdDate.getTime())
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
     
-    // Rule mapping exactly to user request:
-    if (diffDays <= 30 && debt.status === 'paid') {
+    // 1 point is ALWAYS granted when they pay a debt, regardless of the date
+    if (debt.status === 'paid') {
       score += 1
     }
     
+    // Penalties apply if the debt passes certain dates (whether paid late or still pending)
     if (diffDays > 30 && diffDays <= 90) {
       score -= 1
     } else if (diffDays > 90 && diffDays <= 180) {

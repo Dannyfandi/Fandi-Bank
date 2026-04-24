@@ -156,7 +156,23 @@ export async function createPayment(formData: FormData) {
 export async function deleteDebt(formData: FormData) {
   const supabase = await checkAdmin()
   const debtId = formData.get('debtId') as string
+
+  // Get debt before deleting
+  const { data: debt } = await supabase.from('debts').select('*').eq('id', debtId).single()
+  
+  if (debt && Number(debt.paid_amount) > 0) {
+    // Return paid_amount to credit_balance
+    const { data: profile } = await supabase.from('profiles').select('credit_balance').eq('id', debt.user_id).single()
+    const newBalance = Number(profile?.credit_balance || 0) + Number(debt.paid_amount)
+    await supabase.from('profiles').update({ credit_balance: newBalance }).eq('id', debt.user_id)
+  }
+
+  // Delete associated payment allocations first
+  await supabase.from('payment_allocations').delete().eq('debt_id', debtId)
+  
+  // Then delete the debt itself
   await supabase.from('debts').delete().eq('id', debtId)
+  
   revalidatePath('/admin')
   revalidatePath('/dashboard')
 }
@@ -389,6 +405,23 @@ export async function updateEvent(formData: FormData) {
      const inserts = toAdd.map((id: string) => ({ event_id: eventId, user_id: id, status: 'pending' }))
      await supabase.from('event_invitations').insert(inserts)
   }
+
+  revalidatePath('/admin')
+  revalidatePath('/dashboard')
+}
+
+export async function updateManualScore(formData: FormData) {
+  const supabase = await checkAdmin()
+  const userId = formData.get('userId') as string
+  const modifierChange = parseInt(formData.get('amount') as string || '0', 10)
+  
+  if (!userId || isNaN(modifierChange)) throw new Error('Invalid input')
+
+  const { data: profile } = await supabase.from('profiles').select('manual_score_modifier').eq('id', userId).single()
+  const currentModifier = profile?.manual_score_modifier || 0
+  const newModifier = currentModifier + modifierChange
+
+  await supabase.from('profiles').update({ manual_score_modifier: newModifier }).eq('id', userId)
 
   revalidatePath('/admin')
   revalidatePath('/dashboard')

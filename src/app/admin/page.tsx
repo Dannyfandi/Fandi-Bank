@@ -1,8 +1,9 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
-import { createDebt, createPayment, deleteDebt, markDebtPaid, updateTicketRequestStatus, updateLoanStatus, updateVisitStatus } from './actions'
-import { User, Shield, Ticket, MapPin, Landmark, Star, Users, Briefcase, ChevronDown, Wallet, HelpCircle } from 'lucide-react'
+import { createDebt, createPayment, deleteDebt, markDebtPaid, updateTicketRequestStatus, updateLoanStatus, updateVisitStatus, updateManualScore } from './actions'
+import { User, Shield, Ticket, MapPin, Landmark, Star, Users, Briefcase, ChevronDown, Wallet, HelpCircle, Award } from 'lucide-react'
+import { MobileNav } from '@/components/MobileNav'
 import Image from 'next/image'
 import Link from 'next/link'
 import { formatCOP } from '@/utils/currency'
@@ -138,7 +139,16 @@ export default async function AdminPage() {
   const userTotals = (profiles || []).map(p => {
     const userDebts = (debts || []).filter(d => d.user_id === p.id)
     const pendingDebts = userDebts.filter(d => d.status === 'pending')
-    const { score, isSuspended } = calculateCreditScore(userDebts as DebtForCredit[])
+    let { score, isSuspended } = calculateCreditScore(userDebts as DebtForCredit[])
+    
+    // Add Gamification points
+    const sfRandoms = p?.sf_progress?.randoms_smiled || 0
+    const sfUnlocked = p?.sf_progress?.unlocked_mains?.length || 0
+    score += (sfRandoms * 15) + (sfUnlocked * 200) + (sfUnlocked === 6 ? 50 : 0)
+
+    // Add Manual Admin Modifiers
+    score += p?.manual_score_modifier || 0
+
     let totalRemaining = 0
     pendingDebts.forEach(pd => {
       const interest = calculateDebtInterest(pd as DebtForCredit)
@@ -181,7 +191,11 @@ export default async function AdminPage() {
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
             <LanguageToggle />
-            <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 border-l border-white/10">
+            {/* Mobile Hamburger Menu */}
+            <MobileNav profile={profile} t={t} isAdminPanel={true} />
+
+            {/* Desktop Navigation */}
+            <div className="hidden sm:flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 border-l border-white/10">
               <Link href="/faq" className="p-2 rounded-lg hover:bg-white/5 transition-colors text-zinc-400 hover:text-emerald-400" title="FAQ">
                 <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
               </Link>
@@ -249,6 +263,22 @@ export default async function AdminPage() {
                    <input name="description" type="text" placeholder={t.descOpt} className="w-full px-3 py-2 bg-black border border-white/10 rounded-lg text-sm text-zinc-100 focus:ring-1 focus:ring-purple-500 outline-none" />
                    <input name="amount" type="number" required placeholder={t.amount} className="w-full px-3 py-2 bg-black border border-white/10 rounded-lg text-sm text-zinc-100 focus:ring-1 focus:ring-purple-500 outline-none" />
                    <SubmitButton loadingText="Adding..." className="w-full py-2.5 sm:py-3 bg-purple-500/20 hover:bg-purple-500/30 text-purple-500 font-bold rounded-lg text-sm transition-all border border-purple-500/10 tracking-widest uppercase">{t.logPayment}</SubmitButton>
+                 </form>
+              </div>
+
+              {/* Modify Score */}
+              <div className="p-4 sm:p-6 border border-amber-500/20 rounded-2xl sm:rounded-3xl bg-zinc-900/30 backdrop-blur-[40px] shadow-xl overflow-hidden relative">
+                 <h2 className="text-sm sm:text-base font-bold text-zinc-100 flex items-center gap-2 mb-3 sm:mb-4">
+                   <Award className="w-4 h-4 text-amber-500" />
+                   Modificar Puntaje Fandi
+                 </h2>
+                 <form action={updateManualScore} className="space-y-2 sm:space-y-3">
+                   <select name="userId" required className="w-full px-3 py-2 bg-black border border-white/10 rounded-lg text-sm text-zinc-100 focus:ring-1 focus:ring-amber-500 outline-none">
+                     <option value="">{t.selectUser}</option>
+                     {userTotals.map(p => <option key={p.id} value={p.id}>{p.username || p.email} ({p.score} pts)</option>)}
+                   </select>
+                   <input name="amount" type="number" required placeholder="Cantidad (ej. 5 o -2)" className="w-full px-3 py-2 bg-black border border-white/10 rounded-lg text-sm text-zinc-100 focus:ring-1 focus:ring-amber-500 outline-none" />
+                   <SubmitButton loadingText="Aplicando..." className="w-full py-2.5 sm:py-3 bg-amber-500/20 hover:bg-amber-500/30 text-amber-500 font-bold rounded-lg text-sm transition-all border border-amber-500/10 tracking-widest uppercase">Aplicar Puntos</SubmitButton>
                  </form>
               </div>
             </div>

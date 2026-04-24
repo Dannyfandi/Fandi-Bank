@@ -42,8 +42,8 @@ export function AdminHelpCenter({ adminId, users, messages }: { adminId: string,
 
   return (
     <div className="flex h-[600px] border border-white/10 rounded-3xl bg-zinc-900/30 backdrop-blur-[40px] shadow-2xl shadow-purple-900/20 saturate-150 shadow-2xl overflow-hidden mt-12 mb-12 relative z-10">
-      {/* Sidebar */}
-      <div className="w-1/3 border-r border-white/10 bg-transparent/50 flex flex-col min-w-[200px]">
+      {/* Sidebar - Hidden on mobile if a user is selected */}
+      <div className={`w-full md:w-1/3 border-r border-white/10 bg-transparent/50 flex flex-col md:flex ${selectedUserId ? 'hidden' : 'flex'}`}>
         <div className="p-6 border-b border-white/10 bg-gradient-to-r from-purple-500/5 to-transparent">
           <h3 className="font-black text-purple-400 flex items-center gap-3 tracking-tighter text-xl">
             <MessageCircle className="w-6 h-6" /> Live Inbox
@@ -78,9 +78,14 @@ export function AdminHelpCenter({ adminId, users, messages }: { adminId: string,
         </div>
       </div>
 
-      {/* Chat Area */}
+      {/* Chat Area - Hidden on mobile if NO user is selected */}
       {selectedUserId ? (
-        <div className="flex-1 flex flex-col bg-transparent/80">
+        <div className={`w-full md:flex-1 flex flex-col bg-transparent/80 md:flex ${!selectedUserId ? 'hidden' : 'flex'}`}>
+          <div className="md:hidden p-4 border-b border-white/10 flex items-center bg-zinc-900/50">
+             <button onClick={() => setSelectedUserId(null)} className="text-zinc-400 hover:text-white font-bold text-xs uppercase tracking-widest flex items-center gap-2">
+               <span className="text-lg">‹</span> Back to Inbox
+             </button>
+          </div>
           <div className="flex-1 p-6 overflow-y-auto space-y-6">
             {activeMessages.map(msg => {
               const isMe = msg.sender_id === adminId
@@ -109,7 +114,7 @@ export function AdminHelpCenter({ adminId, users, messages }: { adminId: string,
           </form>
         </div>
       ) : (
-        <div className="flex-1 flex flex-col items-center justify-center bg-transparent/50 text-sm text-zinc-600 space-y-4">
+        <div className="hidden md:flex flex-1 flex-col items-center justify-center bg-transparent/50 text-sm text-zinc-600 space-y-4">
           <MessageCircle className="w-16 h-16 opacity-10" />
           <p className="tracking-widest uppercase font-black text-xs opacity-50">Select an inbox to view chat history</p>
         </div>

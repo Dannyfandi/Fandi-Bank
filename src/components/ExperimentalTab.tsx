@@ -118,13 +118,26 @@ export function ExperimentalTab({ lang, initialProgress }: { lang: 'en' | 'es', 
       </div>
 
       {menu === 'main' && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <button onClick={() => setMenu('points')} className="text-left p-6 sm:p-8 rounded-3xl bg-emerald-900/20 hover:bg-emerald-900/30 border border-emerald-500/30 transition-all group overflow-hidden relative">
-            <div className="absolute -right-4 -top-4 w-24 h-24 bg-emerald-500/10 blur-2xl rounded-full group-hover:bg-emerald-500/20 transition-all" />
-            <Gift className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-400 mb-4" />
-            <h3 className="text-lg sm:text-xl font-black text-zinc-100">{t.pointsSys}</h3>
-            <p className="text-sm text-emerald-200/60 mt-2">{t.pointsDesc}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Highlighted Games Section */}
+          <button onClick={() => setMenu('points')} className="sm:col-span-2 text-left p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-emerald-900/40 via-teal-900/20 to-black hover:from-emerald-800/40 hover:to-indigo-900/40 border-2 border-emerald-500/50 hover:border-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:shadow-[0_0_40px_rgba(16,185,129,0.4)] transition-all group overflow-hidden relative">
+            <div className="absolute -right-10 -top-10 w-40 h-40 bg-emerald-500/20 blur-3xl rounded-full group-hover:bg-emerald-500/30 transition-all animate-pulse" />
+            <div className="flex items-start justify-between">
+              <div>
+                <Gift className="w-10 h-10 sm:w-12 sm:h-12 text-emerald-400 mb-4 drop-shadow-lg" />
+                <h3 className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-cyan-300">{t.pointsSys}</h3>
+                <p className="text-sm sm:text-base text-emerald-200/80 mt-2">{t.pointsDesc}</p>
+              </div>
+              <div className="text-right flex flex-col items-end">
+                <span className="inline-block px-3 py-1 bg-emerald-500/20 text-emerald-400 text-[10px] sm:text-xs font-black uppercase tracking-widest rounded-full border border-emerald-500/30 mb-2 animate-bounce">
+                  Win Ice Cream, Oreos & More!
+                </span>
+                <span className="text-xs text-zinc-400 font-bold uppercase tracking-widest hidden sm:block">Play Now ➔</span>
+              </div>
+            </div>
           </button>
+          
+          {/* Suggestions Sections */}
           <button onClick={() => setMenu('suggest-feature')} className="text-left p-6 sm:p-8 rounded-3xl bg-blue-900/20 hover:bg-blue-900/30 border border-blue-500/30 transition-all group overflow-hidden relative">
             <div className="absolute -right-4 -top-4 w-24 h-24 bg-blue-500/10 blur-2xl rounded-full group-hover:bg-blue-500/20 transition-all" />
             <Lightbulb className="w-8 h-8 sm:w-10 sm:h-10 text-blue-400 mb-4" />
@@ -152,17 +165,22 @@ export function ExperimentalTab({ lang, initialProgress }: { lang: 'en' | 'es', 
 
       {menu === 'points' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in zoom-in-95 duration-300">
-          <button onClick={() => setMenu('fandi-tap')} className="group relative overflow-hidden rounded-3xl aspect-[4/3] border border-white/10 flex flex-col items-center justify-center p-6 bg-gradient-to-br from-purple-900/40 to-black hover:border-purple-500/50 transition-all hover:scale-[1.02]">
-             <Zap className="w-16 h-16 text-purple-400 mb-4 group-hover:scale-110 transition-transform" />
-             <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-fuchsia-400">{t.game1}</h3>
+          {/* Smiling Friends (Newest) */}
+          <button onClick={() => setMenu('smiling-friends')} className="group relative overflow-hidden rounded-3xl aspect-[4/3] border border-white/10 flex flex-col items-center justify-center p-6 bg-gradient-to-br from-[#eab308]/40 to-black hover:border-[#eab308]/50 transition-all hover:scale-[1.02] sm:col-span-2 lg:col-span-1">
+             <span className="text-6xl mb-4 group-hover:scale-110 transition-transform block">😁</span>
+             <h3 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#eab308] to-red-400 text-center">Smiling Friends Labs</h3>
           </button>
+          
+          {/* Mole Whack */}
           <button onClick={() => setMenu('mole-whack')} className="group relative overflow-hidden rounded-3xl aspect-[4/3] border border-white/10 flex flex-col items-center justify-center p-6 bg-gradient-to-br from-amber-900/40 to-black hover:border-amber-500/50 transition-all hover:scale-[1.02]">
              <Target className="w-16 h-16 text-amber-500 mb-4 group-hover:scale-110 transition-transform" />
              <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">{t.game2}</h3>
           </button>
-          <button onClick={() => setMenu('smiling-friends')} className="group relative overflow-hidden rounded-3xl aspect-[4/3] border border-white/10 flex flex-col items-center justify-center p-6 bg-gradient-to-br from-[#eab308]/40 to-black hover:border-[#eab308]/50 transition-all hover:scale-[1.02] sm:col-span-2 lg:col-span-1">
-             <span className="text-6xl mb-4 group-hover:scale-110 transition-transform block">😁</span>
-             <h3 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#eab308] to-red-400 text-center">Smiling Friends Labs</h3>
+          
+          {/* Fandi Tap */}
+          <button onClick={() => setMenu('fandi-tap')} className="group relative overflow-hidden rounded-3xl aspect-[4/3] border border-white/10 flex flex-col items-center justify-center p-6 bg-gradient-to-br from-purple-900/40 to-black hover:border-purple-500/50 transition-all hover:scale-[1.02]">
+             <Zap className="w-16 h-16 text-purple-400 mb-4 group-hover:scale-110 transition-transform" />
+             <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-fuchsia-400">{t.game1}</h3>
           </button>
           <div className="p-6 rounded-3xl bg-zinc-900/30 backdrop-blur-[40px] border border-white/10 shadow-xl space-y-4 lg:col-span-3 sm:col-span-2">
             <div className="flex justify-between items-center mb-4">

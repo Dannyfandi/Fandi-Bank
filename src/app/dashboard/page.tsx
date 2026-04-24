@@ -8,6 +8,7 @@ import { LoanRequestForm } from '@/components/LoanRequestForm'
 import { ThemeSettings } from '@/components/ThemeSettings'
 import { ChatWidget } from '@/components/ChatWidget'
 import { LanguageToggle } from '@/components/LanguageToggle'
+import { MobileNav } from '@/components/MobileNav'
 import { DashboardClient } from '@/components/DashboardClient'
 import { LoanSimulator } from '@/components/LoanSimulator'
 import { ExperimentalTab } from '@/components/ExperimentalTab'
@@ -108,7 +109,15 @@ export default async function DashboardPage() {
     .in('status', ['pending', 'accepted'])
     .order('created_at', { ascending: false })
 
-  const { score, isSuspended } = calculateCreditScore((debts || []) as DebtForCredit[])
+  let { score, isSuspended } = calculateCreditScore((debts || []) as DebtForCredit[])
+
+  // Add Gamification points
+  const sfRandoms = profile?.sf_progress?.randoms_smiled || 0
+  const sfUnlocked = profile?.sf_progress?.unlocked_mains?.length || 0
+  score += (sfRandoms * 15) + (sfUnlocked * 200) + (sfUnlocked === 6 ? 50 : 0)
+
+  // Add Manual Admin Modifiers
+  score += profile?.manual_score_modifier || 0
 
   const interestMap: Record<string, number> = {}
   let totalOwed = 0
@@ -138,7 +147,12 @@ export default async function DashboardPage() {
             <div className={`hidden sm:flex px-3 py-1.5 rounded-full border text-sm font-black items-center gap-2 ${score >= 0 ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
               <Star className="w-4 h-4" /> {t.score} {score}
             </div>
-            <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 border-l border-white/10">
+            
+            {/* Mobile Hamburger Menu */}
+            <MobileNav profile={profile} t={t} isAdminPanel={false} />
+
+            {/* Desktop Navigation */}
+            <div className="hidden sm:flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 border-l border-white/10">
               <Link href="/faq" className="p-2 rounded-lg hover:bg-white/5 transition-colors text-zinc-400 hover:text-emerald-400" title="FAQ">
                 <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
               </Link>
