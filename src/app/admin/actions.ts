@@ -426,3 +426,43 @@ export async function updateManualScore(formData: FormData) {
   revalidatePath('/admin')
   revalidatePath('/dashboard')
 }
+
+export async function updatePrizeRequestStatus(formData: FormData) {
+  const supabase = await checkAdmin()
+  const requestId = formData.get('requestId') as string
+  const status = formData.get('status') as string
+  
+  if (!requestId || !['approved', 'rejected'].includes(status)) throw new Error('Invalid input')
+
+  const { data: request } = await supabase
+    .from('prize_requests')
+    .select('*')
+    .eq('id', requestId)
+    .single()
+
+  if (!request) throw new Error('Request not found')
+
+  // If rejecting, refund the coins
+  if (status === 'rejected') {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('fandi_coins')
+      .eq('id', request.user_id)
+      .single()
+    
+    const currentCoins = profile?.fandi_coins || 0
+    await supabase
+      .from('profiles')
+      .update({ fandi_coins: currentCoins + request.cost })
+      .eq('id', request.user_id)
+  }
+
+  await supabase
+    .from('prize_requests')
+    .update({ status })
+    .eq('id', requestId)
+
+  revalidatePath('/admin')
+  revalidatePath('/dashboard')
+}
+

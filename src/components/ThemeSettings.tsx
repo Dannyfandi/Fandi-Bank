@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Settings, Check, Monitor, Gamepad2, X } from 'lucide-react'
+import { Palette, Check, Monitor, Gamepad2, X } from 'lucide-react'
 import { updateTheme } from '@/app/dashboard/actions'
 
 export function ThemeSettings({ activeTheme, hasSmilingFriends }: { activeTheme: string, hasSmilingFriends: boolean }) {
@@ -17,15 +17,15 @@ export function ThemeSettings({ activeTheme, hasSmilingFriends }: { activeTheme:
 
   return (
     <>
-      <button onClick={() => setOpen(true)} className="p-2 rounded-lg hover:bg-white/5 transition-colors text-zinc-400 hover:text-white" title="Settings">
-        <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
+      <button onClick={() => setOpen(true)} className="p-2 rounded-lg hover:bg-white/5 transition-colors text-zinc-400 hover:text-white" title="Themes">
+        <Palette className="w-4 h-4 sm:w-5 sm:h-5" />
       </button>
 
       {open && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
            <div className="bg-zinc-900 border border-white/10 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl relative">
               <div className="p-4 border-b border-white/10 flex justify-between items-center bg-black/40">
-                <h3 className="font-bold text-white flex items-center gap-2"><Settings className="w-4 h-4" /> Appearance Settings</h3>
+                <h3 className="font-bold text-white flex items-center gap-2"><Palette className="w-4 h-4" /> Appearance Settings</h3>
                 <button onClick={() => setOpen(false)} className="text-zinc-500 hover:text-white"><X className="w-5 h-5"/></button>
               </div>
 

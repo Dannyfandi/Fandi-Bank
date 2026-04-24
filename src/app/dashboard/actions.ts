@@ -253,3 +253,113 @@ export async function updateTheme(themeStr: string) {
 
   revalidatePath('/', 'layout')
 }
+
+// -------------------------------------------------------
+// Fandi Coins: Cloud Sync (version-gated to prevent dupes)
+// -------------------------------------------------------
+
+export async function getFandiCoins(): Promise<{ coins: number, version: number }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { coins: 0, version: 0 }
+
+  const { data } = await supabase
+    .from('profiles')
+    .select('fandi_coins, coin_sync_version')
+    .eq('id', user.id)
+    .single()
+
+  return {
+    coins: data?.fandi_coins || 0,
+    version: data?.coin_sync_version || 0,
+  }
+}
+
+export async function syncFandiCoins(delta: number, expectedVersion: number): Promise<{ coins: number, version: number, ok: boolean }> {
+  if (delta <= 0) return { coins: 0, version: expectedVersion, ok: false }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { coins: 0, version: 0, ok: false }
+
+  // Read current state
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('fandi_coins, coin_sync_version')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile) return { coins: 0, version: 0, ok: false }
+
+  // Version mismatch = this batch was already processed (duplicate request)
+  if (profile.coin_sync_version !== expectedVersion) {
+    return { coins: profile.fandi_coins, version: profile.coin_sync_version, ok: false }
+  }
+
+  const newCoins = (profile.fandi_coins || 0) + delta
+  const newVersion = expectedVersion + 1
+
+  // Conditional write: only one writer wins per version
+  const { error: updateError } = await supabase
+    .from('profiles')
+    .update({ fandi_coins: newCoins, coin_sync_version: newVersion })
+    .eq('id', user.id)
+    .eq('coin_sync_version', expectedVersion)
+
+  if (updateError) {
+    // Race condition: another request got there first
+    const { data: fresh } = await supabase.from('profiles').select('fandi_coins, coin_sync_version').eq('id', user.id).single()
+    return { coins: fresh?.fandi_coins || 0, version: fresh?.coin_sync_version || 0, ok: false }
+  }
+
+  return { coins: newCoins, version: newVersion, ok: true }
+}
+
+// -------------------------------------------------------
+// Prize Requests
+// -------------------------------------------------------
+
+export async function requestPrize(itemName: string, cost: number): Promise<{ success: boolean, message: string, newCoins?: number }> {
+  if (!itemName || cost <= 0) return { success: false, message: 'Invalid request' }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, message: 'Unauthorized' }
+
+  // Read current coins
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('fandi_coins')
+    .eq('id', user.id)
+    .single()
+
+  const currentCoins = profile?.fandi_coins || 0
+  if (currentCoins < cost) {
+    return { success: false, message: 'Not enough Fandi Coins' }
+  }
+
+  // Deduct coins atomically
+  const newCoins = currentCoins - cost
+  const { error: deductError } = await supabase
+    .from('profiles')
+    .update({ fandi_coins: newCoins })
+    .eq('id', user.id)
+    .gte('fandi_coins', cost) // safety: only deduct if still enough
+
+  if (deductError) return { success: false, message: 'Failed to deduct coins' }
+
+  // Create the prize request
+  const { error: insertError } = await supabase
+    .from('prize_requests')
+    .insert({ user_id: user.id, item_name: itemName, cost, status: 'pending' })
+
+  if (insertError) {
+    // Refund if insert failed
+    await supabase.from('profiles').update({ fandi_coins: currentCoins }).eq('id', user.id)
+    return { success: false, message: 'Failed to create request' }
+  }
+
+  revalidatePath('/dashboard')
+  revalidatePath('/admin')
+  return { success: true, message: 'Prize requested!', newCoins }
+}

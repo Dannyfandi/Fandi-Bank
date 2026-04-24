@@ -2,7 +2,7 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createDebt, createPayment, deleteDebt, markDebtPaid, updateTicketRequestStatus, updateLoanStatus, updateVisitStatus, updateManualScore } from './actions'
-import { User, Shield, Ticket, MapPin, Landmark, Star, Users, Briefcase, ChevronDown, Wallet, HelpCircle, Award } from 'lucide-react'
+import { User, Shield, Ticket, MapPin, Landmark, Star, Users, Briefcase, ChevronDown, Wallet, HelpCircle, Award, Lightbulb } from 'lucide-react'
 import { MobileNav } from '@/components/MobileNav'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -11,6 +11,7 @@ import { AdminParser } from '@/components/AdminParser'
 import { AdminHelpCenter } from '@/components/AdminHelpCenter'
 import { LanguageToggle } from '@/components/LanguageToggle'
 import { ExperimentalTab } from '@/components/ExperimentalTab'
+import { GamesTab } from '@/components/GamesTab'
 import { calculateCreditScore, calculateDebtInterest, DebtForCredit } from '@/utils/credit'
 import { SubmitButton } from '@/components/SubmitButton'
 import { AdminPaymentsTracker } from '@/components/AdminPaymentsTracker'
@@ -18,6 +19,7 @@ import { AdminDebtReceipts } from '@/components/AdminDebtReceipts'
 import { AdminEventsManager } from '@/components/AdminEventsManager'
 import { ThemeSettings } from '@/components/ThemeSettings'
 import { AdminSuggestionsManager } from '@/components/AdminSuggestionsManager'
+import { AdminPrizeRequests } from '@/components/AdminPrizeRequests'
 
 const dict = {
   en: {
@@ -114,7 +116,7 @@ export default async function AdminPage() {
   const lang = (langCookie === 'en' ? 'en' : 'es') as 'en' | 'es'
   const t = dict[lang]
 
-  const { data: profile } = await supabase.from('profiles').select('role, username, avatar_url, credit_balance, sf_progress, active_theme').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('role, username, avatar_url, credit_balance, sf_progress, active_theme, fandi_coins, coin_sync_version').eq('id', user.id).single()
   if (profile?.role !== 'admin') return redirect('/dashboard')
 
   const { data: profiles } = await supabase.from('profiles').select('*').order('created_at', { ascending: false })
@@ -128,6 +130,7 @@ export default async function AdminPage() {
   const { data: events } = await supabase.from('events').select('*').order('created_at', { ascending: false })
   const { data: invitations } = await supabase.from('event_invitations').select('*')
   const { data: suggestions } = await supabase.from('user_suggestions').select('*, profiles(username)').order('created_at', { ascending: false })
+  const { data: prizeRequests } = await supabase.from('prize_requests').select('*, profiles(username, email)').order('created_at', { ascending: false })
 
   // Build profile avatar lookup
   const avatarMap: Record<string, string> = {}
@@ -196,6 +199,9 @@ export default async function AdminPage() {
 
             {/* Desktop Navigation */}
             <div className="hidden sm:flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 border-l border-white/10">
+              <Link href="/suggest" className="p-2 rounded-lg hover:bg-white/5 transition-colors text-zinc-400 hover:text-blue-400" title="Suggestions">
+                <Lightbulb className="w-4 h-4 sm:w-5 sm:h-5" />
+              </Link>
               <Link href="/faq" className="p-2 rounded-lg hover:bg-white/5 transition-colors text-zinc-400 hover:text-emerald-400" title="FAQ">
                 <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
               </Link>
@@ -453,8 +459,12 @@ export default async function AdminPage() {
                </button>
              </form>
           </div>
-          <ExperimentalTab lang={lang} initialProgress={profile?.sf_progress} />
+          <GamesTab lang={lang} initialProgress={profile?.sf_progress} initialCoins={profile?.fandi_coins || 0} initialVersion={profile?.coin_sync_version || 0} />
+          <ExperimentalTab lang={lang} />
         </div>
+
+        {/* Prize Requests */}
+        <AdminPrizeRequests requests={prizeRequests || []} />
 
         {/* Suggestions Inbox */}
         <div className="pb-12">

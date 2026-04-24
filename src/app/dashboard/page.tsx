@@ -12,9 +12,10 @@ import { MobileNav } from '@/components/MobileNav'
 import { DashboardClient } from '@/components/DashboardClient'
 import { LoanSimulator } from '@/components/LoanSimulator'
 import { ExperimentalTab } from '@/components/ExperimentalTab'
+import { GamesTab } from '@/components/GamesTab'
 import { EventInvitationsClient } from '@/components/EventInvitationsClient'
 import { SubmitButton } from '@/components/SubmitButton'
-import { Ticket, Calendar, Landmark, Sparkles, Star, User, Users, MapPin, Clock, HelpCircle, X } from 'lucide-react'
+import { Ticket, Calendar, Landmark, Sparkles, Star, User, Users, MapPin, Clock, HelpCircle, X, Lightbulb } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { formatCOP } from '@/utils/currency'
@@ -153,6 +154,9 @@ export default async function DashboardPage() {
 
             {/* Desktop Navigation */}
             <div className="hidden sm:flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 border-l border-white/10">
+              <Link href="/suggest" className="p-2 rounded-lg hover:bg-white/5 transition-colors text-zinc-400 hover:text-blue-400" title="Suggestions">
+                <Lightbulb className="w-4 h-4 sm:w-5 sm:h-5" />
+              </Link>
               <Link href="/faq" className="p-2 rounded-lg hover:bg-white/5 transition-colors text-zinc-400 hover:text-emerald-400" title="FAQ">
                 <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
               </Link>
@@ -285,8 +289,27 @@ export default async function DashboardPage() {
 
         </main>
 
+        {/* Games & Rewards Tab */}
+        <GamesTab lang={lang} initialProgress={profile?.sf_progress} initialCoins={profile?.fandi_coins || 0} initialVersion={profile?.coin_sync_version || 0} />
+
         {/* Experimental Tab */}
-        <ExperimentalTab lang={lang} initialProgress={profile?.sf_progress} />
+        <ExperimentalTab lang={lang} />
+
+        {/* Funny Footer */}
+        <footer className="mt-20 pt-8 pb-12 border-t border-white/5 text-center px-4">
+          <div className="max-w-2xl mx-auto space-y-4">
+            <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest">© 2026 Fandi Bank</p>
+            <p className="text-zinc-600 text-xs leading-relaxed">
+              <strong>Terms & Conditions:</strong> If you don't pay, Mr. Frog will find you. 
+              Not insured by Fogafín, but we promise we won't buy crypto with your money (probably).
+              <br/><br/>
+              <strong>Warning:</strong> Late payments will be aggressively reported to Datacrédito, your mom, and the panadero from your neighborhood. Don't give papaya. 
+            </p>
+            <div className="text-[10px] text-zinc-700 font-bold tracking-widest uppercase mt-4">
+              "El banco de los que no tienen banco... ni plata."
+            </div>
+          </div>
+        </footer>
 
       </div>
       

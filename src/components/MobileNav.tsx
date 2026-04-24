@@ -1,7 +1,8 @@
 'use client'
 import { useState } from 'react'
-import { Menu, X, HelpCircle, Users, User, LogOut, ShieldAlert, Monitor } from 'lucide-react'
+import { Menu, X, HelpCircle, Users, User, LogOut, ShieldAlert, Monitor, Settings2, Palette, Lightbulb } from 'lucide-react'
 import Link from 'next/link'
+import { ThemeSettings } from './ThemeSettings'
 
 export function MobileNav({ 
   profile, 
@@ -44,12 +45,20 @@ export function MobileNav({
             </Link>
 
             <div className="flex flex-col space-y-2">
+              <div className="flex items-center gap-4 p-4 hover:bg-white/5 rounded-xl transition-colors text-zinc-200">
+                <Palette className="w-5 h-5 text-indigo-400" />
+                <ThemeSettings activeTheme={profile?.active_theme || 'normal'} hasSmilingFriends={profile?.sf_progress?.unlocked_mains?.length >= 6} />
+              </div>
               <Link href="/faq" onClick={() => setIsOpen(false)} className="flex items-center gap-4 p-4 hover:bg-white/5 rounded-xl transition-colors text-zinc-200">
                 <HelpCircle className="w-5 h-5 text-emerald-400" /> {t.faq || 'FAQ'}
               </Link>
               
               <Link href="/friends" onClick={() => setIsOpen(false)} className="flex items-center gap-4 p-4 hover:bg-white/5 rounded-xl transition-colors text-zinc-200">
                 <Users className="w-5 h-5 text-purple-400" /> {t.friends || 'Friends'}
+              </Link>
+              
+              <Link href="/suggest" onClick={() => setIsOpen(false)} className="flex items-center gap-4 p-4 hover:bg-white/5 rounded-xl transition-colors text-zinc-200">
+                <Lightbulb className="w-5 h-5 text-blue-400" /> {t.suggest || 'Suggest Idea'}
               </Link>
 
               {profile?.role === 'admin' && !isAdminPanel && (
