@@ -4,7 +4,15 @@ import { useState } from 'react'
 import { Palette, Check, Monitor, Gamepad2, X } from 'lucide-react'
 import { updateTheme } from '@/app/dashboard/actions'
 
-export function ThemeSettings({ activeTheme, hasSmilingFriends }: { activeTheme: string, hasSmilingFriends: boolean }) {
+export function ThemeSettings({ 
+  activeTheme, 
+  hasSmilingFriends,
+  trigger
+}: { 
+  activeTheme: string, 
+  hasSmilingFriends: boolean,
+  trigger?: React.ReactNode
+}) {
   const [open, setOpen] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
 
@@ -17,9 +25,15 @@ export function ThemeSettings({ activeTheme, hasSmilingFriends }: { activeTheme:
 
   return (
     <>
-      <button onClick={() => setOpen(true)} className="p-2 rounded-lg hover:bg-white/5 transition-colors text-zinc-400 hover:text-white" title="Themes">
-        <Palette className="w-4 h-4 sm:w-5 sm:h-5" />
-      </button>
+      {trigger ? (
+        <div onClick={() => setOpen(true)} className="cursor-pointer flex-1">
+          {trigger}
+        </div>
+      ) : (
+        <button onClick={() => setOpen(true)} className="p-2 rounded-lg hover:bg-white/5 transition-colors text-zinc-400 hover:text-white" title="Themes">
+          <Palette className="w-4 h-4 sm:w-5 sm:h-5" />
+        </button>
+      )}
 
       {open && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">

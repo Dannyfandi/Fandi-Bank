@@ -45,10 +45,16 @@ export function MobileNav({
             </Link>
 
             <div className="flex flex-col space-y-2">
-              <div className="flex items-center gap-4 p-4 hover:bg-white/5 rounded-xl transition-colors text-zinc-200">
-                <Palette className="w-5 h-5 text-indigo-400" />
-                <ThemeSettings activeTheme={profile?.active_theme || 'normal'} hasSmilingFriends={profile?.sf_progress?.unlocked_mains?.length >= 6} />
-              </div>
+              <ThemeSettings 
+                activeTheme={profile?.active_theme || 'normal'} 
+                hasSmilingFriends={profile?.sf_progress?.unlocked_mains?.length >= 6} 
+                trigger={
+                  <div className="flex items-center gap-4 p-4 hover:bg-white/5 rounded-xl transition-colors text-zinc-200">
+                    <Palette className="w-5 h-5 text-indigo-400" />
+                    <span>{t.themes || 'Themes'}</span>
+                  </div>
+                }
+              />
               <Link href="/faq" onClick={() => setIsOpen(false)} className="flex items-center gap-4 p-4 hover:bg-white/5 rounded-xl transition-colors text-zinc-200">
                 <HelpCircle className="w-5 h-5 text-emerald-400" /> {t.faq || 'FAQ'}
               </Link>
