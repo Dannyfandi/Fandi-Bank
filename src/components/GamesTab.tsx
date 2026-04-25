@@ -14,6 +14,7 @@ interface Reward {
 const rewards: Reward[] = [
   { name: 'Oreo Cookies (4-pack)', price: 2300, emoji: '🍪' },
   { name: 'Gummy Package', price: 3500, emoji: '🍬' },
+  { name: 'Media Marlboro Rojo / Lucky Sandía', price: 7000, emoji: '🚬' },
   { name: 'Crepes & Waffles Ice Cream (800ml)', price: 32900, emoji: '🍨' },
   { name: 'Crepes & Waffles Ice Cream (1.5L)', price: 44900, emoji: '🍦' },
   { name: 'Bacardí Mojito (750ml)', price: 56000, emoji: '🍹' },
