@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Wallet, Undo2, X, AlertOctagon } from 'lucide-react'
+import { Wallet, Undo2, X, AlertOctagon, ChevronDown, Search } from 'lucide-react'
 import { formatCOP } from '@/utils/currency'
 import { SubmitButton } from './SubmitButton'
 import { reversePayment } from '@/app/admin/actions'
@@ -16,6 +16,7 @@ export function AdminPaymentsTracker({
   users: any[]
 }) {
   const [confirmId, setConfirmId] = useState<string | null>(null)
+  const [searchUser, setSearchUser] = useState('')
 
   // Map users
   const userMap = Object.fromEntries(users.map(u => [u.id, u.username || u.email]))
@@ -30,16 +31,38 @@ export function AdminPaymentsTracker({
     }
   }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
-  return (
-    <div className="space-y-4">
-      <h3 className="text-base sm:text-lg font-bold text-zinc-100 flex items-center gap-2">
-        <Wallet className="w-5 h-5 text-emerald-400" /> All Payments
-      </h3>
-      
-      {enrichedPayments.length === 0 && <p className="text-sm text-zinc-500">No payments found.</p>}
+  const filteredPayments = enrichedPayments.filter(p => 
+    p.username.toLowerCase().includes(searchUser.toLowerCase())
+  )
 
-      <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-        {enrichedPayments.map(p => {
+  return (
+    <details className="space-y-4 group/adminpayments">
+      <summary className="cursor-pointer list-none flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border border-emerald-500/20 rounded-2xl bg-zinc-900/30 backdrop-blur-[40px] hover:bg-zinc-900/50 transition-colors">
+        <h3 className="text-base sm:text-lg font-bold text-zinc-100 flex items-center gap-2">
+          <Wallet className="w-5 h-5 text-emerald-400" /> All Payments
+          <span className="text-xs text-zinc-500 ml-1">({filteredPayments.length})</span>
+        </h3>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Filter by user..."
+              value={searchUser}
+              onChange={(e) => setSearchUser(e.target.value)}
+              onClick={(e) => e.preventDefault()}
+              className="pl-9 pr-4 py-1.5 bg-black/40 border border-white/10 rounded-xl text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 w-full sm:w-48"
+            />
+          </div>
+          <ChevronDown className="w-5 h-5 text-zinc-500 group-open/adminpayments:rotate-180 transition-transform" />
+        </div>
+      </summary>
+      
+      <div className="pt-2">
+        {filteredPayments.length === 0 && <p className="text-sm text-zinc-500 p-4">No payments found.</p>}
+
+        <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+          {filteredPayments.map(p => {
           const isConfirming = confirmId === p.id
           
           return (
@@ -102,6 +125,7 @@ export function AdminPaymentsTracker({
           )
         })}
       </div>
-    </div>
+      </div>
+    </details>
   )
 }

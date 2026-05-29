@@ -24,6 +24,10 @@ export default async function SuggestPage() {
       suggFeatDesc: 'Have a cool idea for Fandi Bank? Tell us!',
       suggGame: 'Suggest a Game',
       suggGameDesc: 'Want a new mini-game? Recommend it.',
+      suggBug: 'Report a Bug',
+      suggBugDesc: 'Found something broken or weird? Let us know.',
+      suggProduct: 'Suggest a Product',
+      suggProductDesc: 'What should we add to the Rewards Shop?',
       placeholder: 'Describe your idea in detail...',
       submitSugg: 'Submit Suggestion',
     },
@@ -34,6 +38,10 @@ export default async function SuggestPage() {
       suggFeatDesc: '¿Tienes una idea genial para Fandi Bank? ¡Dínosla!',
       suggGame: 'Sugerir un Juego',
       suggGameDesc: '¿Quieres un nuevo mini-juego? Recomiéndalo.',
+      suggBug: 'Reportar un Bug',
+      suggBugDesc: '¿Encontraste un error o algo raro? Avísanos.',
+      suggProduct: 'Sugerir un Producto',
+      suggProductDesc: '¿Qué deberíamos añadir a la Tienda de Premios?',
       placeholder: 'Describe tu idea en detalle...',
       submitSugg: 'Enviar Sugerencia',
     }
@@ -54,6 +62,8 @@ export default async function SuggestPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <SuggestForm t={t} type="feature" />
           <SuggestForm t={t} type="game" />
+          <SuggestForm t={t} type="product" />
+          <SuggestForm t={t} type="bug" />
         </div>
       </div>
     </div>

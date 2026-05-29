@@ -11,15 +11,7 @@ interface Reward {
   emoji: string
 }
 
-const rewards: Reward[] = [
-  { name: 'Oreo Cookies (4-pack)', price: 2300, emoji: '🍪' },
-  { name: 'Gummy Package', price: 3500, emoji: '🍬' },
-  { name: 'Media Marlboro Rojo / Lucky Sandía', price: 7000, emoji: '🚬' },
-  { name: 'Crepes & Waffles Ice Cream (800ml)', price: 32900, emoji: '🍨' },
-  { name: 'Crepes & Waffles Ice Cream (1.5L)', price: 44900, emoji: '🍦' },
-  { name: 'Bacardí Mojito (750ml)', price: 56000, emoji: '🍹' },
-  { name: 'Bacardí Zombie (750ml)', price: 59400, emoji: '🧟' },
-]
+// Rewards are now defined dynamically inside the component to support translation
 
 const dict = {
   en: {
@@ -46,6 +38,14 @@ const dict = {
     requesting: 'Requesting...',
     syncing: 'Saving...',
     pendingLabel: 'Pending requests',
+    rwdOreo: 'Oreo Cookies (4-pack)',
+    rwdGummy: 'Gummy Package',
+    rwdMarlboro: 'Media Marlboro Rojo',
+    rwdLucky: 'Media Lucky Sandía',
+    rwdIce800: 'C&W Ice Cream (800ml)',
+    rwdIce15: 'C&W Ice Cream (1.5L)',
+    rwdMojito: 'Bacardí Mojito (750ml)',
+    rwdZombie: 'Bacardí Zombie (750ml)',
   },
   es: {
     gamesTitle: '🕹️ Juegos y Premios',
@@ -71,11 +71,30 @@ const dict = {
     requesting: 'Solicitando...',
     syncing: 'Guardando...',
     pendingLabel: 'Solicitudes pendientes',
+    rwdOreo: 'Galletas Oreo (paq. de 4)',
+    rwdGummy: 'Paquete de Gomas',
+    rwdMarlboro: 'Media Marlboro Rojo',
+    rwdLucky: 'Media Lucky Sandía',
+    rwdIce800: 'Helado C&W (800ml)',
+    rwdIce15: 'Helado C&W (1.5L)',
+    rwdMojito: 'Bacardí Mojito (750ml)',
+    rwdZombie: 'Bacardí Zombie (750ml)',
   }
 }
 
 export function GamesTab({ lang, initialProgress, initialCoins = 0, initialVersion = 0 }: { lang: 'en' | 'es', initialProgress?: any, initialCoins?: number, initialVersion?: number }) {
   const t = dict[lang]
+
+  const rewards: Reward[] = [
+    { name: t.rwdOreo, price: 2300, emoji: '🍪' },
+    { name: t.rwdGummy, price: 3500, emoji: '🍬' },
+    { name: t.rwdMarlboro, price: 7000, emoji: '🚬' },
+    { name: t.rwdLucky, price: 7000, emoji: '🚬' },
+    { name: t.rwdIce800, price: 32900, emoji: '🍨' },
+    { name: t.rwdIce15, price: 44900, emoji: '🍦' },
+    { name: t.rwdMojito, price: 56000, emoji: '🍹' },
+    { name: t.rwdZombie, price: 59400, emoji: '🧟' },
+  ]
   
   const [menu, setMenu] = useState<'main' | 'fandi-tap' | 'mole-whack' | 'smiling-friends'>('main')
   

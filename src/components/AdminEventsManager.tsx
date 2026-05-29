@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Calendar, Users, MapPin, Image as ImageIcon, Plus, X, Map, Trash2, Edit2 } from 'lucide-react'
+import { Calendar, Users, MapPin, Image as ImageIcon, Plus, X, Map, Trash2, Edit2, ChevronDown } from 'lucide-react'
 import { SubmitButton } from './SubmitButton'
 import { createEvent, deleteEvent, updateEvent } from '@/app/admin/actions'
 
@@ -20,19 +20,25 @@ export function AdminEventsManager({ users, events, invitations }: any) {
   })
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center bg-fuchsia-900/20 p-4 rounded-2xl border border-fuchsia-500/30">
+    <details className="space-y-4 group/adminevents">
+      <summary className="cursor-pointer list-none flex justify-between items-center bg-fuchsia-900/20 p-4 rounded-2xl border border-fuchsia-500/30">
         <h3 className="text-base sm:text-lg font-bold text-fuchsia-100 flex items-center gap-2">
           <Calendar className="w-5 h-5 text-fuchsia-400" /> Event Manager
+          <span className="text-xs text-zinc-500 ml-2">({events.length})</span>
         </h3>
-        <button 
-          onClick={() => {setShowForm(!showForm); setEditingEventId(null)}}
-          className="px-4 py-2 bg-fuchsia-500/20 hover:bg-fuchsia-500/30 text-fuchsia-300 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
-        >
-          {showForm ? <X className="w-4 h-4"/> : <Plus className="w-4 h-4"/>}
-          {showForm ? 'Cancel' : 'New Event'}
-        </button>
-      </div>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={(e) => { e.preventDefault(); setShowForm(!showForm); setEditingEventId(null); }}
+            className="px-4 py-2 bg-fuchsia-500/20 hover:bg-fuchsia-500/30 text-fuchsia-300 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
+          >
+            {showForm ? <X className="w-4 h-4"/> : <Plus className="w-4 h-4"/>}
+            {showForm ? 'Cancel' : 'New Event'}
+          </button>
+          <ChevronDown className="w-5 h-5 text-zinc-500 group-open/adminevents:rotate-180 transition-transform" />
+        </div>
+      </summary>
+      
+      <div className="pt-2 space-y-4">
 
       {showForm && !editingEventId && (
         <form action={createEvent} encType="multipart/form-data" className="p-5 sm:p-6 border border-fuchsia-500/20 rounded-2xl sm:rounded-3xl bg-zinc-900/80 backdrop-blur-[40px] shadow-2xl relative overflow-hidden space-y-4 animate-in slide-in-from-top-4 duration-300">
@@ -202,6 +208,7 @@ export function AdminEventsManager({ users, events, invitations }: any) {
           )
         })}
       </div>
-    </div>
+      </div>
+    </details>
   )
 }

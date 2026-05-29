@@ -8,6 +8,8 @@ import { SubmitButton } from './SubmitButton'
 
 export function AdminDebtReceipts({ debtsByUser, allocations, t }: any) {
   const [searchTerm, setSearchTerm] = useState('')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
 
   // Convert object to array for filtering
   const entries = Object.entries(debtsByUser).map(([uid, group]: any) => ({
@@ -17,20 +19,53 @@ export function AdminDebtReceipts({ debtsByUser, allocations, t }: any) {
     debts: group.debts
   }))
 
-  const filtered = entries.filter(group => {
-    if (!searchTerm) return true
-    const term = searchTerm.toLowerCase()
-    
-    // Check username
-    if (group.username.toLowerCase().includes(term)) return true
-    
-    // Check if any debt matches by description or exact date
-    return group.debts.some((d: any) => {
-      const matchDesc = d.description.toLowerCase().includes(term)
-      const matchDate = new Date(d.created_at).toLocaleDateString().includes(term)
-      return matchDesc || matchDate
-    })
-  })
+  const filtered = entries.map(group => {
+    let filteredDebts = group.debts
+
+    // Apply text search
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase()
+      const matchUsername = group.username.toLowerCase().includes(term)
+      
+      filteredDebts = filteredDebts.filter((d: any) => {
+        const matchDesc = d.description.toLowerCase().includes(term)
+        const matchDate = new Date(d.created_at).toLocaleDateString().includes(term)
+        return matchDesc || matchDate || matchUsername // Keep all debts if username matches, else only matching debts
+      })
+    }
+
+    // Apply date range filter (only keeps debts created within range)
+    if (startDate || endDate) {
+      filteredDebts = filteredDebts.filter((d: any) => {
+        const dDate = new Date(d.created_at)
+        // Reset time for fair comparison
+        dDate.setHours(0, 0, 0, 0)
+        
+        let passStart = true
+        let passEnd = true
+        
+        if (startDate) {
+          const sDate = new Date(startDate)
+          // Adjust for timezone issues by using local date parsing if needed, but standard string is usually ok
+          // Best to just compare YYYY-MM-DD
+          sDate.setHours(0,0,0,0)
+          sDate.setDate(sDate.getDate() + 1) // basic timezone fix
+          passStart = dDate >= new Date(startDate + 'T00:00:00')
+        }
+        if (endDate) {
+          passEnd = dDate <= new Date(endDate + 'T23:59:59')
+        }
+        return passStart && passEnd
+      })
+    }
+
+    return { ...group, debts: filteredDebts }
+  }).filter(group => group.debts.length > 0)
+
+  // Calculate total of filtered debts (initial amount)
+  const totalFilteredAmount = filtered.reduce((acc, group) => {
+    return acc + group.debts.reduce((sum: number, d: any) => sum + Number(d.amount), 0)
+  }, 0)
 
   return (
     <div className="space-y-4">
@@ -38,18 +73,39 @@ export function AdminDebtReceipts({ debtsByUser, allocations, t }: any) {
         <h2 className="text-lg sm:text-xl font-bold flex items-center gap-3">
           <Receipt className="w-5 h-5 text-zinc-500" /> {t.receipts}
         </h2>
-        
-        <div className="relative w-full sm:w-72">
-          <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Search name or date (e.g. 12/25/2026)"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-black/40 border border-white/10 rounded-xl text-xs sm:text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-purple-500/50"
-          />
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+          {/* Date Filters */}
+          <div className="flex items-center gap-2 bg-black/40 border border-white/10 rounded-xl px-2 py-1 w-full sm:w-auto">
+            <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-widest shrink-0">Desde:</span>
+            <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-transparent text-xs text-zinc-200 outline-none w-[110px]" />
+            <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-widest shrink-0">Hasta:</span>
+            <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-transparent text-xs text-zinc-200 outline-none w-[110px]" />
+            {(startDate || endDate) && (
+              <button onClick={() => { setStartDate(''); setEndDate(''); }} className="p-1 hover:bg-white/10 rounded-lg text-zinc-400 hover:text-white transition-colors">
+                <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+          
+          <div className="relative w-full sm:w-64">
+            <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search name or date..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-black/40 border border-white/10 rounded-xl text-xs sm:text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-purple-500/50"
+            />
+          </div>
         </div>
       </div>
+
+      {(startDate || endDate || searchTerm) && (
+        <div className="bg-purple-500/10 border border-purple-500/20 text-purple-400 px-4 py-3 rounded-2xl flex items-center justify-between">
+           <span className="text-xs font-bold uppercase tracking-widest">Total en filtro:</span>
+           <span className="font-black text-lg">{formatCOP(totalFilteredAmount)}</span>
+        </div>
+      )}
 
       <div className="space-y-3">
         {filtered.length === 0 ? (

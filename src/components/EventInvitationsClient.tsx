@@ -1,6 +1,6 @@
 'use client'
 
-import { Calendar, MapPin, Check, X, AlertTriangle, Info } from 'lucide-react'
+import { Calendar, MapPin, Check, X, AlertTriangle, Info, ChevronDown } from 'lucide-react'
 import { SubmitButton } from './SubmitButton'
 import { rsvpEvent } from '@/app/dashboard/actions'
 
@@ -19,6 +19,7 @@ export function EventInvitationsClient({ invitations, lang }: { invitations: any
       cancel: 'Cancel Attendance',
       penaltyWarning: 'Canceling less than 24h before the event incurs a $2,000 COP penalty to your debt balance.',
       accepted: 'You are attending!',
+      attended: 'You attended!',
     },
     es: {
       title: 'Próximos Eventos',
@@ -27,27 +28,46 @@ export function EventInvitationsClient({ invitations, lang }: { invitations: any
       cancel: 'Cancelar Asistencia',
       penaltyWarning: 'Cancelar a menos de 24h del evento genera una multa de $2,000 COP en tu saldo.',
       accepted: '¡Vas a asistir!',
+      attended: '¡Asististe!',
     }
   }[lang] || { title: 'Upcoming Events', accept: 'Accept Invitation', decline: 'Decline', cancel: 'Cancel Attendance', penaltyWarning: 'Canceling less than 24h before the event incurs a $2k COP penalty.', accepted: 'You are attending!' }
 
-  // Only show pending or accepted
-  const activeInvs = invitations.filter((inv: any) => inv.status === 'pending' || inv.status === 'accepted')
+  const now = new Date()
+
+  // Only show pending or accepted, AND filter out past pending events
+  const activeInvs = invitations.filter((inv: any) => {
+    if (inv.status !== 'pending' && inv.status !== 'accepted') return false
+    const evt = inv.events
+    const eventDate = new Date(evt.event_date)
+    const diffHours = (eventDate.getTime() - now.getTime()) / (1000 * 60 * 60)
+    
+    // Hide if event date has passed and it's pending
+    if (diffHours < 0 && inv.status === 'pending') return false
+    return true
+  })
 
   if (activeInvs.length === 0) return null
 
   return (
-    <div className="space-y-4 mb-8">
-      <h2 className="text-xl sm:text-2xl font-black text-fuchsia-400 flex items-center gap-2">
-        <Calendar className="w-6 h-6" /> {t.title}
-      </h2>
+    <details open className="group/events mb-6">
+      <summary className="cursor-pointer list-none flex items-center gap-3 mb-4">
+        <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-fuchsia-500" />
+        <h2 className="text-xl sm:text-2xl font-bold">{t.title}</h2>
+        <span className="text-xs text-zinc-500 font-bold ml-1">({activeInvs.length})</span>
+        <ChevronDown className="w-4 h-4 text-zinc-500 ml-auto group-open/events:rotate-180 transition-transform" />
+      </summary>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
         {activeInvs.map((inv: any) => {
           const evt = inv.events
           const eventDate = new Date(evt.event_date)
-          const now = new Date()
           const diffHours = (eventDate.getTime() - now.getTime()) / (1000 * 60 * 60)
+          
+          // Late cancel warning
           const isLateCancel = diffHours >= 0 && diffHours < 24
+          
+          // If event has passed by more than 24 hours (1 day)
+          const isPastEvent = diffHours <= -24
 
           return (
             <div key={inv.id} className={`relative overflow-hidden rounded-3xl border shadow-xl flex flex-col ${inv.status === 'accepted' ? 'border-emerald-500/30 bg-emerald-900/10' : 'border-fuchsia-500/30 bg-zinc-900/40 backdrop-blur-[40px]'}`}>
@@ -92,16 +112,18 @@ export function EventInvitationsClient({ invitations, lang }: { invitations: any
                   ) : (
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                         <span className="text-emerald-400 font-black flex items-center gap-1 text-sm"><Check className="w-4 h-4" /> {t.accepted}</span>
-                         <form action={safeRsvp}>
-                           <input type="hidden" name="invitationId" value={inv.id} />
-                           <input type="hidden" name="status" value="declined" />
-                           <SubmitButton loadingText="Canceling..." className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${isLateCancel ? 'bg-red-500 text-white' : 'bg-zinc-800 text-zinc-400 hover:text-red-400'}`}>
-                              {t.cancel}
-                           </SubmitButton>
-                         </form>
+                         <span className="text-emerald-400 font-black flex items-center gap-1 text-sm"><Check className="w-4 h-4" /> {isPastEvent ? t.attended : t.accepted}</span>
+                         {!isPastEvent && (
+                           <form action={safeRsvp}>
+                             <input type="hidden" name="invitationId" value={inv.id} />
+                             <input type="hidden" name="status" value="declined" />
+                             <SubmitButton loadingText="Canceling..." className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${isLateCancel ? 'bg-red-500 text-white' : 'bg-zinc-800 text-zinc-400 hover:text-red-400'}`}>
+                                {t.cancel}
+                             </SubmitButton>
+                           </form>
+                         )}
                       </div>
-                      {isLateCancel && (
+                      {isLateCancel && !isPastEvent && (
                         <p className="text-[10px] text-red-400 leading-snug font-bold border border-red-500/30 bg-red-500/10 p-2 rounded-lg flex items-start gap-1">
                           <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" /> {t.penaltyWarning}
                         </p>
@@ -114,6 +136,6 @@ export function EventInvitationsClient({ invitations, lang }: { invitations: any
           )
         })}
       </div>
-    </div>
+    </details>
   )
 }
