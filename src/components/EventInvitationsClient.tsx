@@ -41,8 +41,8 @@ export function EventInvitationsClient({ invitations, lang }: { invitations: any
     const eventDate = new Date(evt.event_date)
     const diffHours = (eventDate.getTime() - now.getTime()) / (1000 * 60 * 60)
     
-    // Hide if event date has passed and it's pending
-    if (diffHours < 0 && inv.status === 'pending') return false
+    // Hide if event date has passed by more than 24h and it's pending
+    if (diffHours <= -24 && inv.status === 'pending') return false
     return true
   })
 

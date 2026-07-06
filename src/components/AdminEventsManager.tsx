@@ -28,7 +28,7 @@ export function AdminEventsManager({ users, events, invitations }: any) {
         </h3>
         <div className="flex items-center gap-4">
           <button 
-            onClick={(e) => { e.preventDefault(); setShowForm(!showForm); setEditingEventId(null); }}
+            onClick={(e) => { e.preventDefault(); setShowForm(!showForm); setEditingEventId(null); setSelectedUsers([]); }}
             className="px-4 py-2 bg-fuchsia-500/20 hover:bg-fuchsia-500/30 text-fuchsia-300 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
           >
             {showForm ? <X className="w-4 h-4"/> : <Plus className="w-4 h-4"/>}

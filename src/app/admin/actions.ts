@@ -330,7 +330,11 @@ export async function createEvent(formData: FormData) {
       user_id: uid,
       status: 'pending'
     }))
-    await supabase.from('event_invitations').insert(invites)
+    const { error: inviteErr } = await supabase.from('event_invitations').insert(invites)
+    if (inviteErr) {
+      console.error('Invite error:', inviteErr)
+      throw new Error('Error creating invitations: ' + inviteErr.message)
+    }
   }
 
   revalidatePath('/admin')
