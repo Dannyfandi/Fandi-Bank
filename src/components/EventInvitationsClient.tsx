@@ -3,8 +3,10 @@
 import { Calendar, MapPin, Check, X, AlertTriangle, Info, ChevronDown } from 'lucide-react'
 import { SubmitButton } from './SubmitButton'
 import { rsvpEvent } from '@/app/dashboard/actions'
+import { useState } from 'react'
 
 export function EventInvitationsClient({ invitations, lang }: { invitations: any, lang: 'en' | 'es' }) {
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
   if (!invitations || invitations.length === 0) return null
 
   const safeRsvp = async (formData: FormData) => {
@@ -72,13 +74,18 @@ export function EventInvitationsClient({ invitations, lang }: { invitations: any
           return (
             <div key={inv.id} className={`relative overflow-hidden rounded-3xl border shadow-xl flex flex-col ${inv.status === 'accepted' ? 'border-emerald-500/30 bg-emerald-900/10' : 'border-fuchsia-500/30 bg-zinc-900/40 backdrop-blur-[40px]'}`}>
               {evt.poster_url && (
-                <div className="h-32 w-full overflow-hidden relative">
+                <button 
+                  type="button"
+                  onClick={() => setSelectedImage(evt.poster_url)}
+                  className="h-32 w-full overflow-hidden relative group/poster focus:outline-none cursor-pointer"
+                >
                   <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent z-10" />
-                  <img src={evt.poster_url} className="w-full h-full object-cover" alt="Event cover" />
+                  <div className="absolute inset-0 bg-black/0 group-hover/poster:bg-black/20 transition-colors z-10" />
+                  <img src={evt.poster_url} className="w-full h-full object-cover transition-transform duration-500 group-hover/poster:scale-105" alt="Event cover" />
                   <div className="absolute bottom-3 left-4 z-20">
                      <h3 className="font-black text-xl text-white drop-shadow-md">{evt.title}</h3>
                   </div>
-                </div>
+                </button>
               )}
               
               <div className="p-5 flex-1 flex flex-col justify-between">
@@ -136,6 +143,28 @@ export function EventInvitationsClient({ invitations, lang }: { invitations: any
           )
         })}
       </div>
+
+      {/* Full-size Image Modal */}
+      {selectedImage && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div className="relative max-w-4xl w-full max-h-[90vh] flex items-center justify-center">
+            <button 
+              onClick={() => setSelectedImage(null)}
+              className="absolute -top-12 right-0 p-2 text-white/70 hover:text-white bg-black/40 hover:bg-black/60 rounded-full transition-colors focus:outline-none"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <img 
+              src={selectedImage} 
+              className="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl animate-in zoom-in-95 duration-200" 
+              alt="Full size event poster" 
+            />
+          </div>
+        </div>
+      )}
     </details>
   )
 }

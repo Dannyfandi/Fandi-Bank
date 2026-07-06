@@ -9,6 +9,7 @@ export function AdminEventsManager({ users, events, invitations }: any) {
   const [showForm, setShowForm] = useState(false)
   const [editingEventId, setEditingEventId] = useState<string|null>(null)
   const [selectedUsers, setSelectedUsers] = useState<string[]>([])
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
 
   const toggleUser = (id: string) => {
     setSelectedUsers(prev => prev.includes(id) ? prev.filter(u => u !== id) : [...prev, id])
@@ -178,7 +179,14 @@ export function AdminEventsManager({ users, events, invitations }: any) {
               </div>
 
               {evt.poster_url ? (
-                <img src={evt.poster_url} className="w-full sm:w-32 h-32 object-cover rounded-xl shrink-0 border border-white/10" alt="Poster" />
+                <button 
+                  type="button"
+                  onClick={() => setSelectedImage(evt.poster_url)}
+                  className="w-full sm:w-32 h-32 relative group/poster focus:outline-none cursor-pointer shrink-0 rounded-xl overflow-hidden border border-white/10"
+                >
+                  <div className="absolute inset-0 bg-black/0 group-hover/poster:bg-black/20 transition-colors z-10" />
+                  <img src={evt.poster_url} className="w-full h-full object-cover transition-transform duration-500 group-hover/poster:scale-105" alt="Poster" />
+                </button>
               ) : (
                 <div className="w-full sm:w-32 h-32 bg-black/50 rounded-xl flex items-center justify-center border border-white/5 shrink-0">
                   <Map className="w-8 h-8 text-zinc-700" />
@@ -208,6 +216,28 @@ export function AdminEventsManager({ users, events, invitations }: any) {
           )
         })}
       </div>
+
+      {/* Full-size Image Modal */}
+      {selectedImage && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div className="relative max-w-4xl w-full max-h-[90vh] flex items-center justify-center">
+            <button 
+              onClick={() => setSelectedImage(null)}
+              className="absolute -top-12 right-0 p-2 text-white/70 hover:text-white bg-black/40 hover:bg-black/60 rounded-full transition-colors focus:outline-none"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <img 
+              src={selectedImage} 
+              className="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl animate-in zoom-in-95 duration-200" 
+              alt="Full size event poster" 
+            />
+          </div>
+        </div>
+      )}
       </div>
     </details>
   )
