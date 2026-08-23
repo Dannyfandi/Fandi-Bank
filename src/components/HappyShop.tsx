@@ -25,8 +25,8 @@ const PRODUCTS: JointProduct[] = [
     subtitle: 'Tamaño compacto, pegada suave y perfecta',
     emoji: '🌿',
     options: [
-      { label: '1 Unidad', quantity: 1, priceCOP: 3000, priceCoins: 300 },
-      { label: '2 Unidades (Promo)', quantity: 2, priceCOP: 5000, priceCoins: 500 },
+      { label: '1 Unidad', quantity: 1, priceCOP: 3000, priceCoins: 3000 },
+      { label: '2 Unidades (Promo)', quantity: 2, priceCOP: 5000, priceCoins: 5000 },
     ],
   },
   {
@@ -35,8 +35,8 @@ const PRODUCTS: JointProduct[] = [
     subtitle: 'Tamaño extra grande para compartir o sesión intensa',
     emoji: '🔥',
     options: [
-      { label: '1 Unidad', quantity: 1, priceCOP: 6000, priceCoins: 600 },
-      { label: '2 Unidades (Promo)', quantity: 2, priceCOP: 10000, priceCoins: 1000 },
+      { label: '1 Unidad', quantity: 1, priceCOP: 6000, priceCoins: 6000 },
+      { label: '2 Unidades (Promo)', quantity: 2, priceCOP: 10000, priceCoins: 10000 },
     ],
   },
 ]

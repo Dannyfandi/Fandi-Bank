@@ -246,45 +246,46 @@ export default async function DashboardPage() {
               interestMap={interestMap}
             />
           </Suspense>
-
-          {visits && visits.length > 0 && (
-            <details open className="glass-panel rounded-[28px] p-5 shadow-xl border border-white/10 space-y-3">
-              <summary className="cursor-pointer list-none flex items-center justify-between text-sm font-bold text-zinc-200 select-none">
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-fuchsia-400" />
-                  <span>{t.myVisits}</span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-zinc-300">{visits.length}</span>
-                </div>
-              </summary>
-              <div className="space-y-2 pt-2">
-                {visits.map((v: any) => (
-                  <div key={v.id} className="p-3 rounded-2xl bg-black/40 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 text-xs">
-                      <span className="text-zinc-200 font-semibold">{new Date(v.visit_date).toLocaleDateString()}</span>
-                      <span className="text-zinc-400 flex items-center gap-1"><Clock className="w-3 h-3" />{v.arrival_time?.slice(0, 5)}</span>
-                    </div>
-                    <div className="flex items-center gap-2 self-end sm:self-auto">
-                      <span className={`text-[9px] uppercase tracking-widest font-black px-2 py-0.5 rounded-full border ${v.status === 'approved' ? 'bg-purple-500/15 text-purple-300 border-purple-500/30' : 'bg-amber-500/15 text-amber-400 border-amber-500/30'}`}>
-                        {v.status === 'approved' ? t.approved : t.pending}
-                      </span>
-                      <form action={cancelVisitRequest}>
-                        <input type="hidden" name="visitId" value={v.id} />
-                        <SubmitButton title={t.cancelVisit} className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 transition-colors touch-feedback">
-                          <X className="w-3 h-3" />
-                        </SubmitButton>
-                      </form>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </details>
-          )}
         </section>
 
         {/* 3. SECTION 2: Community Events Tab (Completed, Incoming Confirmed, and Pending Invitations) */}
         <section id="events-section" className="space-y-6 scroll-mt-24">
           <EventInvitationsClient invitations={invitations || []} lang={lang} />
         </section>
+
+        {/* 4. SECTION 3: My Visit Requests (If any) */}
+        {visits && visits.length > 0 && (
+          <details className="glass-panel rounded-[28px] p-5 sm:p-6 shadow-xl border border-white/10 space-y-3">
+            <summary className="cursor-pointer list-none flex items-center justify-between text-sm font-bold text-zinc-200 select-none">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-fuchsia-400" />
+                <span>{t.myVisits}</span>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-zinc-300">{visits.length}</span>
+              </div>
+            </summary>
+            <div className="space-y-2 pt-2">
+              {visits.map((v: any) => (
+                <div key={v.id} className="p-3 rounded-2xl bg-black/40 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="text-zinc-200 font-semibold">{new Date(v.visit_date).toLocaleDateString()}</span>
+                    <span className="text-zinc-400 flex items-center gap-1"><Clock className="w-3 h-3" />{v.arrival_time?.slice(0, 5)}</span>
+                  </div>
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
+                    <span className={`text-[9px] uppercase tracking-widest font-black px-2 py-0.5 rounded-full border ${v.status === 'approved' ? 'bg-purple-500/15 text-purple-300 border-purple-500/30' : 'bg-amber-500/15 text-amber-400 border-amber-500/30'}`}>
+                      {v.status === 'approved' ? t.approved : t.pending}
+                    </span>
+                    <form action={cancelVisitRequest}>
+                      <input type="hidden" name="visitId" value={v.id} />
+                      <SubmitButton title={t.cancelVisit} className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 transition-colors touch-feedback">
+                        <X className="w-3 h-3" />
+                      </SubmitButton>
+                    </form>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </details>
+        )}
 
         <GamesTab
           lang={lang}

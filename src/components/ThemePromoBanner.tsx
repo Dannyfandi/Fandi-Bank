@@ -118,14 +118,14 @@ export function ThemePromoBanner({
               : 'Tapping, Whack-a-Mole, Trivia, and more. Unlock Pim, Charlie, and the psychedelic theme.'}
           </p>
 
-          <button
-            onClick={scrollToGames}
+          <Link
+            href="/games/smiling-friends"
             className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-md shadow-yellow-500/20 touch-feedback cursor-pointer"
           >
             <Gamepad2 className="w-4 h-4" />
             <span>{lang === 'es' ? '¡Jugar Smiling Friends!' : 'Play Smiling Friends!'}</span>
             <ChevronRight className="w-3.5 h-3.5" />
-          </button>
+          </Link>
         </div>
 
         {/* 2. Star Wars Card */}
@@ -153,14 +153,14 @@ export function ThemePromoBanner({
               : 'Trench Run, Falcon Flight, Saber Duel, and Cantina. Unlock Luke, Vader, and the global theme.'}
           </p>
 
-          <button
-            onClick={scrollToGames}
+          <Link
+            href="/games/star-wars"
             className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-600 hover:from-cyan-300 hover:to-blue-500 text-black font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-md shadow-cyan-500/20 touch-feedback cursor-pointer"
           >
             <Rocket className="w-4 h-4" />
             <span>{lang === 'es' ? '¡Jugar Star Wars!' : 'Play Star Wars!'}</span>
             <ChevronRight className="w-3.5 h-3.5" />
-          </button>
+          </Link>
         </div>
       </div>
     </div>

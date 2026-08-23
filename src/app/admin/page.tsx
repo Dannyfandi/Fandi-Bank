@@ -350,7 +350,7 @@ export default async function AdminPage() {
           <p className="text-xs sm:text-sm font-black text-violet-300 uppercase tracking-widest mb-1.5 flex items-center gap-2 text-shadow-sm">
             <Shield className="w-4 h-4 text-violet-400" /> {t.grandTotal}
           </p>
-          <p className="text-3xl sm:text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-100 via-violet-100 to-fuchsia-50 tracking-tight text-shadow-lg drop-shadow-[0_0_35px_rgba(216,180,254,0.65)]">
+          <p className="text-3xl sm:text-5xl md:text-6xl font-black text-violet-200 tracking-tight text-shadow-lg drop-shadow-[0_0_35px_rgba(216,180,254,0.75)]">
             <AnimatedNumber value={grandTotal} formatAsCurrency={true} duration={900} />
           </p>
         </div>

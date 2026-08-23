@@ -290,7 +290,7 @@ export function GamesTab({
 
             {/* 2. Star Wars Edition */}
             <Link
-              href="/admin/sandbox/star-wars"
+              href="/games/star-wars"
               className="w-[280px] sm:w-[320px] shrink-0 group relative overflow-hidden rounded-[28px] p-6 bg-gradient-to-br from-cyan-900/35 via-black/60 to-black border border-cyan-500/40 hover:border-cyan-400 transition-all touch-feedback flex flex-col items-center text-center justify-center aspect-[4/3] shadow-xl"
             >
               <div className="absolute inset-0 bg-cyan-500/5 group-hover:bg-cyan-500/10 transition-colors" />
@@ -301,7 +301,7 @@ export function GamesTab({
                 Star Wars Edition
               </h3>
               <p className="text-[11px] text-cyan-200/80 font-medium mt-1">
-                {lang === 'es' ? 'Trinchera · Halcón · Duelo de Sables · Holocrón' : 'Trench Run · Falcon Flight · Saber Duel'}
+                {lang === 'es' ? 'Trinchera · Halcón · Duelo de Sables · Cantina' : 'Trench Run · Falcon Flight · Saber Duel · Cantina'}
               </p>
             </Link>
           </div>

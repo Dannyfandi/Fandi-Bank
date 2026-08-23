@@ -133,8 +133,8 @@ export function DashboardClient({
             <p
               className={`text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-shadow-lg ${
                 totalOwed > 0
-                  ? 'text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-red-300 to-amber-300 drop-shadow-[0_0_25px_rgba(244,63,94,0.45)]'
-                  : 'text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-200 to-cyan-300 drop-shadow-[0_0_25px_rgba(52,211,153,0.45)]'
+                  ? 'text-rose-300 drop-shadow-[0_0_25px_rgba(244,63,94,0.7)]'
+                  : 'text-emerald-300 drop-shadow-[0_0_25px_rgba(52,211,153,0.7)]'
               }`}
             >
               <AnimatedNumber value={totalOwed} formatAsCurrency={true} duration={900} />
@@ -161,8 +161,8 @@ export function DashboardClient({
         </div>
       </div>
 
-      {/* Debts Collapsible Accordion */}
-      <details open className="group/debts glass-panel rounded-[28px] p-5 sm:p-6 shadow-xl border border-white/10">
+      {/* Debts Collapsible Accordion (Closed by default on load) */}
+      <details className="group/debts glass-panel rounded-[28px] p-5 sm:p-6 shadow-xl border border-white/10">
         <summary className="cursor-pointer list-none flex items-center justify-between gap-3 select-none">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400">
@@ -238,28 +238,28 @@ export function DashboardClient({
                   {/* Financial Breakdown */}
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-4 p-3 bg-black/25 rounded-xl border border-white/5 mb-2">
                     <div>
-                      <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-0.5">
+                      <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-0.5">
                         {t.initial}
                       </p>
-                      <p className="text-zinc-200 font-bold text-xs sm:text-sm">
+                      <p className="text-zinc-100 font-extrabold text-xs sm:text-sm">
                         {formatCOP(amount)}
                       </p>
                     </div>
                     {interest > 0 && (
                       <div>
-                        <p className="text-[10px] uppercase tracking-widest text-amber-500/80 font-bold mb-0.5">
+                        <p className="text-[10px] uppercase tracking-widest text-amber-400/90 font-bold mb-0.5">
                           {t.interest}
                         </p>
-                        <p className="text-amber-400 font-bold text-xs sm:text-sm">
+                        <p className="text-amber-300 font-extrabold text-xs sm:text-sm">
                           +{formatCOP(interest)}
                         </p>
                       </div>
                     )}
                     <div>
-                      <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-0.5">
+                      <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold mb-0.5">
                         {t.paid}
                       </p>
-                      <p className="text-emerald-400 font-bold text-xs sm:text-sm">
+                      <p className="text-emerald-400 font-extrabold text-xs sm:text-sm">
                         {formatCOP(paid)}
                       </p>
                     </div>

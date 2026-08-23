@@ -224,13 +224,13 @@ export function AdminDebtReceipts({ debtsByUser, allocations, t }: any) {
                       <div className="flex flex-wrap gap-4 text-xs">
                         <span className="text-zinc-400">
                           {t.initialLabel}:{' '}
-                          <span className="text-zinc-100 font-semibold">
+                          <span className="text-zinc-100 font-extrabold">
                             {formatCOP(amount)}
                           </span>
                         </span>
                         <span className="text-zinc-400">
                           {t.paidLabel}:{' '}
-                          <span className="text-emerald-400 font-semibold">
+                          <span className="text-emerald-400 font-extrabold">
                             {formatCOP(paid)}
                           </span>
                         </span>
