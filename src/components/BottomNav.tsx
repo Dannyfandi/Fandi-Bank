@@ -90,17 +90,21 @@ export function BottomNav({
   // Scroll Spy: Tracks user scroll position and highlights active section
   useEffect(() => {
     const handleScroll = () => {
-      const scrollPos = window.scrollY + 250
+      const scrollPos = window.scrollY + 200
       const shopEl = document.getElementById('shop-section')
       const gamesEl = document.getElementById('games-section')
       const eventsEl = document.getElementById('events-section')
-      const debtsEl = document.getElementById('debts-section')
 
-      if (shopEl && scrollPos >= shopEl.offsetTop) {
+      if (shopEl && scrollPos >= shopEl.offsetTop - 120) {
         setActiveSection('shop')
-      } else if (gamesEl && scrollPos >= gamesEl.offsetTop) {
+      } else if (gamesEl && scrollPos >= gamesEl.offsetTop - 120) {
         setActiveSection('games')
-      } else if (eventsEl && scrollPos >= eventsEl.offsetTop) {
+      } else if (
+        eventsEl &&
+        eventsEl.offsetHeight > 30 &&
+        scrollPos >= eventsEl.offsetTop - 100 &&
+        scrollPos < (gamesEl ? gamesEl.offsetTop - 120 : Infinity)
+      ) {
         setActiveSection('events')
       } else {
         setActiveSection('debts')
@@ -117,41 +121,55 @@ export function BottomNav({
       window.location.href = `/dashboard#${id}`
       return
     }
+
+    if (id === 'debts-section' || id === 'home') {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      setActiveSection('debts')
+      return
+    }
+
     const el = document.getElementById(id)
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      if (id === 'events-section') setActiveSection('events')
+      if (id === 'games-section') setActiveSection('games')
+      if (id === 'shop-section') setActiveSection('shop')
+    } else if (id === 'events-section') {
+      // Fallback: smooth scroll to approximate events area near top
+      window.scrollTo({ top: 120, behavior: 'smooth' })
+      setActiveSection('events')
     }
   }
 
   return (
     <>
-      {/* Mobile Fixed Frosted-Glass Bottom Navigation Bar */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-zinc-950/85 backdrop-blur-2xl border-t border-white/15 px-3 py-2 pb-5 shadow-2xl">
-        <div className="flex items-center justify-around max-w-md mx-auto">
+      {/* Mobile Fixed Frosted-Glass Bottom Navigation Bar (5-Column Centered Grid) */}
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-zinc-950/85 backdrop-blur-2xl border-t border-white/15 px-2 py-2 pb-5 shadow-2xl">
+        <div className="grid grid-cols-5 items-center justify-items-center max-w-md mx-auto">
           {/* 1. Home / Debts */}
           <button
             onClick={() => scrollToSection('debts-section')}
-            className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl touch-feedback transition-colors ${
+            className={`w-full flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl touch-feedback transition-colors ${
               activeSection === 'debts'
                 ? 'text-purple-400 font-bold scale-105'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            <LayoutDashboard className="w-5 h-5" />
-            <span className="text-[10px] tracking-tight">{t.dashboard}</span>
+            <LayoutDashboard className="w-5 h-5 shrink-0" />
+            <span className="text-[10px] tracking-tight truncate max-w-full">{t.dashboard}</span>
           </button>
 
           {/* 2. Events */}
           <button
             onClick={() => scrollToSection('events-section')}
-            className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl touch-feedback transition-colors relative ${
+            className={`w-full flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl touch-feedback transition-colors relative ${
               activeSection === 'events'
                 ? 'text-fuchsia-400 font-bold scale-105'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            <Calendar className="w-5 h-5" />
-            <span className="text-[10px] tracking-tight">{t.events}</span>
+            <Calendar className="w-5 h-5 shrink-0" />
+            <span className="text-[10px] tracking-tight truncate max-w-full">{t.events}</span>
             {hasEvents && (
               <span className="absolute top-1 right-2 w-2 h-2 rounded-full bg-fuchsia-500 animate-pulse" />
             )}
@@ -160,7 +178,7 @@ export function BottomNav({
           {/* 3. Center Quick Action Trigger */}
           <button
             onClick={() => setActiveSheet('actions')}
-            className="flex flex-col items-center justify-center -mt-5 p-3 rounded-full bg-gradient-to-tr from-purple-600 via-fuchsia-500 to-pink-500 text-white shadow-lg shadow-purple-500/40 border-2 border-white/30 touch-feedback cursor-pointer animate-pulse"
+            className="flex items-center justify-center -mt-6 w-13 h-13 rounded-full bg-gradient-to-tr from-purple-600 via-fuchsia-500 to-pink-500 text-white shadow-lg shadow-purple-500/40 border-2 border-white/40 touch-feedback cursor-pointer animate-pulse"
             aria-label={t.actions}
           >
             <Sparkles className="w-6 h-6" />
@@ -169,27 +187,27 @@ export function BottomNav({
           {/* 4. Games & Themes */}
           <button
             onClick={() => scrollToSection('games-section')}
-            className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl touch-feedback transition-colors ${
+            className={`w-full flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl touch-feedback transition-colors ${
               activeSection === 'games'
                 ? 'text-yellow-400 font-bold scale-105'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            <Gamepad2 className="w-5 h-5" />
-            <span className="text-[10px] tracking-tight">{t.games}</span>
+            <Gamepad2 className="w-5 h-5 shrink-0" />
+            <span className="text-[10px] tracking-tight truncate max-w-full">{t.games}</span>
           </button>
 
           {/* 5. Shop (Happy Shop & Rewards) */}
           <button
             onClick={() => scrollToSection('shop-section')}
-            className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl touch-feedback transition-colors ${
+            className={`w-full flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl touch-feedback transition-colors ${
               activeSection === 'shop'
                 ? 'text-emerald-400 font-bold scale-105'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            <ShoppingBag className="w-5 h-5" />
-            <span className="text-[10px] tracking-tight">{t.shop}</span>
+            <ShoppingBag className="w-5 h-5 shrink-0" />
+            <span className="text-[10px] tracking-tight truncate max-w-full">{t.shop}</span>
           </button>
         </div>
       </nav>

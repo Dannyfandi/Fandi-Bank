@@ -35,39 +35,39 @@ export function AdminBottomNav({ users = [], t }: { users: any[]; t: any }) {
 
   return (
     <>
-      {/* Mobile Fixed Admin Bottom Navigation Bar (5 Items Perfectly Symmetrical) */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-zinc-950/85 backdrop-blur-2xl border-t border-white/15 px-3 py-2 pb-5 shadow-2xl">
-        <div className="flex items-center justify-around max-w-md mx-auto">
+      {/* Mobile Fixed Admin Bottom Navigation Bar (5 Items Perfectly Symmetrical Grid) */}
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-zinc-950/85 backdrop-blur-2xl border-t border-white/15 px-2 py-2 pb-5 shadow-2xl">
+        <div className="grid grid-cols-5 items-center justify-items-center max-w-md mx-auto">
           {/* 1. Add Debt */}
           <button
             onClick={() => setActiveSheet('addDebt')}
-            className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl touch-feedback transition-colors ${
+            className={`w-full flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl touch-feedback transition-colors ${
               activeSheet === 'addDebt'
                 ? 'text-purple-300 font-bold scale-105'
                 : 'text-zinc-400 hover:text-purple-300'
             }`}
           >
-            <PlusCircle className="w-5 h-5 text-purple-400" />
-            <span className="text-[10px] tracking-tight">{t.addDebt || 'Deuda'}</span>
+            <PlusCircle className="w-5 h-5 text-purple-400 shrink-0" />
+            <span className="text-[10px] tracking-tight truncate max-w-full">{t.addDebt || 'Deuda'}</span>
           </button>
 
           {/* 2. Log Payment */}
           <button
             onClick={() => setActiveSheet('logPayment')}
-            className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl touch-feedback transition-colors ${
+            className={`w-full flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl touch-feedback transition-colors ${
               activeSheet === 'logPayment'
                 ? 'text-emerald-300 font-bold scale-105'
                 : 'text-zinc-400 hover:text-emerald-300'
             }`}
           >
-            <Wallet className="w-5 h-5 text-emerald-400" />
-            <span className="text-[10px] tracking-tight">{t.logPayment || 'Pago'}</span>
+            <Wallet className="w-5 h-5 text-emerald-400 shrink-0" />
+            <span className="text-[10px] tracking-tight truncate max-w-full">{t.logPayment || 'Pago'}</span>
           </button>
 
           {/* 3. Center: AI Text Parser Button */}
           <button
             onClick={() => setActiveSheet('parser')}
-            className="flex flex-col items-center justify-center -mt-5 p-3 rounded-full bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 text-white shadow-lg shadow-cyan-500/40 border-2 border-white/30 touch-feedback cursor-pointer animate-pulse"
+            className="flex items-center justify-center -mt-6 w-13 h-13 rounded-full bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 text-white shadow-lg shadow-cyan-500/40 border-2 border-white/40 touch-feedback cursor-pointer animate-pulse"
             aria-label="AI Text Parser"
             title="AI Text Parser"
           >
@@ -77,27 +77,27 @@ export function AdminBottomNav({ users = [], t }: { users: any[]; t: any }) {
           {/* 4. Fandi Score Modifier (Left of Events for Symmetry) */}
           <button
             onClick={() => setActiveSheet('score')}
-            className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl touch-feedback transition-colors ${
+            className={`w-full flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl touch-feedback transition-colors ${
               activeSheet === 'score'
                 ? 'text-amber-300 font-bold scale-105'
                 : 'text-zinc-400 hover:text-amber-300'
             }`}
           >
-            <Award className="w-5 h-5 text-amber-400" />
-            <span className="text-[10px] tracking-tight">Score</span>
+            <Award className="w-5 h-5 text-amber-400 shrink-0" />
+            <span className="text-[10px] tracking-tight truncate max-w-full">Score</span>
           </button>
 
           {/* 5. Create Event */}
           <button
             onClick={() => setActiveSheet('createEvent')}
-            className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl touch-feedback transition-colors ${
+            className={`w-full flex flex-col items-center justify-center gap-1 py-1 px-1 rounded-xl touch-feedback transition-colors ${
               activeSheet === 'createEvent'
                 ? 'text-fuchsia-300 font-bold scale-105'
                 : 'text-zinc-400 hover:text-fuchsia-300'
             }`}
           >
-            <CalendarPlus className="w-5 h-5 text-fuchsia-400" />
-            <span className="text-[10px] tracking-tight">{t.events || 'Evento'}</span>
+            <CalendarPlus className="w-5 h-5 text-fuchsia-400 shrink-0" />
+            <span className="text-[10px] tracking-tight truncate max-w-full">{t.events || 'Evento'}</span>
           </button>
         </div>
       </nav>

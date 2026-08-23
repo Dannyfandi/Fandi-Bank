@@ -132,11 +132,25 @@ export default async function DashboardPage() {
     .in('status', ['pending', 'accepted'])
     .order('created_at', { ascending: false })
 
-  // Fetch all user profiles for friend invitations in Suggest Event
-  const { data: allUsers } = await supabase
-    .from('profiles')
-    .select('id, username, avatar_url')
-    .order('username', { ascending: true })
+  // Fetch ONLY accepted friends of the current user for event suggestions
+  const { data: friendships } = await supabase
+    .from('friendships')
+    .select(
+      'status, requester_id, addressee_id, requester:profiles!friendships_requester_id_fkey(id, username, avatar_url), addressee:profiles!friendships_addressee_id_fkey(id, username, avatar_url)'
+    )
+    .eq('status', 'accepted')
+    .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
+
+  const myFriends = (friendships || [])
+    .map((f: any) => (f.requester_id === user.id ? f.addressee : f.requester))
+    .filter(
+      (p: any) =>
+        p &&
+        p.id &&
+        p.id !== user.id &&
+        typeof p.username === 'string' &&
+        p.username.trim().length > 0
+    )
 
   let { score, isSuspended } = calculateCreditScore((debts || []) as DebtForCredit[])
 
@@ -164,7 +178,7 @@ export default async function DashboardPage() {
   const logoSrc = isStarWars ? '/sw_logo.png' : isSmiling ? '/sf_logo.png' : '/logo.png'
 
   return (
-    <div className="min-h-screen bg-transparent text-zinc-50 p-3 sm:p-5 md:p-8 pb-28 sm:pb-12 font-sans">
+    <div id="debts-section" className="min-h-screen bg-transparent text-zinc-50 p-3 sm:p-5 md:p-8 pb-28 sm:pb-12 font-sans scroll-mt-6">
       <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8">
         {/* Condensed Header */}
         <header className="flex items-center justify-between pb-4 border-b border-white/10 glass-panel px-4 sm:px-6 py-3 rounded-2xl sm:rounded-3xl shadow-lg">
@@ -264,8 +278,10 @@ export default async function DashboardPage() {
         <main className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10">
           {/* Main Feed Column */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Upcoming Events Horizontal Carousel */}
-            <EventInvitationsClient invitations={invitations || []} lang={lang} />
+            {/* Upcoming Events Section */}
+            <div id="events-section" className="scroll-mt-24">
+              <EventInvitationsClient invitations={invitations || []} lang={lang} />
+            </div>
 
             {/* Dashboard Client: Balance & Debts List */}
             <Suspense fallback={<LoadingBlock />}>
@@ -383,7 +399,7 @@ export default async function DashboardPage() {
         role={profile?.role}
         lang={lang}
         hasEvents={!!(invitations && invitations.length > 0)}
-        friendsList={allUsers || []}
+        friendsList={myFriends || []}
       />
 
       {/* Floating Theme Selector on the Left */}

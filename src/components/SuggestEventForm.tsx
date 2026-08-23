@@ -220,32 +220,46 @@ export function SuggestEventForm({
       </div>
 
       {/* Invite Friends */}
-      {friends.length > 0 && (
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider block">
-            Invitar Amigos ({selectedFriends.length} seleccionados)
-          </label>
-          <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2 glass-panel rounded-2xl">
-            {friends.map((f) => {
-              const isSelected = selectedFriends.includes(f.id)
-              return (
-                <button
-                  key={f.id}
-                  type="button"
-                  onClick={() => toggleFriend(f.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all touch-feedback ${
-                    isSelected
-                      ? 'bg-fuchsia-500 text-white shadow-md'
-                      : 'bg-white/10 text-zinc-300 hover:bg-white/15'
-                  }`}
-                >
-                  {f.username}
-                </button>
-              )
-            })}
+      {(() => {
+        const validFriends = (friends || []).filter(
+          (f) => f && f.id && typeof f.username === 'string' && f.username.trim().length > 0
+        )
+
+        if (validFriends.length === 0) {
+          return (
+            <div className="p-3 rounded-2xl bg-white/5 border border-white/10 text-xs text-zinc-400">
+              <p>💡 Aún no tienes amigos confirmados para invitar. Puedes agregar amigos desde el menú de Amigos.</p>
+            </div>
+          )
+        }
+
+        return (
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider block">
+              Invitar Amigos ({selectedFriends.length} seleccionados)
+            </label>
+            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2 glass-panel rounded-2xl">
+              {validFriends.map((f) => {
+                const isSelected = selectedFriends.includes(f.id)
+                return (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => toggleFriend(f.id)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all touch-feedback cursor-pointer ${
+                      isSelected
+                        ? 'bg-fuchsia-500 text-white shadow-md'
+                        : 'bg-white/10 text-zinc-300 hover:bg-white/15'
+                    }`}
+                  >
+                    {f.username}
+                  </button>
+                )
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {msg && (
         <div

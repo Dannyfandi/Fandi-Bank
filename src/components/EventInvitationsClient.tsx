@@ -99,7 +99,28 @@ export function EventInvitationsClient({
     return isPast && inv.status === 'accepted'
   })
 
-  if (upcomingInvs.length === 0 && attendedInvs.length === 0) return null
+  if (upcomingInvs.length === 0 && attendedInvs.length === 0) {
+    return (
+      <div
+        id="events-section"
+        className="glass-panel rounded-[24px] p-4 sm:p-5 shadow-lg border border-white/10 flex items-center justify-between gap-3 mb-6 scroll-mt-20"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-fuchsia-500/15 border border-fuchsia-500/30 flex items-center justify-center text-fuchsia-400 shrink-0">
+            <Calendar className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-sm font-black text-zinc-100">{t.title}</h3>
+            <p className="text-xs text-zinc-400">
+              {lang === 'es'
+                ? 'No tienes invitaciones a eventos pendientes.'
+                : 'No pending event invitations.'}
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6 mb-6">
