@@ -43,18 +43,6 @@ export function AdminEventsManager({ users, events, invitations }: any) {
           </span>
         </h3>
         <div className="flex items-center gap-3">
-          <button
-            onClick={(e) => {
-              e.preventDefault()
-              setShowForm(!showForm)
-              setEditingEventId(null)
-              setSelectedUsers([])
-            }}
-            className="px-3.5 py-2 bg-fuchsia-500/20 hover:bg-fuchsia-500/30 text-fuchsia-200 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 border border-fuchsia-500/30 touch-feedback"
-          >
-            {showForm ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
-            {showForm ? 'Cancel' : 'New Event'}
-          </button>
           <ChevronDown className="w-5 h-5 text-zinc-400 group-open/adminevents:rotate-180 transition-transform duration-300" />
         </div>
       </summary>

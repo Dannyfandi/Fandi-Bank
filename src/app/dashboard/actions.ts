@@ -403,7 +403,7 @@ export async function requestPrize(itemName: string, cost: number): Promise<{ su
     .from('profiles')
     .update({ fandi_coins: newCoins })
     .eq('id', user.id)
-    .gte('fandi_coins', cost) // safety: only deduct if still enough
+    .gte('fandi_coins', cost)
 
   if (deductError) return { success: false, message: 'Failed to deduct coins' }
 
@@ -413,7 +413,6 @@ export async function requestPrize(itemName: string, cost: number): Promise<{ su
     .insert({ user_id: user.id, item_name: itemName, cost, status: 'pending' })
 
   if (insertError) {
-    // Refund if insert failed
     await supabase.from('profiles').update({ fandi_coins: currentCoins }).eq('id', user.id)
     return { success: false, message: 'Failed to create request' }
   }
@@ -421,4 +420,141 @@ export async function requestPrize(itemName: string, cost: number): Promise<{ su
   revalidatePath('/dashboard')
   revalidatePath('/admin')
   return { success: true, message: 'Prize requested!', newCoins }
+}
+
+export async function orderHappyShopWithLoan(itemName: string, amountCOP: number) {
+  if (!itemName || amountCOP <= 0) return { success: false, message: 'Invalid order' }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, message: 'Unauthorized' }
+
+  const { error } = await supabase.from('debts').insert({
+    user_id: user.id,
+    description: `Happy Shop - ${itemName}`,
+    amount: amountCOP,
+    status: 'pending',
+  })
+
+  if (error) {
+    return { success: false, message: error.message }
+  }
+
+  revalidatePath('/dashboard')
+  revalidatePath('/admin')
+  return { success: true, message: '¡Pedido agregado a tu saldo como préstamo!' }
+}
+
+export async function orderHappyShopWithCoins(itemName: string, coinCost: number) {
+  return requestPrize(`Happy Shop - ${itemName}`, coinCost)
+}
+
+export async function claimThemeRefund(themeType: 'star_wars' | 'smiling_friends') {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, message: 'Unauthorized' }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('fandi_coins, coin_sync_version, sf_progress')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile) return { success: false, message: 'Profile not found' }
+
+  // Check if refund already claimed in progress
+  const progress = profile.sf_progress || {}
+  const refundKey = `refund_claimed_${themeType}`
+  if (progress[refundKey]) {
+    return { success: false, message: 'Recompensa ya reclamada' }
+  }
+
+  const bonusAmount = themeType === 'star_wars' ? 4900 : 5000
+  const nextCoins = (profile.fandi_coins || 0) + bonusAmount
+  const nextVersion = (profile.coin_sync_version || 0) + 1
+
+  progress[refundKey] = true
+
+  await supabase
+    .from('profiles')
+    .update({
+      fandi_coins: nextCoins,
+      coin_sync_version: nextVersion,
+      sf_progress: progress,
+    })
+    .eq('id', user.id)
+
+  revalidatePath('/dashboard')
+  revalidatePath('/admin')
+  return { success: true, coins: nextCoins, message: `¡Reembolso total + 200 monedas otorgado! (+${bonusAmount} Coins)` }
+}
+
+export async function suggestUserEvent(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, message: 'Unauthorized' }
+
+  const title = (formData.get('title') as string) || 'Evento Sugerido'
+  const price = (formData.get('price') as string) || '0'
+  const dateMode = (formData.get('dateMode') as string) || 'single'
+  const dateSingle = formData.get('dateSingle') as string
+  const dateStart = formData.get('dateStart') as string
+  const dateEnd = formData.get('dateEnd') as string
+  const timeSlots = formData.getAll('timeSlots') as string[]
+  const location = (formData.get('location') as string) || 'Lugar por definir'
+  const photoUrl = (formData.get('photoUrl') as string) || ''
+  const invitedUsers = formData.getAll('invitedUsers') as string[]
+
+  let dateDisplay = ''
+  if (dateMode === 'range' && dateStart && dateEnd) {
+    dateDisplay = `${dateStart} al ${dateEnd}`
+  } else if (dateSingle) {
+    dateDisplay = dateSingle
+  } else {
+    dateDisplay = new Date().toISOString().split('T')[0]
+  }
+
+  const timeSlotsText = timeSlots.length > 0 ? timeSlots.join(', ') : 'Cualquier horario'
+  const formattedLocation = `📍 ${location} | ⏰ Horarios: ${timeSlotsText} | 💰 Est: $${Number(price).toLocaleString('es-CO')}`
+
+  const { data: event, error: evtErr } = await supabase
+    .from('events')
+    .insert({
+      title: `✨ [Sugerido] ${title}`,
+      event_date: dateSingle ? `${dateSingle}T12:00:00` : new Date().toISOString(),
+      location: formattedLocation,
+      poster_url: photoUrl || null,
+    })
+    .select('id')
+    .single()
+
+  if (evtErr || !event) {
+    return { success: false, message: 'Error creando el evento sugerido' }
+  }
+
+  // Invite creator as accepted
+  const invites = [
+    {
+      event_id: event.id,
+      user_id: user.id,
+      status: 'accepted',
+    },
+  ]
+
+  // Invite selected friends
+  invitedUsers.forEach((uid) => {
+    if (uid !== user.id) {
+      invites.push({
+        event_id: event.id,
+        user_id: uid,
+        status: 'pending',
+      })
+    }
+  })
+
+  await supabase.from('event_invitations').insert(invites)
+
+  revalidatePath('/dashboard')
+  revalidatePath('/admin')
+  return { success: true, message: '¡Evento sugerido e invitaciones enviadas a tus amigos!' }
 }

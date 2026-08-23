@@ -25,7 +25,7 @@ import { TrenchRunGame } from './TrenchRunGame'
 import { FalconFlightGame } from './FalconFlightGame'
 import { HolocronMemoryGame } from './HolocronMemoryGame'
 import { CantinaQuickDrawGame } from './CantinaQuickDrawGame'
-import { syncFandiCoins, updateTheme } from '@/app/dashboard/actions'
+import { syncFandiCoins, updateTheme, claimThemeRefund } from '@/app/dashboard/actions'
 
 export interface StarWarsCharacter {
   id: string
@@ -178,6 +178,10 @@ export function StarWarsArena({
 
     if (updated.every((c) => c.unlocked)) {
       await updateTheme('star_wars')
+      const refundRes = await claimThemeRefund('star_wars')
+      if (refundRes.success && refundRes.coins) {
+        setCoins(refundRes.coins)
+      }
     }
   }
 

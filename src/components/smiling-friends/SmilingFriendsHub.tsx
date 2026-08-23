@@ -17,7 +17,7 @@ import {
   Smile,
 } from 'lucide-react'
 import { AnimatedNumber } from '@/components/AnimatedNumber'
-import { updateSmilingFriendsProgress, syncFandiCoins, updateTheme } from '@/app/dashboard/actions'
+import { updateSmilingFriendsProgress, syncFandiCoins, updateTheme, claimThemeRefund } from '@/app/dashboard/actions'
 
 const MAINS = [
   {
@@ -170,6 +170,10 @@ export function SmilingFriendsHub({
 
     if (nextUnlocked.length >= 6) {
       await updateTheme('smiling_friends')
+      const refundRes = await claimThemeRefund('smiling_friends')
+      if (refundRes.success && refundRes.coins) {
+        setCoins(refundRes.coins)
+      }
     }
   }
 

@@ -236,10 +236,14 @@ export function GamesTab({
             </button>
           )}
           <div>
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent text-shadow-sm">
-              {t.gamesTitle}
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight bg-gradient-to-r from-yellow-400 via-amber-300 to-cyan-400 bg-clip-text text-transparent text-shadow-sm">
+              {lang === 'es' ? 'Juegos y Temas' : 'Games & Themes'}
             </h2>
-            <p className="text-xs text-zinc-400 font-medium">{t.pointsDesc}</p>
+            <p className="text-xs text-zinc-400 font-medium">
+              {lang === 'es'
+                ? 'Juega en los mundos temáticos y desbloquea temas exclusivos'
+                : 'Play in themed worlds and unlock exclusive themes'}
+            </p>
           </div>
         </div>
 
@@ -249,13 +253,13 @@ export function GamesTab({
               <Loader2 className="w-3 h-3 animate-spin" /> {t.syncing}
             </span>
           )}
-          <div className="px-4 py-2 rounded-2xl glass-panel border border-emerald-500/30 flex items-center gap-2">
-            <Coins className="w-5 h-5 text-emerald-400 animate-pulse" />
+          <div className="px-4 py-2 rounded-2xl glass-panel border border-yellow-500/30 flex items-center gap-2">
+            <Coins className="w-5 h-5 text-yellow-400 animate-pulse" />
             <div className="flex flex-col">
               <span className="text-[9px] uppercase tracking-widest text-zinc-400 font-black">
                 Fandi Coins
               </span>
-              <span className="text-base sm:text-lg font-black text-emerald-300 leading-none">
+              <span className="text-base sm:text-lg font-black text-yellow-300 leading-none">
                 <AnimatedNumber value={totalCoins} duration={600} />
               </span>
             </div>
@@ -265,105 +269,42 @@ export function GamesTab({
 
       {menu === 'main' && (
         <div className="space-y-6">
-          {/* Horizontal Swiping Carousel for Games */}
+          {/* Horizontal Swiping Carousel for Themed Games */}
           <div className="snap-carousel gap-4 pb-2 pt-1">
-            {/* Smiling Friends Dedicated World */}
+            {/* 1. Smiling Friends Dedicated World */}
             <Link
               href="/games/smiling-friends"
-              className="w-[260px] sm:w-[300px] shrink-0 group relative overflow-hidden rounded-[28px] p-6 bg-gradient-to-br from-[#eab308]/30 via-black/60 to-black border border-[#eab308]/40 hover:border-[#eab308]/70 transition-all touch-feedback flex flex-col items-center text-center justify-center aspect-[4/3] shadow-xl"
+              className="w-[280px] sm:w-[320px] shrink-0 group relative overflow-hidden rounded-[28px] p-6 bg-gradient-to-br from-[#eab308]/30 via-black/60 to-black border border-[#eab308]/40 hover:border-[#eab308]/70 transition-all touch-feedback flex flex-col items-center text-center justify-center aspect-[4/3] shadow-xl"
             >
               <div className="absolute inset-0 bg-[#eab308]/5 group-hover:bg-[#eab308]/10 transition-colors" />
-              <span className="text-5xl sm:text-6xl mb-3 group-hover:scale-110 transition-transform block">
-                😁
+              <span className="text-5xl sm:text-6xl mb-3 group-hover:scale-110 transition-transform block animate-bounce">
+                🐸
               </span>
               <h3 className="text-lg sm:text-xl font-black text-[#eab308] text-shadow-sm">
                 Smiling Friends Labs
               </h3>
-              <p className="text-[11px] text-yellow-200/70 font-medium mt-1">
-                {lang === 'es' ? 'Abrir mundo de minijuegos y tienda' : 'Open world minigames & shop'}
+              <p className="text-[11px] text-yellow-200/80 font-medium mt-1">
+                {lang === 'es' ? '5 Mini-juegos · 6 Personajes · Tema Global' : '5 Minigames · 6 Characters · Global Theme'}
               </p>
             </Link>
 
-            {/* Mole Whack */}
-            <button
-              onClick={() => setMenu('mole-whack')}
-              className="w-[260px] sm:w-[300px] shrink-0 group relative overflow-hidden rounded-[28px] p-6 bg-gradient-to-br from-amber-900/35 via-black/60 to-black border border-amber-500/30 hover:border-amber-500/60 transition-all touch-feedback flex flex-col items-center text-center justify-center aspect-[4/3] shadow-xl"
+            {/* 2. Star Wars Edition */}
+            <Link
+              href="/admin/sandbox/star-wars"
+              className="w-[280px] sm:w-[320px] shrink-0 group relative overflow-hidden rounded-[28px] p-6 bg-gradient-to-br from-cyan-900/35 via-black/60 to-black border border-cyan-500/40 hover:border-cyan-400 transition-all touch-feedback flex flex-col items-center text-center justify-center aspect-[4/3] shadow-xl"
             >
-              <Target className="w-14 h-14 sm:w-16 sm:h-16 text-amber-400 mb-3 group-hover:scale-110 transition-transform" />
-              <h3 className="text-lg sm:text-xl font-black text-amber-300 text-shadow-sm">
-                {t.game2}
+              <div className="absolute inset-0 bg-cyan-500/5 group-hover:bg-cyan-500/10 transition-colors" />
+              <span className="text-5xl sm:text-6xl mb-3 group-hover:scale-110 transition-transform block animate-pulse">
+                ⚔️
+              </span>
+              <h3 className="text-lg sm:text-xl font-black text-cyan-300 text-shadow-sm">
+                Star Wars Edition
               </h3>
-              <p className="text-[11px] text-amber-200/70 font-medium mt-1">
-                {lang === 'es' ? '¡Atrapa las ranas rápidamente!' : 'Fast reaction whacking game'}
+              <p className="text-[11px] text-cyan-200/80 font-medium mt-1">
+                {lang === 'es' ? 'Trinchera · Halcón · Duelo de Sables · Holocrón' : 'Trench Run · Falcon Flight · Saber Duel'}
               </p>
-            </button>
-
-            {/* Fandi Tap */}
-            <button
-              onClick={() => setMenu('fandi-tap')}
-              className="w-[260px] sm:w-[300px] shrink-0 group relative overflow-hidden rounded-[28px] p-6 bg-gradient-to-br from-purple-900/35 via-black/60 to-black border border-purple-500/30 hover:border-purple-500/60 transition-all touch-feedback flex flex-col items-center text-center justify-center aspect-[4/3] shadow-xl"
-            >
-              <Zap className="w-14 h-14 sm:w-16 sm:h-16 text-purple-400 mb-3 group-hover:scale-110 transition-transform" />
-              <h3 className="text-lg sm:text-xl font-black text-purple-300 text-shadow-sm">
-                {t.game1}
-              </h3>
-              <p className="text-[11px] text-purple-200/70 font-medium mt-1">
-                {lang === 'es' ? 'Toca rápido para combos' : 'Tap fast for combo multipliers'}
-              </p>
-            </button>
+            </Link>
           </div>
-
-          {/* Rewards Shop Accordion */}
-          <details open className="group/shop glass-panel rounded-[28px] p-5 sm:p-6 shadow-xl border border-white/10">
-            <summary className="cursor-pointer list-none flex items-center justify-between gap-3 select-none mb-3">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-                  <ShoppingBag className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-lg sm:text-xl font-black text-zinc-100 text-shadow-sm flex items-center gap-2">
-                    {t.shopTitle}
-                  </h3>
-                </div>
-              </div>
-              <ChevronDown className="w-5 h-5 text-zinc-400 group-open/shop:rotate-180 transition-transform duration-300" />
-            </summary>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-80 overflow-y-auto pr-1 custom-scrollbar pt-2">
-              {rewards.map((r) => {
-                const canAfford = totalCoins >= r.price
-                return (
-                  <div
-                    key={r.name}
-                    className="flex items-center justify-between p-3 rounded-2xl bg-black/40 border border-white/10 hover:border-emerald-500/30 transition-all gap-2"
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <span className="text-2xl shrink-0">{r.emoji}</span>
-                      <div className="min-w-0">
-                        <span className="font-bold text-zinc-100 text-xs sm:text-sm truncate block">
-                          {r.name}
-                        </span>
-                        <span className="text-[10px] text-emerald-400 font-bold">
-                          {r.price.toLocaleString()} Fandi Coins
-                        </span>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => canAfford && setConfirmReward(r)}
-                      disabled={!canAfford}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 touch-feedback ${
-                        canAfford
-                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
-                          : 'bg-zinc-800/40 text-zinc-500 border border-white/5 cursor-not-allowed'
-                      }`}
-                    >
-                      {canAfford ? t.redeem : t.notEnough}
-                    </button>
-                  </div>
-                )
-              })}
-            </div>
-          </details>
         </div>
       )}
 

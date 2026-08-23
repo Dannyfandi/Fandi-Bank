@@ -13,6 +13,8 @@ import { EventInvitationsClient } from '@/components/EventInvitationsClient'
 import { SubmitButton } from '@/components/SubmitButton'
 import { QuickActionGrid } from '@/components/QuickActionGrid'
 import { BottomNav } from '@/components/BottomNav'
+import { ShopSection } from '@/components/ShopSection'
+import { ThemeToggleWidget } from '@/components/ThemeToggleWidget'
 import {
   Star,
   User,
@@ -129,6 +131,12 @@ export default async function DashboardPage() {
     .eq('user_id', user.id)
     .in('status', ['pending', 'accepted'])
     .order('created_at', { ascending: false })
+
+  // Fetch all user profiles for friend invitations in Suggest Event
+  const { data: allUsers } = await supabase
+    .from('profiles')
+    .select('id, username, avatar_url')
+    .order('username', { ascending: true })
 
   let { score, isSuspended } = calculateCreditScore((debts || []) as DebtForCredit[])
 
@@ -335,13 +343,16 @@ export default async function DashboardPage() {
           </div>
         </main>
 
-        {/* Games & Rewards Section */}
+        {/* Games & Themes Section */}
         <GamesTab
           lang={lang}
           initialProgress={profile?.sf_progress}
           initialCoins={profile?.fandi_coins || 0}
           initialVersion={profile?.coin_sync_version || 0}
         />
+
+        {/* Dedicated Shop & Rewards Section */}
+        <ShopSection userCoins={profile?.fandi_coins || 0} lang={lang} />
 
         {/* Experimental Tab */}
         <ExperimentalTab lang={lang} />
@@ -372,9 +383,17 @@ export default async function DashboardPage() {
         role={profile?.role}
         lang={lang}
         hasEvents={!!(invitations && invitations.length > 0)}
+        friendsList={allUsers || []}
       />
 
-      {/* Support Chat Floating Widget */}
+      {/* Floating Theme Selector on the Left */}
+      <ThemeToggleWidget
+        activeTheme={profile?.active_theme || 'normal'}
+        hasSmilingFriends={(profile?.sf_progress?.unlocked_mains?.length || 0) >= 6}
+        hasStarWars={profile?.active_theme === 'star_wars' || ((profile?.sf_progress?.unlocked_mains?.length || 0) >= 6)}
+      />
+
+      {/* Support Chat Floating Widget on the Right */}
       {adminId && (
         <div className="mb-14 sm:mb-0">
           <ChatWidget userId={user.id} adminId={adminId} initialMessages={chatMessages} />

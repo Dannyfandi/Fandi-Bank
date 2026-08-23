@@ -153,8 +153,8 @@ export function AdminDebtReceipts({ debtsByUser, allocations, t }: any) {
                   <span className="font-bold text-zinc-100 text-sm sm:text-base">
                     {group.username}
                   </span>
-                  <span className="text-[10px] uppercase tracking-widest font-black text-zinc-400 bg-white/10 px-2.5 py-0.5 rounded-full">
-                    {group.debts.length} {t.receipts}
+                  <span className="text-[10px] uppercase tracking-widest font-black text-purple-300 bg-purple-500/20 border border-purple-500/30 px-2.5 py-0.5 rounded-full">
+                    {group.debts.length} Total Debts
                   </span>
                 </div>
                 <ChevronDown className="w-4 h-4 text-zinc-400 group-open/userDebts:rotate-180 transition-transform duration-300" />
