@@ -7,7 +7,7 @@ import { formatCOP } from '@/utils/currency'
 
 type Profile = { id: string, username: string, email: string }
 
-export function AdminParser({ users }: { users: Profile[] }) {
+export function AdminParser({ users, onClose }: { users: Profile[]; onClose?: () => void }) {
   const [text, setText] = useState('')
   const [parsedData, setParsedData] = useState<{name: string, entries: any[]}>({ name: '', entries: [] })
   const [selectedUserId, setSelectedUserId] = useState('')
@@ -77,6 +77,9 @@ export function AdminParser({ users }: { users: Profile[] }) {
     setParsedData({ name: '', entries: [] })
     setText('')
     setDebugMsg('Successfully committed to Database! 🎉')
+    if (onClose) {
+      setTimeout(onClose, 1200)
+    }
   }
 
   return (

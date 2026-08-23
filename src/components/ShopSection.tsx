@@ -12,14 +12,28 @@ interface Reward {
   emoji: string
 }
 
-const DEFAULT_REWARDS: Reward[] = [
-  { name: '1 Cerveza fría', price: 500, emoji: '🍺' },
-  { name: '1 Café premium', price: 350, emoji: '☕' },
-  { name: '1 Snack / Dulce', price: 200, emoji: '🍫' },
-  { name: '1 Almuerzo ejecutivo', price: 1500, emoji: '🍔' },
-  { name: '1 Día libre de favores', price: 3000, emoji: '👑' },
-  { name: '1 Entrada a cine', price: 2500, emoji: '🍿' },
-]
+const REWARDS_I18N = {
+  es: [
+    { name: 'Galletas Oreo (paq. de 4)', price: 2300, emoji: '🍪' },
+    { name: 'Paquete de Gomas', price: 3500, emoji: '🍬' },
+    { name: 'Media Marlboro Rojo', price: 7000, emoji: '🚬' },
+    { name: 'Media Lucky Sandía', price: 7000, emoji: '🚬' },
+    { name: 'Helado C&W (800ml)', price: 32900, emoji: '🍨' },
+    { name: 'Helado C&W (1.5L)', price: 44900, emoji: '🍦' },
+    { name: 'Bacardí Mojito (750ml)', price: 56000, emoji: '🍹' },
+    { name: 'Bacardí Zombie (750ml)', price: 59400, emoji: '🧟' },
+  ],
+  en: [
+    { name: 'Oreo Cookies (4-pack)', price: 2300, emoji: '🍪' },
+    { name: 'Gummy Package', price: 3500, emoji: '🍬' },
+    { name: 'Media Marlboro Rojo', price: 7000, emoji: '🚬' },
+    { name: 'Media Lucky Sandía', price: 7000, emoji: '🚬' },
+    { name: 'C&W Ice Cream (800ml)', price: 32900, emoji: '🍨' },
+    { name: 'C&W Ice Cream (1.5L)', price: 44900, emoji: '🍦' },
+    { name: 'Bacardí Mojito (750ml)', price: 56000, emoji: '🍹' },
+    { name: 'Bacardí Zombie (750ml)', price: 59400, emoji: '🧟' },
+  ],
+}
 
 export function ShopSection({
   userCoins = 0,
@@ -28,7 +42,7 @@ export function ShopSection({
   userCoins?: number
   lang?: 'en' | 'es'
 }) {
-  const [rewards] = useState<Reward[]>(DEFAULT_REWARDS)
+  const rewards = REWARDS_I18N[lang] || REWARDS_I18N.es
   const [confirmReward, setConfirmReward] = useState<Reward | null>(null)
   const [isRequesting, setIsRequesting] = useState(false)
   const [requestMsg, setRequestMsg] = useState('')

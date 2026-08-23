@@ -235,7 +235,7 @@ export default async function AdminPage() {
 
   const isSmiling = profile?.active_theme === 'smiling_friends'
   const isStarWars = profile?.active_theme === 'star_wars'
-  const logoSrc = isStarWars ? '/sw_logo.svg' : isSmiling ? '/sf_logo.png' : '/logo.png'
+  const logoSrc = isStarWars ? '/sw_logo.png' : isSmiling ? '/sf_logo.png' : '/logo.png'
 
   // Count pending items for badges
   const pendingLoans = loans?.filter((l) => l.status === 'pending') || []
