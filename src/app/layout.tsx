@@ -35,21 +35,50 @@ export default async function RootLayout({
   }
 
   const isSmiling = theme === 'smiling_friends'
+  const isStarWars = theme === 'star_wars'
 
   return (
-      <html
+    <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className={`min-h-full flex flex-col bg-black text-zinc-50 relative overflow-x-hidden ${isSmiling ? 'selection:bg-[#eab308]/30 smiling-theme' : 'selection:bg-purple-500/30'}`} suppressHydrationWarning>
-        
+      <body
+        className={`min-h-full flex flex-col bg-black text-zinc-50 relative overflow-x-hidden ${
+          isStarWars
+            ? 'selection:bg-cyan-500/30 star-wars-theme bg-[#05070E]'
+            : isSmiling
+            ? 'selection:bg-[#eab308]/30 smiling-theme'
+            : 'selection:bg-purple-500/30'
+        }`}
+        suppressHydrationWarning
+      >
         {/* Abstract / Animated Background Layer */}
         <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none bg-black">
-          {isSmiling ? (
+          {isStarWars ? (
+            <>
+              {/* Star Wars Deep Cosmos & Starfield Backdrop */}
+              <div
+                className="absolute inset-0 bg-[#05070E]"
+                style={{
+                  backgroundImage:
+                    'radial-gradient(1.5px 1.5px at 25px 35px, #ffffff, rgba(0,0,0,0)), radial-gradient(2px 2px at 120px 180px, #00E5FF, rgba(0,0,0,0)), radial-gradient(1.5px 1.5px at 280px 310px, #FF1E56, rgba(0,0,0,0)), radial-gradient(2px 2px at 450px 380px, #FFB800, rgba(0,0,0,0))',
+                  backgroundSize: '500px 500px',
+                }}
+              />
+              <div className="absolute -top-[20%] -left-[10%] w-[70vw] h-[70vh] rounded-full bg-cyan-600/20 mix-blend-screen filter blur-[130px] opacity-70 animate-glass-1" />
+              <div className="absolute top-[20%] -right-[20%] w-[60vw] h-[80vh] rounded-full bg-red-600/15 mix-blend-screen filter blur-[140px] opacity-60 animate-glass-2" />
+              <div className="absolute -bottom-[20%] left-[20%] w-[80vw] h-[60vh] rounded-full bg-blue-600/15 mix-blend-screen filter blur-[130px] opacity-50 animate-glass-3" />
+              <div className="absolute inset-0 bg-black/40 backdrop-blur-[20px]" />
+            </>
+          ) : isSmiling ? (
             <>
               {/* Background artwork — visible but softened */}
-              <img src="/sf_bg.jpg" alt="" className="absolute inset-0 w-full h-full object-cover blur-[12px] opacity-50 scale-105" />
+              <img
+                src="/sf_bg.jpg"
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover blur-[12px] opacity-50 scale-105"
+              />
               <div className="absolute inset-0 bg-black/30" />
               {/* Warm animated blobs on top */}
               <div className="absolute -top-[20%] -left-[10%] w-[70vw] h-[70vh] rounded-full bg-yellow-500/15 mix-blend-screen filter blur-[120px] opacity-70 animate-glass-1" />

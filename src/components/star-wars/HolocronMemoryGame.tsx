@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { Sparkles, Brain, Award, RotateCcw } from 'lucide-react'
+import { useState, useRef } from 'react'
+import { Brain, Award, RotateCcw } from 'lucide-react'
 import { starWarsAudio } from '@/utils/starWarsAudio'
 
 const HOLOCRONS = [
@@ -24,6 +24,7 @@ export function HolocronMemoryGame({
   const [activeHolocron, setActiveHolocron] = useState<number | null>(null)
   const [isDisplaying, setIsDisplaying] = useState(false)
   const [stage, setStage] = useState(1)
+  const [highScore, setHighScore] = useState(1)
   const [gameOver, setGameOver] = useState(false)
   const [gameWon, setGameWon] = useState(false)
   const [earnedCoins, setEarnedCoins] = useState(0)
@@ -48,14 +49,18 @@ export function HolocronMemoryGame({
   }
 
   const playSequence = async (seq: number[]) => {
-    await new Promise((r) => setTimeout(r, 600))
+    // Speed increases slightly at higher levels for snappy play
+    const stepDuration = Math.max(260, 480 - Math.min(seq.length * 6, 200))
+    const pauseDuration = Math.max(120, 200 - Math.min(seq.length * 4, 80))
+
+    await new Promise((r) => setTimeout(r, 500))
     for (let i = 0; i < seq.length; i++) {
       const holocronIndex = seq[i]
       setActiveHolocron(holocronIndex)
       starWarsAudio.playKyberChime(HOLOCRONS[holocronIndex].freq)
-      await new Promise((r) => setTimeout(r, 500))
+      await new Promise((r) => setTimeout(r, stepDuration))
       setActiveHolocron(null)
-      await new Promise((r) => setTimeout(r, 200))
+      await new Promise((r) => setTimeout(r, pauseDuration))
     }
     setIsDisplaying(false)
   }
@@ -65,29 +70,32 @@ export function HolocronMemoryGame({
 
     setActiveHolocron(index)
     starWarsAudio.playKyberChime(HOLOCRONS[index].freq)
-    setTimeout(() => setActiveHolocron(null), 250)
+    setTimeout(() => setActiveHolocron(null), 200)
 
     if (sequence[userStep] === index) {
       // Correct step
       const nextStep = userStep + 1
       if (nextStep === sequence.length) {
         // Stage completed!
-        const bonus = 5
-        if (earnedRef.current < 35) {
-          earnedRef.current += bonus
+        const nextStage = stage + 1
+        setStage(nextStage)
+        if (nextStage > highScore) setHighScore(nextStage)
+
+        // Award +2 coins every 2 stages up to 30 coins
+        if (nextStage % 2 === 0 && earnedRef.current < 30) {
+          earnedRef.current += 2
           setEarnedCoins(earnedRef.current)
-          onAddCoins(bonus)
+          onAddCoins(2)
         }
 
-        if (stage >= 7) {
-          // Master of the Holocrons!
+        if (nextStage >= 100) {
+          // Ultimate Grand Master Level 100 reached!
           setGameWon(true)
           setIsPlaying(false)
           if (onComplete) onComplete()
         } else {
-          setStage((s) => s + 1)
           const nextSeq = [...sequence, Math.floor(Math.random() * 4)]
-          setTimeout(() => startRound(nextSeq), 800)
+          setTimeout(() => startRound(nextSeq), 650)
         }
       } else {
         setUserStep(nextStep)
@@ -110,49 +118,65 @@ export function HolocronMemoryGame({
           </div>
           <div>
             <h3 className="font-black text-sm sm:text-base text-amber-300 text-shadow-sm">
-              Holocron Memory Matrix
+              Holocron Memory Matrix (Hasta Nivel 100)
             </h3>
             <p className="text-[10px] text-amber-400/70 uppercase tracking-widest font-semibold">
-              Force resonant sequence memory
+              Desafío de memoria Jedi de 100 niveles
             </p>
           </div>
         </div>
 
-        <div className="px-3 py-1 rounded-full bg-amber-950/60 border border-amber-500/30 text-xs font-black text-amber-300">
-          Nivel {stage}/7
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] uppercase font-bold text-zinc-500">
+            Récord: Lvl {highScore}
+          </span>
+          <div className="px-3 py-1 rounded-full bg-amber-950/60 border border-amber-500/30 text-xs font-black text-amber-300">
+            Nivel {stage}/100
+          </div>
         </div>
       </div>
 
-      {/* Main Interactive Matrix Area */}
-      <div className="relative w-full h-80 sm:h-96 rounded-2xl bg-slate-950/90 border border-amber-500/20 overflow-hidden shadow-inner flex items-center justify-center p-6">
+      {/* Main Altar View with Ancient Temple Background */}
+      <div
+        className="relative w-full h-84 sm:h-96 rounded-2xl bg-slate-950/95 border border-amber-500/30 overflow-hidden shadow-inner flex items-center justify-center p-6"
+        style={{
+          backgroundImage:
+            'radial-gradient(circle at 50% 50%, rgba(255, 184, 0, 0.12) 0%, transparent 80%)',
+        }}
+      >
+        {/* Ancient Altar Temple Glyphs Overlay */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none text-6xl">
+          🏛️
+        </div>
+
         {!isPlaying && !gameOver && !gameWon && (
           <div className="text-center p-6 space-y-3 z-10 animate-spring-scale">
             <span className="text-5xl block animate-spin">💠</span>
             <h4 className="text-lg sm:text-xl font-black text-zinc-100">
-              Desbloquea la Sabiduría Jedi
+              Desafío de la Matriz Holocrón
             </h4>
             <p className="text-xs text-zinc-400 max-w-xs mx-auto">
-              Observa y memoriza el patrón de luz de los 4 Holocrones. Repite la secuencia
-              exacta.
+              Memoriza la secuencia y repite los patrones. Cada nivel añade una nota a la
+              melodía de la Fuerza hasta el nivel 100.
             </p>
             <button
               onClick={startGame}
               className="px-6 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black font-black uppercase text-xs tracking-wider rounded-2xl shadow-lg shadow-amber-500/30 touch-feedback"
             >
-              Iniciar Meditación
+              Iniciar Meditación de 100 Niveles
             </button>
           </div>
         )}
 
         {gameWon && (
           <div className="text-center p-6 space-y-3 z-10 animate-spring-scale">
-            <Award className="w-14 h-14 text-amber-400 mx-auto animate-bounce" />
+            <Award className="w-16 h-16 text-amber-400 mx-auto animate-bounce" />
             <h4 className="text-xl font-black text-amber-300">
-              ¡Maestro de la Fuerza!
+              ¡NIVEL 100 ALCANZADO! Gran Maestro de la Orden!
             </h4>
             <p className="text-xs text-zinc-300">
-              Has dominado los 7 niveles del Holocrón. Recompensa:{' '}
-              <strong className="text-emerald-400">+{earnedCoins} Coins</strong>
+              Has logrado una hazaña legendaria. Recompensa:{' '}
+              <strong className="text-emerald-400">+{earnedCoins} Fandi Coins</strong>
             </p>
             <button
               onClick={startGame}
@@ -167,11 +191,12 @@ export function HolocronMemoryGame({
           <div className="text-center p-6 space-y-3 z-10 animate-spring-scale">
             <span className="text-5xl block">⚡</span>
             <h4 className="text-xl font-black text-red-400">
-              Perturbación en la Fuerza
+              Secuencia Interrumpida
             </h4>
             <p className="text-xs text-zinc-300">
-              Nivel Alcanzado: <strong className="text-amber-400">{stage}</strong> ·
-              Monedas Ganadas: <strong className="text-emerald-400">+{earnedCoins}</strong>
+              Nivel Alcanzado: <strong className="text-amber-400">Lvl {stage}</strong> ·
+              Monedas:{' '}
+              <strong className="text-emerald-400">+{earnedCoins}</strong>
             </p>
             <button
               onClick={startGame}
@@ -182,9 +207,9 @@ export function HolocronMemoryGame({
           </div>
         )}
 
-        {/* 4 Holocrons Grid */}
+        {/* 4 Holocrons Interactive Altar */}
         {isPlaying && (
-          <div className="grid grid-cols-2 gap-4 w-full max-w-[280px] aspect-square">
+          <div className="grid grid-cols-2 gap-4 w-full max-w-[280px] aspect-square relative z-10">
             {HOLOCRONS.map((h, i) => {
               const isActive = activeHolocron === i
               return (
@@ -192,10 +217,10 @@ export function HolocronMemoryGame({
                   key={h.id}
                   disabled={isDisplaying}
                   onClick={() => handleHolocronTap(i)}
-                  className={`rounded-3xl border-2 transition-all duration-150 flex flex-col items-center justify-center relative overflow-hidden touch-feedback ${
+                  className={`rounded-3xl border-2 transition-all duration-100 flex flex-col items-center justify-center relative overflow-hidden touch-feedback ${
                     isActive
-                      ? 'scale-95 shadow-[0_0_35px_var(--glow)] border-white'
-                      : 'bg-black/40 border-white/10 opacity-70 hover:opacity-100 hover:border-white/30'
+                      ? 'scale-95 shadow-[0_0_40px_var(--glow)] border-white'
+                      : 'bg-black/50 border-white/10 opacity-75 hover:opacity-100 hover:border-white/30'
                   }`}
                   style={
                     {
@@ -205,12 +230,12 @@ export function HolocronMemoryGame({
                   }
                 >
                   <div
-                    className={`absolute inset-0 transition-opacity duration-150 ${
-                      isActive ? 'opacity-40' : 'opacity-10'
+                    className={`absolute inset-0 transition-opacity duration-100 ${
+                      isActive ? 'opacity-50' : 'opacity-10'
                     }`}
                     style={{ backgroundColor: h.color }}
                   />
-                  <span className="text-3xl sm:text-4xl mb-1 relative z-10">
+                  <span className="text-3xl sm:text-4xl mb-1 relative z-10 drop-shadow">
                     {h.emoji}
                   </span>
                   <span
@@ -229,13 +254,13 @@ export function HolocronMemoryGame({
       {/* Footer Metrics */}
       <div className="flex items-center justify-between text-xs px-2">
         <span className="text-zinc-400 font-bold">
-          Progreso:{' '}
+          Paso Actual:{' '}
           <strong className="text-amber-400">
             {userStep}/{sequence.length}
           </strong>
         </span>
         <span className="text-emerald-400 font-black">
-          +{earnedCoins} Fandi Coins
+          +{earnedCoins} Coins
         </span>
       </div>
     </div>

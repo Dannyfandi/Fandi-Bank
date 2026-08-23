@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <radialGradient id="ybg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00E5FF" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#05070E" stop-opacity="0.95"/>
+    </radialGradient>
+    <filter id="yglow">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="200" height="200" rx="24" fill="url(#ybg)" stroke="#00E5FF" stroke-width="2"/>
+  <!-- Yoda Ears -->
+  <polygon points="40,80 80,70 70,90" fill="#00E5FF" fill-opacity="0.3" stroke="#00E5FF" stroke-width="2"/>
+  <polygon points="160,80 120,70 130,90" fill="#00E5FF" fill-opacity="0.3" stroke="#00E5FF" stroke-width="2"/>
+  <!-- Head -->
+  <circle cx="100" cy="85" r="24" fill="#00E5FF" fill-opacity="0.25" stroke="#00E5FF" stroke-width="2" filter="url(#yglow)"/>
+  <!-- Eyes -->
+  <circle cx="90" cy="85" r="4" fill="#00E5FF"/>
+  <circle cx="110" cy="85" r="4" fill="#00E5FF"/>
+  <!-- Robe -->
+  <path d="M70 160 C 70 120, 130 120, 130 160 Z" fill="#00E5FF" fill-opacity="0.2" stroke="#00E5FF" stroke-width="2"/>
+  <text x="100" y="185" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="900" font-size="11" fill="#00E5FF" letter-spacing="2">MASTER YODA</text>
+</svg>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import Link from 'next/link'
 import {
   Zap,
   ShoppingBag,
@@ -266,9 +267,9 @@ export function GamesTab({
         <div className="space-y-6">
           {/* Horizontal Swiping Carousel for Games */}
           <div className="snap-carousel gap-4 pb-2 pt-1">
-            {/* Smiling Friends */}
-            <button
-              onClick={() => setMenu('smiling-friends')}
+            {/* Smiling Friends Dedicated World */}
+            <Link
+              href="/games/smiling-friends"
               className="w-[260px] sm:w-[300px] shrink-0 group relative overflow-hidden rounded-[28px] p-6 bg-gradient-to-br from-[#eab308]/30 via-black/60 to-black border border-[#eab308]/40 hover:border-[#eab308]/70 transition-all touch-feedback flex flex-col items-center text-center justify-center aspect-[4/3] shadow-xl"
             >
               <div className="absolute inset-0 bg-[#eab308]/5 group-hover:bg-[#eab308]/10 transition-colors" />
@@ -279,9 +280,9 @@ export function GamesTab({
                 Smiling Friends Labs
               </h3>
               <p className="text-[11px] text-yellow-200/70 font-medium mt-1">
-                {lang === 'es' ? 'Minijuegos y desbloqueables' : 'Minigames & Character unlocks'}
+                {lang === 'es' ? 'Abrir mundo de minijuegos y tienda' : 'Open world minigames & shop'}
               </p>
-            </button>
+            </Link>
 
             {/* Mole Whack */}
             <button

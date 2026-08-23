@@ -337,14 +337,14 @@ export default async function AdminPage() {
         </header>
 
         {/* Grand Total Hero Card with AnimatedNumber */}
-        <div className="p-6 sm:p-8 glass-panel-heavy rounded-[32px] border border-violet-500/30 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+        <div className="p-6 sm:p-8 glass-panel-heavy rounded-[32px] border border-violet-500/40 shadow-2xl relative overflow-hidden bg-violet-950/20">
+          <div className="absolute top-0 right-0 p-8 opacity-15 pointer-events-none">
             <Shield className="w-32 h-32 text-violet-400" />
           </div>
           <p className="text-xs sm:text-sm font-black text-violet-300 uppercase tracking-widest mb-1.5 flex items-center gap-2 text-shadow-sm">
             <Shield className="w-4 h-4 text-violet-400" /> {t.grandTotal}
           </p>
-          <p className="text-3xl sm:text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-200 via-purple-200 to-indigo-300 tracking-tight text-shadow-md">
+          <p className="text-3xl sm:text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-300 via-violet-200 to-cyan-300 tracking-tight text-shadow-lg drop-shadow-[0_0_30px_rgba(192,132,252,0.45)]">
             <AnimatedNumber value={grandTotal} formatAsCurrency={true} duration={900} />
           </p>
         </div>

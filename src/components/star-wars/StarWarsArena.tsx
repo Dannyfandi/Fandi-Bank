@@ -8,7 +8,7 @@ import {
   Award,
   Lock,
   Unlock,
-  CheckCircle,
+  Coins,
   Brain,
   Rocket,
   Compass,
@@ -16,8 +16,7 @@ import {
   RotateCcw,
   Star,
   Send,
-  Eye,
-  Layers,
+  HelpCircle,
 } from 'lucide-react'
 import { AnimatedNumber } from '@/components/AnimatedNumber'
 import { starWarsAudio } from '@/utils/starWarsAudio'
@@ -26,99 +25,106 @@ import { TrenchRunGame } from './TrenchRunGame'
 import { FalconFlightGame } from './FalconFlightGame'
 import { HolocronMemoryGame } from './HolocronMemoryGame'
 import { CantinaQuickDrawGame } from './CantinaQuickDrawGame'
-import { syncFandiCoins } from '@/app/dashboard/actions'
+import { syncFandiCoins, updateTheme } from '@/app/dashboard/actions'
 
-interface Character {
+export interface StarWarsCharacter {
   id: string
   name: string
   title: string
-  avatar: string
+  image: string
   color: string
+  cost: number
   perk: string
   perkDetail: string
   unlocked: boolean
   quote: string
 }
 
-const INITIAL_CHARACTERS: Character[] = [
+const INITIAL_CHARACTERS: StarWarsCharacter[] = [
   {
     id: 'luke',
     name: 'Luke Skywalker',
-    title: 'Jedi Knight',
-    avatar: '⚔️',
+    title: 'Caballero Jedi',
+    image: '/star-wars/luke.svg',
     color: '#00FF66',
-    perk: 'Green Lightsaber Accent Glow',
-    perkDetail: 'Enables emerald vector illumination around active debts and navigation.',
-    unlocked: true, // starts unlocked as hero
-    quote: 'I am a Jedi, like my father before me.',
+    cost: 250,
+    perk: 'Aura Verde de Sable de Luz',
+    perkDetail: 'Iluminación esmeralda en el balance y tarjetas activas. Toca para encender el sable.',
+    unlocked: false,
+    quote: 'Soy un Jedi, como mi padre antes que yo.',
   },
   {
     id: 'vader',
     name: 'Darth Vader',
-    title: 'Dark Lord of the Sith',
-    avatar: '🦹‍♂️',
+    title: 'Lord Sith',
+    image: '/star-wars/vader.svg',
     color: '#FF1E56',
-    perk: 'Sith Red Borders & Breathing SFX',
-    perkDetail: 'Tapping cards triggers mechanical Sith respirator breath and crimson edge aura.',
+    cost: 450,
+    perk: 'Bordes Carmesí Sith & Respiración SFX',
+    perkDetail: 'Efecto de sonido de respiración mecánica Sith al tocar las tarjetas.',
     unlocked: false,
-    quote: 'You underestimate the power of the Dark Side.',
+    quote: 'Subestimas el poder del Lado Oscuro.',
   },
   {
     id: 'yoda',
     name: 'Master Yoda',
-    title: 'Grand Master',
-    avatar: '🧙‍♂️',
+    title: 'Gran Maestro',
+    image: '/star-wars/yoda.svg',
     color: '#00E5FF',
-    perk: 'Jedi Wisdom Daily Tip Widget',
-    perkDetail: 'Interactive holographic daily advice for debt repayment and financial Force.',
+    cost: 650,
+    perk: 'Widget de Sabiduría Jedi',
+    perkDetail: 'Consejos financieros y de paz mental interactivos con la Fuerza.',
     unlocked: false,
-    quote: 'Do or do not. There is no try.',
+    quote: 'Hazlo o no lo hagas, pero no lo intentes.',
   },
   {
     id: 'ahsoka',
     name: 'Ahsoka Tano',
     title: 'Fulcrum',
-    avatar: '🗡️',
+    image: '/star-wars/ahsoka.svg',
     color: '#FFFFFF',
-    perk: 'Dual-Wielding Swipe Gestures',
-    perkDetail: 'Fast dual gesture shortcuts to swipe between debts and payments seamlessly.',
+    cost: 850,
+    perk: 'Gestos Rápidos de Doble Sable',
+    perkDetail: 'Navegación veloz y fluidos accesos directos táctiles.',
     unlocked: false,
-    quote: 'I am no Jedi.',
+    quote: 'No soy una Jedi.',
   },
   {
     id: 'rez',
-    name: 'Commander Rez',
-    title: 'Clone Captain',
-    avatar: '🎖️',
+    name: 'Commander Rex',
+    title: 'Capitán Clon',
+    image: '/star-wars/rex.svg',
     color: '#3B82F6',
-    perk: 'Blaster-Speed Fast-Pay Action',
-    perkDetail: 'One-tap QuickPay shortcut with blaster SFX for rapid debt amortization.',
+    cost: 1100,
+    perk: 'Acción Rápida Blaster Fast-Pay',
+    perkDetail: 'Botón de amortización rápida con sonido de disparo láser.',
     unlocked: false,
-    quote: 'Good soldiers follow orders. Great soldiers question them.',
+    quote: 'La experiencia supera a la suerte.',
   },
   {
     id: 'obiwan',
     name: 'Obi-Wan Kenobi',
-    title: 'Jedi Master',
-    avatar: '🧘‍♂️',
+    title: 'Maestro Jedi',
+    image: '/star-wars/obiwan.svg',
     color: '#FFB800',
-    perk: 'High-Ground Sticky Navigation Header',
-    perkDetail: 'Permanent elevated navigation bar with Force clarity floating above content.',
+    cost: 1400,
+    perk: 'Cabecera Flotante del Terreno Alto',
+    perkDetail: 'Barra de navegación elevada fija con claridad de la Fuerza.',
     unlocked: false,
-    quote: 'The Force will be with you, always.',
+    quote: 'La Fuerza estará contigo, siempre.',
   },
 ]
 
 const YODA_WISDOMS = [
-  'Do or do not. There is no try.',
-  'Pay your debts first, peace of mind follows.',
-  'Patience you must have, young padawan.',
-  'A debt repaid is a burden lifted into the light.',
-  'Fear of loss is a path to the dark side.',
+  'Hazlo o no lo hagas, pero no lo intentes.',
+  'Paga tus deudas primero, la paz mental llegará.',
+  'Paciencia debes tener, joven padawan.',
+  'Una deuda saldada es una carga liberada hacia la luz.',
+  'El miedo a la pérdida es un camino hacia el lado oscuro.',
 ]
 
 export function StarWarsArena({
-  initialCoins = 150,
+  initialCoins = 250,
   initialVersion = 0,
 }: {
   initialCoins?: number
@@ -126,20 +132,19 @@ export function StarWarsArena({
 }) {
   const [coins, setCoins] = useState(initialCoins)
   const [coinVersion, setCoinVersion] = useState(initialVersion)
-  const [characters, setCharacters] = useState<Character[]>(INITIAL_CHARACTERS)
+  const [characters, setCharacters] = useState<StarWarsCharacter[]>(INITIAL_CHARACTERS)
   const [activeGame, setActiveGame] = useState<
     'duel' | 'trench' | 'falcon' | 'holocron' | 'cantina'
   >('duel')
   const [yodaWisdom, setYodaWisdom] = useState(YODA_WISDOMS[0])
   const [fastPaySuccess, setFastPaySuccess] = useState(false)
-  const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(
-    INITIAL_CHARACTERS[0]
-  )
+  const [selectedCharacter, setSelectedCharacter] = useState<StarWarsCharacter | null>(null)
+  const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({})
 
   const unlockedCount = characters.filter((c) => c.unlocked).length
   const allUnlocked = unlockedCount === 6
 
-  // Coin handler with Supabase sync
+  // Coin Handler with Server Sync
   const handleAddCoins = async (amount: number) => {
     const nextCoins = coins + amount
     const nextVersion = coinVersion + 1
@@ -148,45 +153,54 @@ export function StarWarsArena({
     try {
       await syncFandiCoins(nextCoins, nextVersion)
     } catch {
-      // Offline fallback
+      // offline fallback
     }
   }
 
-  // Character unlock triggers on minigame completion
-  const handleGameComplete = () => {
-    // Unlock next character in sequence if locked
-    setCharacters((prev) => {
-      const nextLockedIndex = prev.findIndex((c) => !c.unlocked)
-      if (nextLockedIndex !== -1) {
-        const updated = [...prev]
-        updated[nextLockedIndex] = { ...updated[nextLockedIndex], unlocked: true }
-        starWarsAudio.playKyberChime(880)
-        return updated
-      }
-      return prev
-    })
+  // Spend Coins to Unlock Character
+  const handleUnlockWithCoins = async (charId: string) => {
+    const target = characters.find((c) => c.id === charId)
+    if (!target || target.unlocked) return
+    if (coins < target.cost) return
+
+    const nextCoins = coins - target.cost
+    const nextVersion = coinVersion + 1
+    setCoins(nextCoins)
+    setCoinVersion(nextVersion)
+    await syncFandiCoins(nextCoins, nextVersion)
+
+    const updated = characters.map((c) =>
+      c.id === charId ? { ...c, unlocked: true } : c
+    )
+    setCharacters(updated)
+    setSelectedCharacter(updated.find((c) => c.id === charId) || null)
+    starWarsAudio.playKyberChime(880)
+
+    if (updated.every((c) => c.unlocked)) {
+      await updateTheme('star_wars')
+    }
   }
 
-  // Admin Sandbox Controls
-  const handleUnlockAll = () => {
-    setCharacters((prev) => prev.map((c) => ({ ...c, unlocked: true })))
+  // Admin Sandbox Quick Unlock All
+  const handleUnlockAll = async () => {
+    const updated = characters.map((c) => ({ ...c, unlocked: true }))
+    setCharacters(updated)
     starWarsAudio.playLightsaberIgnite()
+    await updateTheme('star_wars')
   }
 
   const handleResetCharacters = () => {
     setCharacters(INITIAL_CHARACTERS)
+    setSelectedCharacter(null)
   }
 
-  const handleCharacterClick = (c: Character) => {
+  const handleCharacterClick = (c: StarWarsCharacter) => {
     setSelectedCharacter(c)
-    if (c.id === 'vader') {
-      starWarsAudio.playVaderBreath()
-    } else if (c.id === 'luke') {
-      starWarsAudio.playLightsaberIgnite()
-    } else if (c.id === 'rez') {
-      starWarsAudio.playBlaster()
-    } else {
-      starWarsAudio.playKyberChime(660)
+    if (c.unlocked) {
+      if (c.id === 'vader') starWarsAudio.playVaderBreath()
+      else if (c.id === 'luke') starWarsAudio.playLightsaberIgnite()
+      else if (c.id === 'rez') starWarsAudio.playBlaster()
+      else starWarsAudio.playKyberChime(660)
     }
   }
 
@@ -205,9 +219,9 @@ export function StarWarsArena({
   return (
     <div className="space-y-6 select-none font-sans">
       {/* 1. Star Wars Galactic Header */}
-      <div className="p-6 sm:p-8 rounded-[32px] glass-panel-heavy border border-cyan-500/40 shadow-2xl relative overflow-hidden bg-slate-950/80">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-cyan-500/10 rounded-full blur-[100px] pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-red-500/10 rounded-full blur-[100px] pointer-events-none" />
+      <div className="p-6 sm:p-8 rounded-[32px] glass-panel-heavy border border-cyan-500/40 shadow-2xl relative overflow-hidden bg-slate-950/90">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-cyan-500/15 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-red-500/15 rounded-full blur-[100px] pointer-events-none" />
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
           <div>
@@ -219,22 +233,22 @@ export function StarWarsArena({
                 AUREBESH // 0x77A
               </span>
             </div>
-            <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-white to-amber-400 text-shadow-md">
+            <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-white to-amber-300 text-shadow-md">
               Fandi Bank: Star Wars Edition
             </h2>
             <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-              Desbloquea los 6 hologramas galácticos para liberar el tema global de Star Wars.
+              Juega los mini-juegos, gana Fandi Coins y desbloquea los 6 hologramas misteriosos.
             </p>
           </div>
 
           {/* Credits Counter Card */}
-          <div className="p-4 rounded-2xl bg-cyan-950/40 border border-cyan-500/30 flex items-center gap-4 shrink-0 shadow-lg shadow-cyan-950/50">
+          <div className="p-4 rounded-2xl bg-cyan-950/50 border border-cyan-500/40 flex items-center gap-4 shrink-0 shadow-lg shadow-cyan-950/60">
             <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-2xl shadow-[0_0_15px_#00E5FF]">
               💎
             </div>
             <div>
               <p className="text-[10px] uppercase tracking-widest font-black text-cyan-400">
-                Créditos Galácticos
+                Tus Fandi Coins
               </p>
               <p className="text-2xl sm:text-3xl font-black text-cyan-200">
                 <AnimatedNumber value={coins} formatAsCurrency={false} />
@@ -255,18 +269,21 @@ export function StarWarsArena({
                   ¡Tema Global Star Wars Desbloqueado!
                 </h4>
                 <p className="text-xs text-zinc-300">
-                  Los 6 personajes han alcanzado la maestría de la Fuerza.
+                  Ya puedes activarlo en Apariencia y Temas en todo el banco.
                 </p>
               </div>
             </div>
-            <span className="hidden sm:inline-block text-xs font-black uppercase tracking-wider px-3 py-1.5 rounded-xl bg-cyan-400 text-black shadow-md">
-              Activo
-            </span>
+            <button
+              onClick={() => updateTheme('star_wars')}
+              className="text-xs font-black uppercase tracking-wider px-3.5 py-2 rounded-xl bg-cyan-400 text-black shadow-md hover:bg-cyan-300 transition-colors touch-feedback"
+            >
+              Aplicar Tema Ahora
+            </button>
           </div>
         )}
       </div>
 
-      {/* 2. Character Vault (6 Holographic Cards) */}
+      {/* 2. Character Vault (Mystery Holograms with Image Support) */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-sm sm:text-base font-black text-zinc-200 tracking-wider uppercase flex items-center gap-2">
@@ -290,33 +307,69 @@ export function StarWarsArena({
 
         {/* 6 Character Cards Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-          {characters.map((c) => {
+          {characters.map((c, idx) => {
             const isSelected = selectedCharacter?.id === c.id
+            const canAfford = coins >= c.cost
+            const hasImgError = imgErrors[c.id]
+
             return (
               <button
                 key={c.id}
                 onClick={() => handleCharacterClick(c)}
-                className={`p-3.5 rounded-2xl glass-panel border transition-all text-left flex flex-col justify-between relative overflow-hidden touch-feedback ${
+                className={`p-3 rounded-2xl glass-panel border transition-all text-left flex flex-col justify-between relative overflow-hidden touch-feedback ${
                   c.unlocked
                     ? isSelected
                       ? 'border-cyan-400 bg-cyan-950/40 shadow-[0_0_20px_rgba(0,229,255,0.3)]'
-                      : 'border-white/10 bg-slate-950/40 hover:border-white/30'
-                    : 'border-white/5 bg-black/40 opacity-50'
+                      : 'border-white/15 bg-slate-950/60 hover:border-white/30'
+                    : 'border-white/5 bg-black/60 opacity-70 hover:opacity-100'
                 }`}
               >
-                {/* Status Badge */}
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-2xl sm:text-3xl">{c.avatar}</span>
+                {/* Character Image / Secret Silhouette */}
+                <div className="w-full aspect-square rounded-xl overflow-hidden mb-2 bg-black/50 relative flex items-center justify-center border border-white/10">
                   {c.unlocked ? (
-                    <Unlock className="w-3.5 h-3.5 text-cyan-400" />
+                    !hasImgError ? (
+                      <img
+                        src={c.image}
+                        alt={c.name}
+                        onError={() => setImgErrors((prev) => ({ ...prev, [c.id]: true }))}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div
+                        className="w-full h-full flex items-center justify-center font-black text-2xl"
+                        style={{ color: c.color }}
+                      >
+                        ⚔️
+                      </div>
+                    )
                   ) : (
-                    <Lock className="w-3.5 h-3.5 text-zinc-600" />
+                    /* Encrypted Silhouette */
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-slate-950/80 p-2 text-center">
+                      <Lock className="w-6 h-6 text-zinc-600 mb-1 animate-pulse" />
+                      <span className="text-[9px] font-mono text-zinc-500 uppercase">
+                        Holograma #{idx + 1}
+                      </span>
+                    </div>
                   )}
+
+                  {/* Lock / Unlock status pill */}
+                  <div className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/60 backdrop-blur-md">
+                    {c.unlocked ? (
+                      <Unlock className="w-3 h-3 text-cyan-400" />
+                    ) : (
+                      <Lock className="w-3 h-3 text-zinc-500" />
+                    )}
+                  </div>
                 </div>
 
+                {/* Character Name or Encrypted Title */}
                 <div>
-                  <h4 className="font-black text-xs text-zinc-100 truncate">{c.name}</h4>
-                  <p className="text-[9px] font-bold text-zinc-500 truncate">{c.title}</p>
+                  <h4 className="font-black text-xs text-zinc-100 truncate">
+                    {c.unlocked ? c.name : '??? Encriptado'}
+                  </h4>
+                  <p className="text-[9px] font-bold text-zinc-500 truncate">
+                    {c.unlocked ? c.title : `${c.cost} Coins`}
+                  </p>
                 </div>
 
                 {/* Perk Glow Line */}
@@ -329,76 +382,123 @@ export function StarWarsArena({
           })}
         </div>
 
-        {/* Selected Character Perk Details Card */}
+        {/* Selected Character / Unlock Action Drawer */}
         {selectedCharacter && (
           <div
-            className="p-4 sm:p-5 rounded-2xl glass-panel border shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-spring-scale"
+            className="p-4 sm:p-6 rounded-2xl glass-panel border shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-spring-scale"
             style={{
-              borderColor: `${selectedCharacter.color}50`,
-              backgroundColor: 'rgba(15, 23, 42, 0.75)',
+              borderColor: selectedCharacter.unlocked
+                ? `${selectedCharacter.color}50`
+                : 'rgba(255,255,255,0.15)',
+              backgroundColor: 'rgba(15, 23, 42, 0.85)',
             }}
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               <div
-                className="w-12 h-12 rounded-2xl flex items-center justify-center text-3xl border shadow-lg"
+                className="w-16 h-16 rounded-2xl overflow-hidden flex items-center justify-center border shadow-lg shrink-0 bg-black"
                 style={{
-                  backgroundColor: `${selectedCharacter.color}20`,
-                  borderColor: selectedCharacter.color,
-                  boxShadow: `0 0 15px ${selectedCharacter.color}60`,
+                  borderColor: selectedCharacter.unlocked
+                    ? selectedCharacter.color
+                    : '#475569',
                 }}
               >
-                {selectedCharacter.avatar}
+                {selectedCharacter.unlocked ? (
+                  !imgErrors[selectedCharacter.id] ? (
+                    <img
+                      src={selectedCharacter.image}
+                      alt={selectedCharacter.name}
+                      onError={() =>
+                        setImgErrors((prev) => ({
+                          ...prev,
+                          [selectedCharacter.id]: true,
+                        }))
+                      }
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-2xl">⚔️</span>
+                  )
+                ) : (
+                  <Lock className="w-8 h-8 text-zinc-600" />
+                )}
               </div>
+
               <div>
-                <div className="flex items-center gap-2">
-                  <h4 className="font-black text-sm sm:text-base text-zinc-100">
-                    {selectedCharacter.name}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h4 className="font-black text-base text-zinc-100">
+                    {selectedCharacter.unlocked
+                      ? selectedCharacter.name
+                      : 'Holograma Encriptado (???)'}
                   </h4>
-                  <span
-                    className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full border"
-                    style={{
-                      color: selectedCharacter.color,
-                      borderColor: `${selectedCharacter.color}50`,
-                      backgroundColor: `${selectedCharacter.color}15`,
-                    }}
-                  >
-                    {selectedCharacter.perk}
-                  </span>
+                  {selectedCharacter.unlocked && (
+                    <span
+                      className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full border"
+                      style={{
+                        color: selectedCharacter.color,
+                        borderColor: `${selectedCharacter.color}50`,
+                        backgroundColor: `${selectedCharacter.color}15`,
+                      }}
+                    >
+                      {selectedCharacter.perk}
+                    </span>
+                  )}
                 </div>
-                <p className="text-xs text-zinc-300 mt-0.5">
-                  {selectedCharacter.perkDetail}
+
+                <p className="text-xs text-zinc-300 mt-1">
+                  {selectedCharacter.unlocked
+                    ? selectedCharacter.perkDetail
+                    : `Desbloquea este holograma legendario por ${selectedCharacter.cost} Fandi Coins para revelar su verdadera identidad y recompensa.`}
                 </p>
-                <p className="text-[11px] italic text-zinc-400 mt-1">
-                  "{selectedCharacter.quote}"
-                </p>
+
+                {selectedCharacter.unlocked && (
+                  <p className="text-[11px] italic text-zinc-400 mt-1">
+                    "{selectedCharacter.quote}"
+                  </p>
+                )}
               </div>
             </div>
 
-            {/* Interactive Perk Actions */}
-            <div className="shrink-0">
-              {selectedCharacter.id === 'yoda' && selectedCharacter.unlocked && (
+            {/* Action Buttons */}
+            <div className="shrink-0 flex items-center gap-2">
+              {!selectedCharacter.unlocked ? (
                 <button
-                  onClick={getNewYodaWisdom}
-                  className="px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 rounded-xl text-xs font-black uppercase tracking-wider transition-all touch-feedback flex items-center gap-1.5"
+                  onClick={() => handleUnlockWithCoins(selectedCharacter.id)}
+                  disabled={coins < selectedCharacter.cost}
+                  className={`px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all touch-feedback flex items-center gap-2 shadow-lg ${
+                    coins >= selectedCharacter.cost
+                      ? 'bg-gradient-to-r from-cyan-400 to-blue-500 text-black hover:from-cyan-300 hover:to-blue-400 shadow-cyan-500/25'
+                      : 'bg-zinc-800 text-zinc-500 cursor-not-allowed border border-white/5'
+                  }`}
                 >
-                  <Brain className="w-4 h-4" /> Consejo Jedi
+                  <Coins className="w-4 h-4" /> Desbloquear ({selectedCharacter.cost} Coins)
                 </button>
-              )}
-              {selectedCharacter.id === 'rez' && selectedCharacter.unlocked && (
-                <button
-                  onClick={handleFastPayDemo}
-                  className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/40 rounded-xl text-xs font-black uppercase tracking-wider transition-all touch-feedback flex items-center gap-1.5"
-                >
-                  <Send className="w-4 h-4" /> Test Fast-Pay Blaster
-                </button>
+              ) : (
+                <>
+                  {selectedCharacter.id === 'yoda' && (
+                    <button
+                      onClick={getNewYodaWisdom}
+                      className="px-4 py-2.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 rounded-xl text-xs font-black uppercase tracking-wider transition-all touch-feedback flex items-center gap-1.5"
+                    >
+                      <Brain className="w-4 h-4" /> Consejo Jedi
+                    </button>
+                  )}
+                  {selectedCharacter.id === 'rez' && (
+                    <button
+                      onClick={handleFastPayDemo}
+                      className="px-4 py-2.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/40 rounded-xl text-xs font-black uppercase tracking-wider transition-all touch-feedback flex items-center gap-1.5"
+                    >
+                      <Send className="w-4 h-4" /> Test Fast-Pay Blaster
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>
         )}
 
-        {/* Yoda Wisdom Display */}
-        {selectedCharacter?.id === 'yoda' && (
-          <div className="p-4 rounded-2xl bg-cyan-950/30 border border-cyan-500/30 text-center animate-spring-scale">
+        {/* Yoda Wisdom Message */}
+        {selectedCharacter?.id === 'yoda' && selectedCharacter.unlocked && (
+          <div className="p-4 rounded-2xl bg-cyan-950/40 border border-cyan-500/40 text-center animate-spring-scale">
             <p className="text-xs text-cyan-300 font-serif italic">"{yodaWisdom}"</p>
           </div>
         )}
@@ -466,7 +566,7 @@ export function StarWarsArena({
             }`}
           >
             <span className="text-xl">💠</span>
-            <span>Holocron Matrix</span>
+            <span>Holocron Matrix (100 Lvl)</span>
           </button>
 
           <button
@@ -482,38 +582,13 @@ export function StarWarsArena({
           </button>
         </div>
 
-        {/* Render Active Game */}
+        {/* Active Game Stage */}
         <div className="pt-2">
-          {activeGame === 'duel' && (
-            <LightsaberDuelGame
-              onAddCoins={handleAddCoins}
-              onComplete={handleGameComplete}
-            />
-          )}
-          {activeGame === 'trench' && (
-            <TrenchRunGame
-              onAddCoins={handleAddCoins}
-              onComplete={handleGameComplete}
-            />
-          )}
-          {activeGame === 'falcon' && (
-            <FalconFlightGame
-              onAddCoins={handleAddCoins}
-              onComplete={handleGameComplete}
-            />
-          )}
-          {activeGame === 'holocron' && (
-            <HolocronMemoryGame
-              onAddCoins={handleAddCoins}
-              onComplete={handleGameComplete}
-            />
-          )}
-          {activeGame === 'cantina' && (
-            <CantinaQuickDrawGame
-              onAddCoins={handleAddCoins}
-              onComplete={handleGameComplete}
-            />
-          )}
+          {activeGame === 'duel' && <LightsaberDuelGame onAddCoins={handleAddCoins} />}
+          {activeGame === 'trench' && <TrenchRunGame onAddCoins={handleAddCoins} />}
+          {activeGame === 'falcon' && <FalconFlightGame onAddCoins={handleAddCoins} />}
+          {activeGame === 'holocron' && <HolocronMemoryGame onAddCoins={handleAddCoins} />}
+          {activeGame === 'cantina' && <CantinaQuickDrawGame onAddCoins={handleAddCoins} />}
         </div>
       </div>
     </div>

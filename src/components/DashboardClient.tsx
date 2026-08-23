@@ -131,8 +131,10 @@ export function DashboardClient({
 
           <div className="mt-1 mb-4">
             <p
-              className={`text-4xl sm:text-5xl md:text-6xl font-black tracking-tighter text-shadow-md ${
-                totalOwed > 0 ? 'text-red-400' : 'text-emerald-400'
+              className={`text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-shadow-lg ${
+                totalOwed > 0
+                  ? 'text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-red-300 to-amber-300 drop-shadow-[0_0_25px_rgba(244,63,94,0.45)]'
+                  : 'text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-200 to-cyan-300 drop-shadow-[0_0_25px_rgba(52,211,153,0.45)]'
               }`}
             >
               <AnimatedNumber value={totalOwed} formatAsCurrency={true} duration={900} />
