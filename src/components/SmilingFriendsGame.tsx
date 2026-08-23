@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Smile, Sparkles, AlertTriangle, ArrowRight, Zap, Target } from 'lucide-react'
-import { SubmitButton } from './SubmitButton'
+import { Sparkles, Target } from 'lucide-react'
 import { updateSmilingFriendsProgress } from '@/app/dashboard/actions'
 
 const MAINS = [
@@ -11,20 +10,35 @@ const MAINS = [
   { id: 'alan', name: 'Alan', url: '/characters/alan.jpg' },
   { id: 'pim', name: 'Pim', url: '/characters/pim.jpg' },
   { id: 'charlie', name: 'Charlie', url: '/characters/charlie.jpg' },
-  { id: 'glep', name: 'Glep', url: '/characters/glep.gif' }
+  { id: 'glep', name: 'Glep', url: '/characters/glep.gif' },
 ]
 
-const RANDOMS = [
-  { emoji: '😭', task: 'Math', solved: '😃' },
-  { emoji: '😡', task: 'Spam', solved: '😁' },
-  { emoji: '😨', task: 'Wait', solved: '😎' }
-]
-
-export function SmilingFriendsGame({ initialProgress, lang, addPoints }: { initialProgress?: any, lang: 'en' | 'es', addPoints?: (p: number) => void }) {
-  const [randomsSmiled, setRandomsSmiled] = useState<number>(initialProgress?.randoms_smiled || 0)
-  const [unlockedMains, setUnlockedMains] = useState<string[]>(initialProgress?.unlocked_mains || [])
+export function SmilingFriendsGame({
+  initialProgress,
+  lang,
+  addPoints,
+}: {
+  initialProgress?: any
+  lang: 'en' | 'es'
+  addPoints?: (p: number) => void
+}) {
+  const [prevProgress, setPrevProgress] = useState(initialProgress)
+  const [randomsSmiled, setRandomsSmiled] = useState<number>(
+    initialProgress?.randoms_smiled || 0
+  )
+  const [unlockedMains, setUnlockedMains] = useState<string[]>(
+    initialProgress?.unlocked_mains || []
+  )
   const [activeMinigame, setActiveMinigame] = useState<number | null>(null)
-  
+
+  // Sync state during render if initialProgress prop updates (e.g., when Admin resets game progress)
+  if (prevProgress !== initialProgress) {
+    setPrevProgress(initialProgress)
+    setRandomsSmiled(initialProgress?.randoms_smiled || 0)
+    setUnlockedMains(initialProgress?.unlocked_mains || [])
+    setActiveMinigame(null)
+  }
+
   // Anti-farm system: Track last win timestamp
   const [lastWinTime, setLastWinTime] = useState<number>(0)
   const [cooldown, setCooldown] = useState(0)
@@ -40,11 +54,12 @@ export function SmilingFriendsGame({ initialProgress, lang, addPoints }: { initi
   const [mathTarget, setMathTarget] = useState(0)
   const [mathVar2, setMathVar2] = useState(5)
   const [mathOp, setMathOp] = useState('+')
+  const [mathAnswers, setMathAnswers] = useState<number[]>([])
   const [spamCount, setSpamCount] = useState(0)
   const [waitTime, setWaitTime] = useState(10)
   const [maxWait, setMaxWait] = useState(10)
 
-  // New games states
+  // Reflex and Memory states
   const [reactionGreen, setReactionGreen] = useState(false)
   const [reactionTimer, setReactionTimer] = useState<NodeJS.Timeout | null>(null)
   
@@ -55,9 +70,19 @@ export function SmilingFriendsGame({ initialProgress, lang, addPoints }: { initi
   const startGame = (type: number) => {
     setActiveMinigame(type)
     if (type === 0) { // Math
-      setMathTarget(Math.floor(Math.random() * 50) + 10)
-      setMathVar2(Math.floor(Math.random() * 20) + 1)
-      setMathOp(Math.random() > 0.5 ? '+' : '-')
+      const target = Math.floor(Math.random() * 50) + 10
+      const var2 = Math.floor(Math.random() * 20) + 1
+      const op = Math.random() > 0.5 ? '+' : '-'
+      const correct = op === '+' ? target + var2 : target - var2
+      const fake1 = correct + 2
+      const fake2 = Math.max(1, correct - 3)
+      const fake3 = correct + 5
+      const options = [correct, fake1, fake2, fake3].sort(() => Math.random() - 0.5)
+
+      setMathTarget(target)
+      setMathVar2(var2)
+      setMathOp(op)
+      setMathAnswers(options)
     } else if (type === 1) { // Spam Random 10 to 50
       setSpamCount(Math.floor(Math.random() * 41) + 10)
     } else if (type === 2) { // Wait Random 10s to 60s
@@ -85,44 +110,40 @@ export function SmilingFriendsGame({ initialProgress, lang, addPoints }: { initi
     }
   }, [activeMinigame, waitTime])
 
-  const winMinigame = async (formData?: FormData) => {
+  const winMinigame = async () => {
     const now = Date.now()
     if (now - lastWinTime < 6000) {
-      // Basic client check: games cannot be won faster than 6 seconds (10/min max speed theoretically per point system logic elsewhere)
+      // client anti-farm check
     }
     
     setLastWinTime(now)
     setActiveMinigame(null)
     setCooldown(6)
 
-    // Compute new logic securely on server
     const newRandoms = randomsSmiled + 1
-    const shouldUnlock = newRandoms % 4 === 0 // Requires 4 randoms to unlock 1 character now (Doubled length)
-    let newlyUnlocked = null
+    const shouldUnlock = newRandoms % 4 === 0
+    let newlyUnlocked: string | null = null
 
     if (shouldUnlock) {
        const nextMain = MAINS.find(m => !unlockedMains.includes(m.id))
        if (nextMain) {
          newlyUnlocked = nextMain.id
-         setUnlockedMains([...unlockedMains, newlyUnlocked])
+         setUnlockedMains(prev => [...prev, newlyUnlocked as string])
        }
     }
 
     setRandomsSmiled(newRandoms)
 
-    // Award Fandi Coins: 15 per random smiled
+    // Award Fandi Coins
     if (addPoints) addPoints(15)
 
-    // Award 200 coins per character unlock
     if (newlyUnlocked && addPoints) {
       addPoints(200)
-      // If all 6 are now unlocked, award bonus 50
       if ([...unlockedMains, newlyUnlocked].length >= MAINS.length) {
         addPoints(50)
       }
     }
     
-    // Server action logic handles saving JSON progress
     const data = new FormData()
     data.append('randomsSmiled', newRandoms.toString())
     if (newlyUnlocked) data.append('newlyUnlocked', newlyUnlocked)
@@ -132,159 +153,217 @@ export function SmilingFriendsGame({ initialProgress, lang, addPoints }: { initi
   const allUnlocked = unlockedMains.length === MAINS.length
 
   return (
-    <div className="p-4 sm:p-6 bg-zinc-900/50 backdrop-blur-3xl border border-[#eab308]/30 rounded-3xl mt-6 shadow-[0_0_50px_rgba(234,179,8,0.15)] font-sans relative overflow-hidden">
-      {/* Decorative background circle */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/10 blur-[80px] rounded-full pointer-events-none" />
+    <div className="p-5 sm:p-7 glass-panel-heavy border border-[#eab308]/30 rounded-[28px] mt-6 shadow-[0_0_50px_rgba(234,179,8,0.15)] font-sans relative overflow-hidden">
+      {/* Decorative warm glow */}
+      <div className="absolute top-0 right-0 w-72 h-72 bg-yellow-500/10 blur-[90px] rounded-full pointer-events-none" />
       
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b border-[#eab308]/20 pb-4 relative z-10">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b border-[#eab308]/20 pb-4 relative z-10 gap-3">
         <div>
           <h2 className="text-xl sm:text-2xl font-black text-[#eab308] tracking-tighter flex items-center gap-2 drop-shadow-md">
-             😁 Smiling Friends Inc.
+             😁 Smiling Friends Labs
           </h2>
-          <p className="text-xs sm:text-sm text-zinc-400 font-bold mt-1 max-w-sm">
-            Help people smile! Bring 4 random characters joy to summon a Smiling Friend.
+          <p className="text-xs sm:text-sm text-zinc-300 font-medium mt-1 max-w-sm">
+            {lang === 'es' 
+              ? '¡Haz sonreír a la gente! Ayuda a 4 personajes aleatorios para invocar a un miembro de Smiling Friends.' 
+              : 'Help people smile! Bring 4 random characters joy to summon a Smiling Friend.'}
           </p>
         </div>
-        <div className="mt-3 sm:mt-0 px-4 py-2 bg-black/40 border border-[#eab308]/40 rounded-xl">
-           <p className="text-[10px] uppercase font-black tracking-widest text-[#eab308]">Randoms Smiled</p>
+        <div className="px-4 py-2 bg-black/50 border border-[#eab308]/40 rounded-2xl shrink-0">
+           <p className="text-[10px] uppercase font-black tracking-widest text-[#eab308]">
+             {lang === 'es' ? 'Sonrisas Logradas' : 'Randoms Smiled'}
+           </p>
            <p className="text-2xl font-black text-white">{randomsSmiled}</p>
         </div>
       </div>
 
       {!allUnlocked ? (
-        <div className="mb-8 p-4 bg-black/30 rounded-2xl border border-white/5">
-          <h3 className="text-sm font-bold text-zinc-300 mb-3 flex items-center gap-2"><Target className="w-4 h-4 text-fuchsia-400"/> Current Mission (Cooldown: {cooldown}s)</h3>
+        <div className="mb-8 p-4 sm:p-5 bg-black/40 rounded-2xl border border-white/10 relative z-10">
+          <h3 className="text-sm font-bold text-zinc-200 mb-3 flex items-center gap-2">
+            <Target className="w-4 h-4 text-fuchsia-400"/>
+            {lang === 'es' ? 'Misión Actual' : 'Current Mission'} {cooldown > 0 ? `(${cooldown}s)` : ''}
+          </h3>
           
           {activeMinigame === null ? (
-            <div className="flex flex-wrap gap-3">
-               <button onClick={() => startGame(0)} disabled={cooldown>0} className="px-4 py-2 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 border border-indigo-500/30 rounded-xl text-sm font-bold transition-all disabled:opacity-50">
-                 Solve Problem 😭
+            <div className="flex flex-wrap gap-2.5">
+               <button onClick={() => startGame(0)} disabled={cooldown > 0} className="px-3.5 py-2 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/30 rounded-xl text-xs font-bold transition-all touch-feedback disabled:opacity-40">
+                 {lang === 'es' ? 'Resolver Problema 😭' : 'Solve Problem 😭'}
                </button>
-               <button onClick={() => startGame(1)} disabled={cooldown>0} className="px-4 py-2 bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/30 rounded-xl text-sm font-bold transition-all disabled:opacity-50">
-                 Calm Down User 😡
+               <button onClick={() => startGame(1)} disabled={cooldown > 0} className="px-3.5 py-2 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 rounded-xl text-xs font-bold transition-all touch-feedback disabled:opacity-40">
+                 {lang === 'es' ? 'Calmar Usuario 😡' : 'Calm Down User 😡'}
                </button>
-               <button onClick={() => startGame(2)} disabled={cooldown>0} className="px-4 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 rounded-xl text-sm font-bold transition-all disabled:opacity-50">
-                 Soothe Anxiety 😨
+               <button onClick={() => startGame(2)} disabled={cooldown > 0} className="px-3.5 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-bold transition-all touch-feedback disabled:opacity-40">
+                 {lang === 'es' ? 'Calmar Ansiedad 😨' : 'Soothe Anxiety 😨'}
                </button>
-               <button onClick={() => startGame(3)} disabled={cooldown>0} className="px-4 py-2 bg-fuchsia-500/20 hover:bg-fuchsia-500/30 text-fuchsia-400 border border-fuchsia-500/30 rounded-xl text-sm font-bold transition-all disabled:opacity-50">
-                 Test Reflex 😲
+               <button onClick={() => startGame(3)} disabled={cooldown > 0} className="px-3.5 py-2 bg-fuchsia-500/20 hover:bg-fuchsia-500/30 text-fuchsia-300 border border-fuchsia-500/30 rounded-xl text-xs font-bold transition-all touch-feedback disabled:opacity-40">
+                 {lang === 'es' ? 'Reflejos Rápidos 😲' : 'Test Reflex 😲'}
                </button>
-               <button onClick={() => startGame(4)} disabled={cooldown>0} className="px-4 py-2 bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 border border-orange-500/30 rounded-xl text-sm font-bold transition-all disabled:opacity-50">
-                 Memory Sync 🧠
+               <button onClick={() => startGame(4)} disabled={cooldown > 0} className="px-3.5 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 rounded-xl text-xs font-bold transition-all touch-feedback disabled:opacity-40">
+                 {lang === 'es' ? 'Sincronizar Memoria 🧠' : 'Memory Sync 🧠'}
                </button>
             </div>
           ) : (
-            <div className="p-4 bg-zinc-800/50 rounded-xl animate-in slide-in-from-top-2 border border-white/10">
+            <div className="p-4 bg-zinc-900/80 rounded-xl border border-white/15 animate-spring-scale">
                {activeMinigame === 0 && (
                  <div className="space-y-3">
-                   <p className="font-bold text-lg text-white text-center">Random Character is crying because they can't solve: {mathTarget} {mathOp} {mathVar2}</p>
-                   <div className="flex justify-center gap-4 flex-wrap">
-                      {[mathTarget + mathVar2, mathTarget - mathVar2, mathTarget + 1, mathTarget * 2].sort(() => Math.random() - 0.5).slice(0,4).map((ans, i) => (
-                         <button key={i} onClick={() => {
-                            if ((mathOp === '+' && ans === mathTarget + mathVar2) || (mathOp === '-' && ans === mathTarget - mathVar2)) winMinigame()
-                            else setActiveMinigame(null) // Fail
-                         }} className="w-14 h-14 bg-black hover:bg-indigo-500/30 border border-white/20 rounded-xl font-bold flex items-center justify-center text-lg">
+                   <p className="font-bold text-base sm:text-lg text-white text-center">
+                     {lang === 'es' ? 'El personaje no puede resolver:' : 'Random Character needs answer for:'}{' '}
+                     <span className="text-[#eab308]">{mathTarget} {mathOp} {mathVar2}</span>
+                   </p>
+                   <div className="flex justify-center gap-3 flex-wrap">
+                      {mathAnswers.map((ans, i) => (
+                         <button
+                           key={i}
+                           onClick={() => {
+                             const correct = mathOp === '+' ? mathTarget + mathVar2 : mathTarget - mathVar2
+                             if (ans === correct) winMinigame()
+                             else setActiveMinigame(null)
+                           }}
+                           className="w-14 h-14 bg-black/60 hover:bg-indigo-500/30 border border-white/20 rounded-xl font-black text-white flex items-center justify-center text-lg touch-feedback"
+                         >
                             {ans}
                          </button>
                       ))}
                    </div>
                  </div>
                )}
+
                {activeMinigame === 1 && (
                  <div className="flex flex-col items-center gap-3">
-                   <p className="font-bold text-center text-rose-300">This character is extremely angry! Click the chill pill {spamCount} times!</p>
-                   <button onClick={() => {
-                     if (spamCount <= 1) winMinigame()
-                     else setSpamCount(s => s - 1)
-                   }} className="w-20 h-20 text-4xl bg-rose-500/20 hover:bg-rose-500/30 rounded-full border-4 border-rose-500/50 active:scale-90 transition-transform flex items-center justify-center">
+                   <p className="font-bold text-center text-rose-300 text-sm">
+                     {lang === 'es' ? `¡Haz clic en la píldora de calma ${spamCount} veces!` : `Click the chill pill ${spamCount} times!`}
+                   </p>
+                   <button
+                     onClick={() => {
+                       if (spamCount <= 1) winMinigame()
+                       else setSpamCount(s => s - 1)
+                     }}
+                     className="w-20 h-20 text-4xl bg-rose-500/20 hover:bg-rose-500/30 rounded-full border-4 border-rose-500/50 touch-feedback flex items-center justify-center"
+                   >
                      💊
                    </button>
                  </div>
                )}
+
                {activeMinigame === 2 && (
-                 <div className="flex flex-col items-center gap-3">
-                   <p className="font-bold text-center text-emerald-300">Just be patient and listen to them vent...</p>
-                   <div className="w-full bg-black h-4 rounded-full overflow-hidden border border-white/10">
-                      <div className="h-full bg-emerald-500 transition-all duration-1000" style={{ width: `${(1 - (waitTime/maxWait))*100}%`}} />
+                 <div className="space-y-3 text-center">
+                   <p className="font-bold text-emerald-300 text-sm">
+                     {lang === 'es' ? `Mantén la calma y espera: ${waitTime}s` : `Be patient and breathe: ${waitTime}s`}
+                   </p>
+                   <div className="w-full bg-zinc-800 rounded-full h-3 overflow-hidden">
+                     <div
+                       className="h-full bg-emerald-500 transition-all duration-1000"
+                       style={{ width: `${((maxWait - waitTime) / maxWait) * 100}%` }}
+                     />
                    </div>
-                   {waitTime === 0 ? (
-                     <button onClick={() => winMinigame()} className="px-6 py-2 bg-emerald-500 text-black font-black rounded-xl">Smile! 😃</button>
-                   ) : (
-                     <p className="font-mono text-zinc-500">{waitTime}s remaining</p>
+                   {waitTime === 0 && (
+                     <button
+                       onClick={winMinigame}
+                       className="px-6 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-black rounded-xl text-sm touch-feedback"
+                     >
+                       {lang === 'es' ? '¡Listo, Reclamar!' : 'Complete!'}
+                     </button>
                    )}
                  </div>
                )}
+
                {activeMinigame === 3 && (
                  <div className="flex flex-col items-center gap-3">
-                    <p className="font-bold text-center text-fuchsia-300">Wait for it to turn GREEN, then click!</p>
-                    <button 
-                      onClick={() => {
-                        if (reactionGreen) winMinigame()
-                        else {
-                          if (reactionTimer) clearTimeout(reactionTimer)
-                          setActiveMinigame(null)
-                        }
-                      }}
-                      className={`w-full h-32 rounded-2xl font-black text-2xl transition-colors ${reactionGreen ? 'bg-green-500 text-black hover:bg-green-400' : 'bg-red-500 text-white hover:bg-red-600'}`}
-                    >
-                      {reactionGreen ? 'CLICK NOW!' : 'Wait...'}
-                    </button>
+                   <p className="font-bold text-fuchsia-300 text-sm">
+                     {reactionGreen
+                       ? (lang === 'es' ? '¡¡DALE CLICK AHORA!!' : 'CLICK NOW!!')
+                       : (lang === 'es' ? 'Espera a que se ponga VERDE...' : 'Wait for GREEN...')}
+                   </p>
+                   <button
+                     onClick={() => {
+                       if (reactionGreen) {
+                         winMinigame()
+                       } else {
+                         if (reactionTimer) clearTimeout(reactionTimer)
+                         setActiveMinigame(null)
+                       }
+                     }}
+                     className={`w-32 h-32 rounded-3xl font-black text-lg transition-colors touch-feedback flex items-center justify-center ${
+                       reactionGreen ? 'bg-emerald-500 text-black animate-pulse' : 'bg-red-950/80 text-red-400 border border-red-500/40'
+                     }`}
+                   >
+                     {reactionGreen ? 'GO!' : 'WAIT'}
+                   </button>
                  </div>
                )}
+
                {activeMinigame === 4 && (
-                 <div className="flex flex-col items-center gap-4">
-                    <p className="font-bold text-center text-orange-300">Sync with their memory! Remember the sequence.</p>
-                    {memoryShow ? (
-                      <div className="flex gap-2 p-4 bg-black rounded-xl">
-                        {memorySeq.map((v, i) => <div key={i} className={`w-8 h-8 rounded-full ${['bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500'][v]}`} />)}
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-2 gap-3 w-48">
-                         {[0,1,2,3].map(v => (
-                           <button key={v} onClick={() => {
-                             if (v === memorySeq[memoryCur]) {
-                               if (memoryCur === memorySeq.length - 1) winMinigame()
-                               else setMemoryCur(c => c + 1)
+                 <div className="space-y-4 text-center">
+                   <p className="font-bold text-amber-300 text-sm">
+                     {memoryShow
+                       ? (lang === 'es' ? `Memoriza la secuencia: ${memorySeq.map(n => n + 1).join(' - ')}` : `Memorize sequence: ${memorySeq.map(n => n + 1).join(' - ')}`)
+                       : (lang === 'es' ? `Presiona el siguiente número (#${memoryCur + 1})` : `Press step #${memoryCur + 1}`)}
+                   </p>
+                   {!memoryShow && (
+                     <div className="flex justify-center gap-3">
+                       {[0, 1, 2, 3].map(btnIdx => (
+                         <button
+                           key={btnIdx}
+                           onClick={() => {
+                             if (memorySeq[memoryCur] === btnIdx) {
+                               if (memoryCur + 1 === memorySeq.length) {
+                                 winMinigame()
+                               } else {
+                                 setMemoryCur(c => c + 1)
+                               }
                              } else {
-                               setActiveMinigame(null) // Fail
+                               setActiveMinigame(null)
                              }
-                           }} className={`w-full h-16 rounded-xl ${['bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500'][v]} hover:brightness-125`}></button>
-                         ))}
-                      </div>
-                    )}
+                           }}
+                           className="w-14 h-14 bg-black/60 hover:bg-amber-500/30 border border-white/20 rounded-2xl font-black text-lg text-white touch-feedback"
+                         >
+                           {btnIdx + 1}
+                         </button>
+                       ))}
+                     </div>
+                   )}
                  </div>
                )}
             </div>
           )}
         </div>
       ) : (
-        <div className="text-center p-6 bg-[#eab308]/20 border border-[#eab308]/50 rounded-2xl mb-8 animate-in zoom-in duration-500">
-           <h3 className="text-2xl font-black text-[#eab308] uppercase tracking-widest drop-shadow-lg mb-2">🎉 MISSION COMPLETE! 🎉</h3>
-           <p className="text-zinc-100">You helped everyone smile! The Smiling Friends Theme is now permanently unlocked on your profile! (Check settings/header to apply it!)</p>
+        <div className="mb-6 p-4 bg-[#eab308]/20 border border-[#eab308]/40 rounded-2xl flex items-center gap-3">
+          <Sparkles className="w-6 h-6 text-[#eab308] shrink-0" />
+          <p className="text-xs sm:text-sm text-yellow-200 font-bold">
+            {lang === 'es' 
+              ? '¡Completaste todos los personajes de Smiling Friends! Tema desbloqueado en Ajustes.' 
+              : 'All Smiling Friends characters unlocked! Smiling Friends theme is unlocked in Settings.'}
+          </p>
         </div>
       )}
 
-      {/* Main Roster grid */}
-      <h3 className="text-sm font-bold text-zinc-300 mb-3 flex items-center gap-2"><Sparkles className="w-4 h-4 text-fuchsia-400"/> Primary Agents</h3>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 relative z-10">
-        {MAINS.map(m => {
-          const isUnlocked = unlockedMains.includes(m.id)
-          const isGlep = m.id === 'glep'
+      {/* Main Characters Grid */}
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 relative z-10">
+        {MAINS.map(char => {
+          const isUnlocked = unlockedMains.includes(char.id)
           return (
-            <div key={m.id} className={`p-2 border rounded-2xl flex flex-col items-center text-center transition-all ${isUnlocked ? 'border-[#eab308]/50 bg-black/60 shadow-[0_0_20px_rgba(234,179,8,0.2)]' : 'border-white/5 bg-black/20 grayscale opacity-40'} ${isGlep && isUnlocked ? 'border-[#84cc16]/60 shadow-[0_0_25px_rgba(132,204,22,0.3)]' : ''}`}>
-              <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden mb-2 border-2 bg-zinc-900 shrink-0 ${isGlep && isUnlocked ? 'border-[#84cc16]/50' : 'border-white/10'}`}>
-                 {isUnlocked ? (
-                   <img src={m.url} alt={m.name} className="w-full h-full object-cover" />
-                 ) : (
-                   <div className="w-full h-full flex items-center justify-center font-black text-2xl text-zinc-800">?</div>
-                 )}
+            <div
+              key={char.id}
+              className={`flex flex-col items-center p-2.5 rounded-2xl border transition-all ${
+                isUnlocked
+                  ? 'bg-black/50 border-[#eab308]/40 shadow-lg shadow-yellow-500/10'
+                  : 'bg-black/20 border-white/5 opacity-40 grayscale'
+              }`}
+            >
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 border-white/10 mb-2 bg-black flex items-center justify-center">
+                {isUnlocked ? (
+                  <img src={char.url} alt={char.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-xl">🔒</span>
+                )}
               </div>
-              <p className={`text-xs font-black uppercase tracking-widest ${isUnlocked ? (isGlep ? 'text-[#84cc16]' : 'text-[#eab308]') : 'text-zinc-500'}`}>{m.name}{isGlep && isUnlocked ? ' ⭐' : ''}</p>
+              <span className="text-[11px] font-bold text-center text-zinc-200 truncate w-full">
+                {char.name}
+              </span>
             </div>
           )
         })}
       </div>
-
     </div>
   )
 }

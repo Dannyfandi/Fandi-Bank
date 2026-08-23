@@ -1,25 +1,27 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Lightbulb } from 'lucide-react'
 import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { SuggestForm } from '@/components/SuggestForm'
 
 export default async function SuggestPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   if (!user) {
     redirect('/auth')
   }
 
   const cookieStore = await cookies()
-  const lang = (cookieStore.get('lang')?.value || 'en') as 'en' | 'es'
+  const lang = (cookieStore.get('NEXT_LOCALE')?.value || 'es') as 'en' | 'es'
 
   const t = {
     en: {
       title: 'Suggestions HQ',
-      back: 'Back to Dashboard',
+      back: 'Back',
       suggFeat: 'Suggest a Feature',
       suggFeatDesc: 'Have a cool idea for Fandi Bank? Tell us!',
       suggGame: 'Suggest a Game',
@@ -33,7 +35,7 @@ export default async function SuggestPage() {
     },
     es: {
       title: 'Buzón de Sugerencias',
-      back: 'Volver al Inicio',
+      back: 'Volver',
       suggFeat: 'Sugerir una Función',
       suggFeatDesc: '¿Tienes una idea genial para Fandi Bank? ¡Dínosla!',
       suggGame: 'Sugerir un Juego',
@@ -44,22 +46,25 @@ export default async function SuggestPage() {
       suggProductDesc: '¿Qué deberíamos añadir a la Tienda de Premios?',
       placeholder: 'Describe tu idea en detalle...',
       submitSugg: 'Enviar Sugerencia',
-    }
+    },
   }[lang]
 
   return (
-    <div className="min-h-screen bg-black text-zinc-100 p-4 sm:p-8 font-sans pb-32">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <header className="flex items-center gap-4 border-b border-white/10 pb-6">
-          <Link href="/dashboard" className="p-2 bg-white/5 hover:bg-white/10 rounded-xl transition-colors text-zinc-400">
-            <ArrowLeft className="w-5 h-5" />
+    <div className="min-h-screen bg-transparent text-zinc-100 p-3 sm:p-5 md:p-8 font-sans pb-24">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <header className="flex items-center gap-3 border-b border-white/10 glass-panel px-4 sm:px-6 py-3 rounded-2xl sm:rounded-3xl shadow-lg">
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-2 text-zinc-300 hover:text-white transition-colors font-bold text-xs sm:text-sm glass-panel hover:bg-white/10 px-3.5 py-2 rounded-full border border-white/10 touch-feedback"
+          >
+            <ArrowLeft className="w-4 h-4" /> {t.back}
           </Link>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tighter bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-            {t.title}
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent flex items-center gap-2 text-shadow-sm">
+            <Lightbulb className="w-5 h-5 text-blue-400" /> {t.title}
           </h1>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           <SuggestForm t={t} type="feature" />
           <SuggestForm t={t} type="game" />
           <SuggestForm t={t} type="product" />

@@ -240,6 +240,7 @@ export async function resetSmilingFriends() {
     active_theme: 'normal'
   }).eq('id', user.id)
 
+  revalidatePath('/', 'layout')
   revalidatePath('/admin')
   revalidatePath('/dashboard')
 }

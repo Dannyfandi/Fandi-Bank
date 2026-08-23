@@ -1,8 +1,29 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
-import { createDebt, createPayment, deleteDebt, markDebtPaid, updateTicketRequestStatus, updateLoanStatus, updateVisitStatus, updateManualScore } from './actions'
-import { User, Shield, Ticket, MapPin, Landmark, Star, Users, Briefcase, ChevronDown, Wallet, HelpCircle, Award, Lightbulb } from 'lucide-react'
+import {
+  createDebt,
+  createPayment,
+  updateTicketRequestStatus,
+  updateLoanStatus,
+  updateVisitStatus,
+  updateManualScore,
+} from './actions'
+import {
+  User,
+  Shield,
+  Ticket,
+  MapPin,
+  Landmark,
+  Star,
+  Users,
+  Briefcase,
+  ChevronDown,
+  Wallet,
+  HelpCircle,
+  Award,
+  Lightbulb,
+} from 'lucide-react'
 import { MobileNav } from '@/components/MobileNav'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -20,6 +41,7 @@ import { AdminEventsManager } from '@/components/AdminEventsManager'
 import { ThemeSettings } from '@/components/ThemeSettings'
 import { AdminSuggestionsManager } from '@/components/AdminSuggestionsManager'
 import { AdminPrizeRequests } from '@/components/AdminPrizeRequests'
+import { AnimatedNumber } from '@/components/AnimatedNumber'
 
 const dict = {
   en: {
@@ -103,12 +125,14 @@ const dict = {
     pending: 'pendiente',
     approved: 'aprobado',
     rejected: 'rechazado',
-  }
+  },
 }
 
 export default async function AdminPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) return redirect('/auth')
 
   const cookieStore = await cookies()
@@ -116,200 +140,386 @@ export default async function AdminPage() {
   const lang = (langCookie === 'en' ? 'en' : 'es') as 'en' | 'es'
   const t = dict[lang]
 
-  const { data: profile } = await supabase.from('profiles').select('role, username, avatar_url, credit_balance, sf_progress, active_theme, fandi_coins, coin_sync_version').eq('id', user.id).single()
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select(
+      'role, username, avatar_url, credit_balance, sf_progress, active_theme, fandi_coins, coin_sync_version'
+    )
+    .eq('id', user.id)
+    .single()
   if (profile?.role !== 'admin') return redirect('/dashboard')
 
-  const { data: profiles } = await supabase.from('profiles').select('*').order('created_at', { ascending: false })
-  const { data: debts } = await supabase.from('debts').select('*, profiles(username, avatar_url)').order('created_at', { ascending: false })
-  const { data: allocations } = await supabase.from('payment_allocations').select('*, payments(created_at, total_amount)')
-  const { data: paymentsInfo } = await supabase.from('payments').select('*').order('created_at', { ascending: false })
-  const { data: requests } = await supabase.from('ticket_requests').select('*, profiles(username)').order('created_at', { ascending: false })
-  const { data: visits } = await supabase.from('visit_requests').select('*, profiles(username)').order('created_at', { ascending: false })
-  const { data: loans } = await supabase.from('loan_requests').select('*, profiles(username)').order('created_at', { ascending: false })
-  const { data: allMessages } = await supabase.from('messages').select('*').order('created_at', { ascending: true })
-  const { data: events } = await supabase.from('events').select('*').order('created_at', { ascending: false })
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('*')
+    .order('created_at', { ascending: false })
+  const { data: debts } = await supabase
+    .from('debts')
+    .select('*, profiles(username, avatar_url)')
+    .order('created_at', { ascending: false })
+  const { data: allocations } = await supabase
+    .from('payment_allocations')
+    .select('*, payments(created_at, total_amount)')
+  const { data: paymentsInfo } = await supabase
+    .from('payments')
+    .select('*')
+    .order('created_at', { ascending: false })
+  const { data: requests } = await supabase
+    .from('ticket_requests')
+    .select('*, profiles(username)')
+    .order('created_at', { ascending: false })
+  const { data: visits } = await supabase
+    .from('visit_requests')
+    .select('*, profiles(username)')
+    .order('created_at', { ascending: false })
+  const { data: loans } = await supabase
+    .from('loan_requests')
+    .select('*, profiles(username)')
+    .order('created_at', { ascending: false })
+  const { data: allMessages } = await supabase
+    .from('messages')
+    .select('*')
+    .order('created_at', { ascending: true })
+  const { data: events } = await supabase
+    .from('events')
+    .select('*')
+    .order('created_at', { ascending: false })
   const { data: invitations } = await supabase.from('event_invitations').select('*')
-  const { data: suggestions } = await supabase.from('user_suggestions').select('*, profiles(username)').order('created_at', { ascending: false })
-  const { data: prizeRequests } = await supabase.from('prize_requests').select('*, profiles(username, email)').order('created_at', { ascending: false })
+  const { data: suggestions } = await supabase
+    .from('user_suggestions')
+    .select('*, profiles(username)')
+    .order('created_at', { ascending: false })
+  const { data: prizeRequests } = await supabase
+    .from('prize_requests')
+    .select('*, profiles(username, email)')
+    .order('created_at', { ascending: false })
 
-  // Build profile avatar lookup
   const avatarMap: Record<string, string> = {}
-  for (const p of (profiles || [])) {
+  for (const p of profiles || []) {
     if (p.avatar_url) avatarMap[p.id] = p.avatar_url
   }
 
   let grandTotal = 0
-  const userTotals = (profiles || []).map(p => {
-    const userDebts = (debts || []).filter(d => d.user_id === p.id)
-    const pendingDebts = userDebts.filter(d => d.status === 'pending')
+  const userTotals = (profiles || []).map((p) => {
+    const userDebts = (debts || []).filter((d) => d.user_id === p.id)
+    const pendingDebts = userDebts.filter((d) => d.status === 'pending')
     let { score, isSuspended } = calculateCreditScore(userDebts as DebtForCredit[])
-    
-    // Add Gamification points
+
     const sfRandoms = p?.sf_progress?.randoms_smiled || 0
     const sfUnlocked = p?.sf_progress?.unlocked_mains?.length || 0
-    score += (sfRandoms * 15) + (sfUnlocked * 200) + (sfUnlocked === 6 ? 50 : 0)
-
-    // Add Manual Admin Modifiers
+    score += sfRandoms * 15 + sfUnlocked * 200 + (sfUnlocked === 6 ? 50 : 0)
     score += p?.manual_score_modifier || 0
 
     let totalRemaining = 0
-    pendingDebts.forEach(pd => {
+    pendingDebts.forEach((pd) => {
       const interest = calculateDebtInterest(pd as DebtForCredit)
-      totalRemaining += ((Number(pd.amount) + interest) - Number(pd.paid_amount || 0))
+      totalRemaining += Number(pd.amount) + interest - Number(pd.paid_amount || 0)
     })
     const userCredits = Number(p.credit_balance || 0)
-    // We do NOT subtract credit from totalRemaining mathematically here because totalRemaining means the sum of pending debts,
-    // but the credit is visually distinct until a debt consumes it.
     grandTotal += totalRemaining
     return { ...p, totalRemaining, userCredits, debts: userDebts, score, isSuspended }
   })
 
-  // Group debts by user
-  const debtsByUser: Record<string, { username: string; avatarUrl: string | null; debts: any[] }> = {}
-  for (const debt of (debts || [])) {
+  const debtsByUser: Record<
+    string,
+    { username: string; avatarUrl: string | null; debts: any[] }
+  > = {}
+  for (const debt of debts || []) {
     const uid = debt.user_id
     if (!debtsByUser[uid]) {
       debtsByUser[uid] = {
         username: debt.profiles?.username || uid,
         avatarUrl: debt.profiles?.avatar_url || avatarMap[uid] || null,
-        debts: []
+        debts: [],
       }
     }
     debtsByUser[uid].debts.push(debt)
   }
 
+  const isSmiling = profile?.active_theme === 'smiling_friends'
+
   return (
-    <div className="min-h-screen bg-transparent text-zinc-50 p-3 sm:p-4 md:p-8 font-sans">
+    <div className="min-h-screen bg-transparent text-zinc-50 p-3 sm:p-5 md:p-8 font-sans pb-24">
       <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
-        
-        {/* Header */}
-        <header className="flex items-center justify-between pb-4 sm:pb-6 border-b border-white/10">
+        {/* Condensed Header */}
+        <header className="flex items-center justify-between pb-4 border-b border-white/10 glass-panel px-4 sm:px-6 py-3 rounded-2xl sm:rounded-3xl shadow-lg">
           <div className="flex items-center gap-3 sm:gap-4">
-            <div className="w-14 h-14 sm:w-20 sm:h-20 relative shrink-0">
-               <Image src={profile?.active_theme === 'smiling_friends' ? '/sf_logo.png' : '/logo.png'} alt="Fandi Bank" fill className="object-cover rounded-full shadow-lg shadow-purple-900/30" priority />
+            <div className="w-12 h-12 sm:w-16 sm:h-16 relative shrink-0">
+              <Image
+                src={isSmiling ? '/sf_logo.png' : '/logo.png'}
+                alt="Fandi Bank"
+                fill
+                className="object-cover rounded-full shadow-lg shadow-purple-900/40"
+                priority
+              />
             </div>
-            <h1 className={`text-2xl sm:text-3xl font-black tracking-tighter bg-clip-text text-transparent ${profile?.active_theme === 'smiling_friends' ? 'bg-gradient-to-r from-yellow-400 to-orange-500' : 'bg-gradient-to-r from-purple-400 to-fuchsia-600'}`}>
+            <h1
+              className={`text-xl sm:text-3xl font-black tracking-tight bg-clip-text text-transparent ${
+                isSmiling
+                  ? 'bg-gradient-to-r from-yellow-400 to-orange-500'
+                  : 'bg-gradient-to-r from-purple-400 to-fuchsia-500'
+              }`}
+            >
               {t.adminHq}
             </h1>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
             <LanguageToggle />
-            {/* Mobile Hamburger Menu */}
             <MobileNav profile={profile} t={t} isAdminPanel={true} />
 
             {/* Desktop Navigation */}
-            <div className="hidden sm:flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 border-l border-white/10">
-              <Link href="/suggest" className="p-2 rounded-lg hover:bg-white/5 transition-colors text-zinc-400 hover:text-blue-400" title="Suggestions">
-                <Lightbulb className="w-4 h-4 sm:w-5 sm:h-5" />
+            <div className="hidden sm:flex items-center gap-2 sm:gap-3 pl-2 border-l border-white/10">
+              <Link
+                href="/suggest"
+                className="p-2 rounded-xl glass-panel hover:bg-white/10 transition-colors text-zinc-400 hover:text-blue-400 touch-feedback"
+                title="Suggestions"
+              >
+                <Lightbulb className="w-4 h-4" />
               </Link>
-              <Link href="/faq" className="p-2 rounded-lg hover:bg-white/5 transition-colors text-zinc-400 hover:text-emerald-400" title="FAQ">
-                <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+              <Link
+                href="/faq"
+                className="p-2 rounded-xl glass-panel hover:bg-white/10 transition-colors text-zinc-400 hover:text-emerald-400 touch-feedback"
+                title="FAQ"
+              >
+                <HelpCircle className="w-4 h-4" />
               </Link>
-              <Link href="/friends" className="p-2 rounded-lg hover:bg-white/5 transition-colors text-zinc-400 hover:text-purple-400" title="Friends">
-                <Users className="w-4 h-4 sm:w-5 sm:h-5" />
+              <Link
+                href="/friends"
+                className="p-2 rounded-xl glass-panel hover:bg-white/10 transition-colors text-zinc-400 hover:text-purple-400 touch-feedback"
+                title="Friends"
+              >
+                <Users className="w-4 h-4" />
               </Link>
-              <Link href="/profile" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden border-2 border-purple-500/30 bg-black flex items-center justify-center shadow-lg shadow-purple-900/40">
-                   {profile?.avatar_url ? (
-                     <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-                   ) : (
-                     <User className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-500" />
-                   )}
+              <Link
+                href="/profile"
+                className="flex items-center gap-2 hover:opacity-80 transition-opacity touch-feedback"
+              >
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden border border-purple-500/30 bg-black flex items-center justify-center shadow-md">
+                  {profile?.avatar_url ? (
+                    <img
+                      src={profile.avatar_url}
+                      alt="Avatar"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User className="w-4 h-4 text-zinc-500" />
+                  )}
                 </div>
-                <span className="text-sm font-bold text-zinc-200 hidden md:block">{profile?.username || 'Profile'}</span>
+                <span className="text-sm font-bold text-zinc-200 hidden md:block">
+                  {profile?.username || 'Profile'}
+                </span>
               </Link>
-              <Link href="/dashboard" className="hidden sm:flex px-4 py-1.5 rounded-full border border-fuchsia-500/20 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 text-fuchsia-400 text-[10px] uppercase font-bold items-center gap-1 transition-colors tracking-widest shrink-0">
-                 View as User
+              <Link
+                href="/dashboard"
+                className="hidden sm:flex px-3.5 py-1.5 rounded-full border border-fuchsia-500/30 bg-fuchsia-500/15 hover:bg-fuchsia-500/25 text-fuchsia-300 text-[10px] uppercase font-black tracking-wider transition-colors shrink-0"
+              >
+                View as User
               </Link>
               <form action="/auth/signout" method="post">
-                <button className="text-[10px] sm:text-xs font-bold text-zinc-500 hover:text-red-400 transition-colors uppercase tracking-widest hidden sm:block">
+                <button className="text-[10px] font-bold text-zinc-500 hover:text-red-400 transition-colors uppercase tracking-widest px-2">
                   {t.logout}
                 </button>
               </form>
-              <ThemeSettings activeTheme={profile?.active_theme || 'normal'} hasSmilingFriends={profile?.sf_progress?.unlocked_mains?.length >= 6} />
+              <ThemeSettings
+                activeTheme={profile?.active_theme || 'normal'}
+                hasSmilingFriends={profile?.sf_progress?.unlocked_mains?.length >= 6}
+              />
             </div>
           </div>
         </header>
 
         <main className="grid grid-cols-1 lg:grid-cols-4 gap-6 sm:gap-8">
-          
           {/* Left Column - Forms & Actions */}
-          <div className="space-y-6 sm:space-y-8 lg:col-span-1">
+          <div className="space-y-6 lg:col-span-1">
             <AdminParser users={profiles || []} />
 
             <div className="flex flex-col gap-4">
               {/* Add Manual Debt */}
-              <div className="p-4 sm:p-6 border border-red-500/20 rounded-2xl sm:rounded-3xl bg-zinc-900/30 backdrop-blur-[40px] shadow-xl overflow-hidden relative">
-                 <h2 className="text-sm sm:text-base font-bold text-zinc-100 flex items-center gap-2 mb-3 sm:mb-4">
-                   <Briefcase className="w-4 h-4 text-red-500" />
-                   {t.addDebt}
-                 </h2>
-                 <form action={createDebt} className="space-y-2 sm:space-y-3">
-                   <select name="userId" required className="w-full px-3 py-2 bg-black border border-white/10 rounded-lg text-sm text-zinc-100 focus:ring-1 focus:ring-red-500 outline-none">
-                     <option value="">{t.selectUser}</option>
-                     {profiles?.map(p => <option key={p.id} value={p.id}>{p.username || p.email}</option>)}
-                   </select>
-                   <input name="description" type="text" required placeholder={t.desc} className="w-full px-3 py-2 bg-black border border-white/10 rounded-lg text-sm text-zinc-100 focus:ring-1 focus:ring-red-500 outline-none" />
-                   <input name="amount" type="number" required placeholder={t.amount} className="w-full px-3 py-2 bg-black border border-white/10 rounded-lg text-sm text-zinc-100 focus:ring-1 focus:ring-red-500 outline-none" />
-                   <SubmitButton loadingText="Adding..." className="w-full py-2.5 sm:py-3 bg-red-500/20 hover:bg-red-500/30 text-red-500 font-bold rounded-lg text-sm transition-all border border-red-500/10 tracking-widest uppercase">{t.addBtn}</SubmitButton>
-                 </form>
+              <div className="p-4 sm:p-5 border border-red-500/25 rounded-3xl glass-panel shadow-xl overflow-hidden relative">
+                <h2 className="text-sm sm:text-base font-black text-zinc-100 flex items-center gap-2 mb-3">
+                  <Briefcase className="w-4 h-4 text-red-400" />
+                  {t.addDebt}
+                </h2>
+                <form action={createDebt} className="space-y-2.5">
+                  <select
+                    name="userId"
+                    required
+                    className="w-full px-3 py-2.5 glass-input rounded-xl text-xs text-zinc-100 bg-zinc-900"
+                  >
+                    <option value="" className="bg-zinc-900 text-zinc-400">
+                      {t.selectUser}
+                    </option>
+                    {profiles?.map((p) => (
+                      <option key={p.id} value={p.id} className="bg-zinc-900 text-white">
+                        {p.username || p.email}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    name="description"
+                    type="text"
+                    required
+                    placeholder={t.desc}
+                    className="w-full px-3 py-2.5 glass-input rounded-xl text-xs text-zinc-100 placeholder-zinc-500"
+                  />
+                  <input
+                    name="amount"
+                    type="number"
+                    required
+                    placeholder={t.amount}
+                    className="w-full px-3 py-2.5 glass-input rounded-xl text-xs text-zinc-100 placeholder-zinc-500"
+                  />
+                  <SubmitButton
+                    loadingText="Adding..."
+                    className="w-full py-2.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 font-black rounded-xl text-xs transition-all border border-red-500/20 tracking-wider uppercase touch-feedback"
+                  >
+                    {t.addBtn}
+                  </SubmitButton>
+                </form>
               </div>
 
               {/* Add Manual Payment */}
-              <div className="p-4 sm:p-6 border border-purple-500/20 rounded-2xl sm:rounded-3xl bg-zinc-900/30 backdrop-blur-[40px] shadow-xl overflow-hidden relative">
-                 <h2 className="text-sm sm:text-base font-bold text-zinc-100 flex items-center gap-2 mb-3 sm:mb-4">
-                   <Briefcase className="w-4 h-4 text-purple-500" />
-                   {t.addPayment}
-                 </h2>
-                 <form action={createPayment} className="space-y-2 sm:space-y-3">
-                   <select name="userId" required className="w-full px-3 py-2 bg-black border border-white/10 rounded-lg text-sm text-zinc-100 focus:ring-1 focus:ring-purple-500 outline-none">
-                     <option value="">{t.selectUser}</option>
-                     {profiles?.map(p => <option key={p.id} value={p.id}>{p.username || p.email}</option>)}
-                   </select>
-                   <input name="description" type="text" placeholder={t.descOpt} className="w-full px-3 py-2 bg-black border border-white/10 rounded-lg text-sm text-zinc-100 focus:ring-1 focus:ring-purple-500 outline-none" />
-                   <input name="amount" type="number" required placeholder={t.amount} className="w-full px-3 py-2 bg-black border border-white/10 rounded-lg text-sm text-zinc-100 focus:ring-1 focus:ring-purple-500 outline-none" />
-                   <SubmitButton loadingText="Adding..." className="w-full py-2.5 sm:py-3 bg-purple-500/20 hover:bg-purple-500/30 text-purple-500 font-bold rounded-lg text-sm transition-all border border-purple-500/10 tracking-widest uppercase">{t.logPayment}</SubmitButton>
-                 </form>
+              <div className="p-4 sm:p-5 border border-purple-500/25 rounded-3xl glass-panel shadow-xl overflow-hidden relative">
+                <h2 className="text-sm sm:text-base font-black text-zinc-100 flex items-center gap-2 mb-3">
+                  <Briefcase className="w-4 h-4 text-purple-400" />
+                  {t.addPayment}
+                </h2>
+                <form action={createPayment} className="space-y-2.5">
+                  <select
+                    name="userId"
+                    required
+                    className="w-full px-3 py-2.5 glass-input rounded-xl text-xs text-zinc-100 bg-zinc-900"
+                  >
+                    <option value="" className="bg-zinc-900 text-zinc-400">
+                      {t.selectUser}
+                    </option>
+                    {profiles?.map((p) => (
+                      <option key={p.id} value={p.id} className="bg-zinc-900 text-white">
+                        {p.username || p.email}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    name="description"
+                    type="text"
+                    placeholder={t.descOpt}
+                    className="w-full px-3 py-2.5 glass-input rounded-xl text-xs text-zinc-100 placeholder-zinc-500"
+                  />
+                  <input
+                    name="amount"
+                    type="number"
+                    required
+                    placeholder={t.amount}
+                    className="w-full px-3 py-2.5 glass-input rounded-xl text-xs text-zinc-100 placeholder-zinc-500"
+                  />
+                  <SubmitButton
+                    loadingText="Adding..."
+                    className="w-full py-2.5 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 font-black rounded-xl text-xs transition-all border border-purple-500/20 tracking-wider uppercase touch-feedback"
+                  >
+                    {t.logPayment}
+                  </SubmitButton>
+                </form>
               </div>
 
               {/* Modify Score */}
-              <div className="p-4 sm:p-6 border border-amber-500/20 rounded-2xl sm:rounded-3xl bg-zinc-900/30 backdrop-blur-[40px] shadow-xl overflow-hidden relative">
-                 <h2 className="text-sm sm:text-base font-bold text-zinc-100 flex items-center gap-2 mb-3 sm:mb-4">
-                   <Award className="w-4 h-4 text-amber-500" />
-                   Modificar Puntaje Fandi
-                 </h2>
-                 <form action={updateManualScore} className="space-y-2 sm:space-y-3">
-                   <select name="userId" required className="w-full px-3 py-2 bg-black border border-white/10 rounded-lg text-sm text-zinc-100 focus:ring-1 focus:ring-amber-500 outline-none">
-                     <option value="">{t.selectUser}</option>
-                     {userTotals.map(p => <option key={p.id} value={p.id}>{p.username || p.email} ({p.score} pts)</option>)}
-                   </select>
-                   <input name="amount" type="number" required placeholder="Cantidad (ej. 5 o -2)" className="w-full px-3 py-2 bg-black border border-white/10 rounded-lg text-sm text-zinc-100 focus:ring-1 focus:ring-amber-500 outline-none" />
-                   <SubmitButton loadingText="Aplicando..." className="w-full py-2.5 sm:py-3 bg-amber-500/20 hover:bg-amber-500/30 text-amber-500 font-bold rounded-lg text-sm transition-all border border-amber-500/10 tracking-widest uppercase">Aplicar Puntos</SubmitButton>
-                 </form>
+              <div className="p-4 sm:p-5 border border-amber-500/25 rounded-3xl glass-panel shadow-xl overflow-hidden relative">
+                <h2 className="text-sm sm:text-base font-black text-zinc-100 flex items-center gap-2 mb-3">
+                  <Award className="w-4 h-4 text-amber-400" />
+                  Modificar Puntaje Fandi
+                </h2>
+                <form action={updateManualScore} className="space-y-2.5">
+                  <select
+                    name="userId"
+                    required
+                    className="w-full px-3 py-2.5 glass-input rounded-xl text-xs text-zinc-100 bg-zinc-900"
+                  >
+                    <option value="" className="bg-zinc-900 text-zinc-400">
+                      {t.selectUser}
+                    </option>
+                    {userTotals.map((p) => (
+                      <option key={p.id} value={p.id} className="bg-zinc-900 text-white">
+                        {p.username || p.email} ({p.score} pts)
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    name="amount"
+                    type="number"
+                    required
+                    placeholder="Cantidad (ej. 5 o -2)"
+                    className="w-full px-3 py-2.5 glass-input rounded-xl text-xs text-zinc-100 placeholder-zinc-500"
+                  />
+                  <SubmitButton
+                    loadingText="Aplicando..."
+                    className="w-full py-2.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-black rounded-xl text-xs transition-all border border-amber-500/20 tracking-wider uppercase touch-feedback"
+                  >
+                    Aplicar Puntos
+                  </SubmitButton>
+                </form>
               </div>
             </div>
 
             {/* Dropdown for Loans */}
-            <details className="group/loans space-y-3 sm:space-y-4">
-              <summary className="text-base sm:text-lg font-bold text-zinc-100 flex items-center justify-between gap-2 p-3 bg-white/5 hover:bg-white/10 rounded-xl cursor-pointer list-none transition-colors">
-                <span className="flex items-center gap-2"><Landmark className="w-5 h-5 text-amber-500" /> {t.loans} ({loans?.length || 0})</span>
+            <details className="group/loans glass-panel rounded-2xl p-3 shadow-lg border border-white/10">
+              <summary className="text-sm font-bold text-zinc-200 flex items-center justify-between gap-2 cursor-pointer list-none select-none">
+                <span className="flex items-center gap-2">
+                  <Landmark className="w-4 h-4 text-amber-400" /> {t.loans} (
+                  {loans?.length || 0})
+                </span>
                 <ChevronDown className="w-4 h-4 group-open/loans:rotate-180 transition-transform" />
               </summary>
-              <div className="space-y-3 p-1">
-                {(!loans || loans.length === 0) && <p className="text-zinc-500 text-sm">{t.noLoans}</p>}
-                {loans?.map(req => (
-                  <div key={req.id} className="p-3 sm:p-4 border border-white/10 rounded-xl sm:rounded-2xl bg-zinc-900/30 backdrop-blur-[40px] flex flex-col justify-between">
+              <div className="space-y-2.5 pt-3">
+                {(!loans || loans.length === 0) && (
+                  <p className="text-zinc-500 text-xs">{t.noLoans}</p>
+                )}
+                {loans?.map((req) => (
+                  <div
+                    key={req.id}
+                    className="p-3 border border-white/10 rounded-xl bg-black/40 flex flex-col justify-between gap-2"
+                  >
                     <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-bold text-zinc-200 text-sm">{req.profiles?.username}</span>
-                        <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded-full border ${req.status === 'approved' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : req.status === 'rejected' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20'}`}>{req.status}</span>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-bold text-zinc-200 text-xs truncate">
+                          {req.profiles?.username}
+                        </span>
+                        <span
+                          className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full border ${
+                            req.status === 'approved'
+                              ? 'bg-purple-500/15 text-purple-300 border-purple-500/30'
+                              : req.status === 'rejected'
+                              ? 'bg-red-500/15 text-red-300 border-red-500/30'
+                              : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                          }`}
+                        >
+                          {req.status}
+                        </span>
                       </div>
-                      <p className="text-base sm:text-lg font-black text-amber-500 mb-3">{formatCOP(req.amount)}</p>
+                      <p className="text-sm font-black text-amber-400">
+                        {formatCOP(req.amount)}
+                      </p>
                     </div>
                     {req.status === 'pending' && (
                       <div className="flex gap-2">
-                         <form action={updateLoanStatus} className="flex-1"><input type="hidden" name="loanId" value={req.id} /><input type="hidden" name="status" value="approved" /><SubmitButton loadingText="." className="w-full py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 rounded-lg text-xs font-bold transition-colors border border-purple-500/30">{t.approve}</SubmitButton></form>
-                         <form action={updateLoanStatus} className="flex-1"><input type="hidden" name="loanId" value={req.id} /><input type="hidden" name="status" value="rejected" /><SubmitButton loadingText="." className="w-full py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg text-xs font-bold transition-colors border border-red-500/30">{t.reject}</SubmitButton></form>
+                        <form action={updateLoanStatus} className="flex-1">
+                          <input type="hidden" name="loanId" value={req.id} />
+                          <input type="hidden" name="status" value="approved" />
+                          <SubmitButton
+                            loadingText="."
+                            className="w-full py-1.5 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded-lg text-xs font-bold transition-colors border border-purple-500/30"
+                          >
+                            {t.approve}
+                          </SubmitButton>
+                        </form>
+                        <form action={updateLoanStatus} className="flex-1">
+                          <input type="hidden" name="loanId" value={req.id} />
+                          <input type="hidden" name="status" value="rejected" />
+                          <SubmitButton
+                            loadingText="."
+                            className="w-full py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg text-xs font-bold transition-colors border border-red-500/30"
+                          >
+                            {t.reject}
+                          </SubmitButton>
+                        </form>
                       </div>
                     )}
                   </div>
@@ -318,26 +528,64 @@ export default async function AdminPage() {
             </details>
 
             {/* Dropdown for Tickets */}
-            <details className="group/tickets space-y-3 sm:space-y-4">
-              <summary className="text-base sm:text-lg font-bold text-zinc-100 flex items-center justify-between gap-2 p-3 bg-white/5 hover:bg-white/10 rounded-xl cursor-pointer list-none transition-colors">
-                <span className="flex items-center gap-2"><Ticket className="w-5 h-5 text-indigo-400" /> {t.tickets} ({requests?.length || 0})</span>
+            <details className="group/tickets glass-panel rounded-2xl p-3 shadow-lg border border-white/10">
+              <summary className="text-sm font-bold text-zinc-200 flex items-center justify-between gap-2 cursor-pointer list-none select-none">
+                <span className="flex items-center gap-2">
+                  <Ticket className="w-4 h-4 text-indigo-400" /> {t.tickets} (
+                  {requests?.length || 0})
+                </span>
                 <ChevronDown className="w-4 h-4 group-open/tickets:rotate-180 transition-transform" />
               </summary>
-              <div className="space-y-3 p-1">
-                {(!requests || requests.length === 0) && <p className="text-zinc-500 text-sm">{t.noTickets}</p>}
-                {requests?.map(req => (
-                  <div key={req.id} className="p-3 sm:p-4 border border-white/10 rounded-xl sm:rounded-2xl bg-zinc-900/30 backdrop-blur-[40px] flex flex-col justify-between">
+              <div className="space-y-2.5 pt-3">
+                {(!requests || requests.length === 0) && (
+                  <p className="text-zinc-500 text-xs">{t.noTickets}</p>
+                )}
+                {requests?.map((req) => (
+                  <div
+                    key={req.id}
+                    className="p-3 border border-white/10 rounded-xl bg-black/40 flex flex-col justify-between gap-2"
+                  >
                     <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-bold text-zinc-200 text-sm">{req.profiles?.username}</span>
-                        <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded-full border ${req.status === 'approved' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : req.status === 'rejected' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/20'}`}>{req.status}</span>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-bold text-zinc-200 text-xs truncate">
+                          {req.profiles?.username}
+                        </span>
+                        <span
+                          className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full border ${
+                            req.status === 'approved'
+                              ? 'bg-purple-500/15 text-purple-300 border-purple-500/30'
+                              : req.status === 'rejected'
+                              ? 'bg-red-500/15 text-red-300 border-red-500/30'
+                              : 'bg-fuchsia-500/15 text-fuchsia-300 border-fuchsia-500/30'
+                          }`}
+                        >
+                          {req.status}
+                        </span>
                       </div>
-                      <p className="text-sm text-zinc-400 mb-3 break-words">{req.event_name}</p>
+                      <p className="text-xs text-zinc-300 break-words">{req.event_name}</p>
                     </div>
                     {req.status === 'pending' && (
                       <div className="flex gap-2">
-                         <form action={updateTicketRequestStatus} className="flex-1"><input type="hidden" name="reqId" value={req.id} /><input type="hidden" name="status" value="approved" /><SubmitButton loadingText="." className="w-full py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 rounded-lg text-xs font-bold transition-colors border border-purple-500/30">{t.approve}</SubmitButton></form>
-                         <form action={updateTicketRequestStatus} className="flex-1"><input type="hidden" name="reqId" value={req.id} /><input type="hidden" name="status" value="rejected" /><SubmitButton loadingText="." className="w-full py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg text-xs font-bold transition-colors border border-red-500/30">{t.reject}</SubmitButton></form>
+                        <form action={updateTicketRequestStatus} className="flex-1">
+                          <input type="hidden" name="reqId" value={req.id} />
+                          <input type="hidden" name="status" value="approved" />
+                          <SubmitButton
+                            loadingText="."
+                            className="w-full py-1.5 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded-lg text-xs font-bold transition-colors border border-purple-500/30"
+                          >
+                            {t.approve}
+                          </SubmitButton>
+                        </form>
+                        <form action={updateTicketRequestStatus} className="flex-1">
+                          <input type="hidden" name="reqId" value={req.id} />
+                          <input type="hidden" name="status" value="rejected" />
+                          <SubmitButton
+                            loadingText="."
+                            className="w-full py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg text-xs font-bold transition-colors border border-red-500/30"
+                          >
+                            {t.reject}
+                          </SubmitButton>
+                        </form>
                       </div>
                     )}
                   </div>
@@ -345,32 +593,69 @@ export default async function AdminPage() {
               </div>
             </details>
 
-            {/* Dropdown for Visits  */}
-            <details className="group/visits space-y-3 sm:space-y-4">
-              <summary className="text-base sm:text-lg font-bold text-zinc-100 flex items-center justify-between gap-2 p-3 bg-white/5 hover:bg-white/10 rounded-xl cursor-pointer list-none transition-colors">
-                <span className="flex items-center gap-2"><MapPin className="w-5 h-5 text-fuchsia-400" /> {t.visits} ({visits?.length || 0})</span>
+            {/* Dropdown for Visits */}
+            <details className="group/visits glass-panel rounded-2xl p-3 shadow-lg border border-white/10">
+              <summary className="text-sm font-bold text-zinc-200 flex items-center justify-between gap-2 cursor-pointer list-none select-none">
+                <span className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-fuchsia-400" /> {t.visits} (
+                  {visits?.length || 0})
+                </span>
                 <ChevronDown className="w-4 h-4 group-open/visits:rotate-180 transition-transform" />
               </summary>
-              <div className="space-y-3 p-1">
-                {(!visits || visits.length === 0) && <p className="text-zinc-500 text-sm">{t.noVisits}</p>}
-                {visits?.map(visit => (
-                  <div key={visit.id} className="p-3 sm:p-4 border border-white/10 rounded-xl sm:rounded-2xl bg-zinc-900/30 backdrop-blur-[40px]">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-bold text-zinc-200 text-sm">{visit.profiles?.username}</span>
-                      <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded-full border ${
-                        visit.status === 'approved' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
-                        : visit.status === 'rejected' ? 'bg-red-500/10 text-red-400 border-red-500/20'
-                        : 'bg-amber-500/10 text-amber-500 border-amber-500/20'
-                      }`}>
+              <div className="space-y-2.5 pt-3">
+                {(!visits || visits.length === 0) && (
+                  <p className="text-zinc-500 text-xs">{t.noVisits}</p>
+                )}
+                {visits?.map((visit) => (
+                  <div
+                    key={visit.id}
+                    className="p-3 border border-white/10 rounded-xl bg-black/40 space-y-1.5"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-zinc-200 text-xs">
+                        {visit.profiles?.username}
+                      </span>
+                      <span
+                        className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full border ${
+                          visit.status === 'approved'
+                            ? 'bg-purple-500/15 text-purple-300 border-purple-500/30'
+                            : visit.status === 'rejected'
+                            ? 'bg-red-500/15 text-red-300 border-red-500/30'
+                            : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                        }`}
+                      >
                         {visit.status || t.pending}
                       </span>
                     </div>
-                    <p className="text-sm text-zinc-300">{new Date(visit.visit_date).toLocaleDateString()} · {t.eta} {visit.arrival_time?.slice(0, 5)}</p>
-                    <p className="text-sm text-fuchsia-400 font-medium break-words mt-1">{visit.stay_status}</p>
+                    <p className="text-xs text-zinc-300">
+                      {new Date(visit.visit_date).toLocaleDateString()} · {t.eta}{' '}
+                      {visit.arrival_time?.slice(0, 5)}
+                    </p>
+                    <p className="text-xs text-fuchsia-400 font-medium break-words">
+                      {visit.stay_status}
+                    </p>
                     {(!visit.status || visit.status === 'pending') && (
-                      <div className="flex gap-2 mt-3">
-                        <form action={updateVisitStatus} className="flex-1"><input type="hidden" name="visitId" value={visit.id} /><input type="hidden" name="status" value="approved" /><SubmitButton loadingText="." className="w-full py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 rounded-lg text-xs font-bold transition-colors border border-purple-500/30">{t.approve}</SubmitButton></form>
-                        <form action={updateVisitStatus} className="flex-1"><input type="hidden" name="visitId" value={visit.id} /><input type="hidden" name="status" value="rejected" /><SubmitButton loadingText="." className="w-full py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg text-xs font-bold transition-colors border border-red-500/30">{t.reject}</SubmitButton></form>
+                      <div className="flex gap-2 pt-1">
+                        <form action={updateVisitStatus} className="flex-1">
+                          <input type="hidden" name="visitId" value={visit.id} />
+                          <input type="hidden" name="status" value="approved" />
+                          <SubmitButton
+                            loadingText="."
+                            className="w-full py-1.5 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded-lg text-xs font-bold transition-colors border border-purple-500/30"
+                          >
+                            {t.approve}
+                          </SubmitButton>
+                        </form>
+                        <form action={updateVisitStatus} className="flex-1">
+                          <input type="hidden" name="visitId" value={visit.id} />
+                          <input type="hidden" name="status" value="rejected" />
+                          <SubmitButton
+                            loadingText="."
+                            className="w-full py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg text-xs font-bold transition-colors border border-red-500/30"
+                          >
+                            {t.reject}
+                          </SubmitButton>
+                        </form>
                       </div>
                     )}
                   </div>
@@ -379,87 +664,142 @@ export default async function AdminPage() {
             </details>
           </div>
 
-          {/* Right Column */}
+          {/* Right Column - Overview & Analytics */}
           <div className="lg:col-span-3 space-y-6">
-            
-            {/* Grand Total tracking */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1 p-6 sm:p-8 bg-gradient-to-br from-violet-900/40 to-indigo-900/40 border border-violet-500/30 rounded-2xl sm:rounded-3xl shadow-2xl shadow-violet-500/5 mb-6 sm:mb-8">
-                <p className="text-xs sm:text-sm font-bold text-violet-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                  <Shield className="w-4 h-4 sm:w-5 sm:h-5" /> {t.grandTotal}
-                </p>
-                <p className="text-4xl sm:text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-indigo-400 tracking-tighter">
-                  {formatCOP(grandTotal)}
-                </p>
+            {/* Grand Total tracking with Animated Number */}
+            <div className="p-6 sm:p-8 glass-panel-heavy rounded-[32px] border border-violet-500/30 shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+                <Shield className="w-32 h-32 text-violet-400" />
               </div>
+              <p className="text-xs sm:text-sm font-black text-violet-300 uppercase tracking-widest mb-2 flex items-center gap-2 text-shadow-sm">
+                <Shield className="w-4 h-4 text-violet-400" /> {t.grandTotal}
+              </p>
+              <p className="text-4xl sm:text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-purple-200 to-indigo-300 tracking-tighter text-shadow-md">
+                <AnimatedNumber value={grandTotal} formatAsCurrency={true} duration={900} />
+              </p>
             </div>
 
             {/* Events Manager */}
-            <AdminEventsManager users={profiles || []} events={events || []} invitations={invitations || []} />
+            <AdminEventsManager
+              users={profiles || []}
+              events={events || []}
+              invitations={invitations || []}
+            />
 
             {/* Payments Tracker */}
-            <div className="pt-6 sm:pt-8 border-t border-white/10">
-              <AdminPaymentsTracker payments={paymentsInfo || []} allocations={allocations || []} users={profiles || []} />
+            <div className="pt-6 border-t border-white/10">
+              <AdminPaymentsTracker
+                payments={paymentsInfo || []}
+                allocations={allocations || []}
+                users={profiles || []}
+              />
             </div>
 
             {/* User Cards Grid */}
-            <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-3 pt-6 sm:pt-8 border-t border-white/10">
-              <User className="w-5 h-5 sm:w-6 sm:h-6 text-violet-500" /> {t.tracking}
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
-              {userTotals.map(u => {
-                const total = u.totalRemaining
-                const formatted = total === 0 ? '$0' : formatCOP(total)
-                const credits = Number(u.credit_balance || 0)
-                return (
-                  <div key={u.id} className={`p-4 sm:p-6 rounded-2xl sm:rounded-3xl border shadow-lg relative overflow-hidden ${u.isSuspended ? 'bg-red-950/40 border-red-500' : total > 0 ? 'bg-zinc-900/30 backdrop-blur-[40px] border-red-500/20' : credits > 0 ? 'bg-zinc-900/30 backdrop-blur-[40px] border-purple-500/30' : 'bg-zinc-900/30 backdrop-blur-[40px] border-white/10'}`}>
-                    {u.isSuspended && <div className="absolute top-0 right-0 bg-red-500 text-red-950 font-black text-[10px] px-3 py-1 rounded-bl-xl uppercase tracking-widest">{t.suspended}</div>}
-                    <div className="flex justify-between items-start mb-3 sm:mb-4">
-                      <h3 className="font-bold text-zinc-200 text-base sm:text-lg truncate pr-2">{u.username || u.email}</h3>
-                      <div className={`px-2 py-1 rounded-lg border text-[10px] uppercase font-black tracking-widest flex items-center gap-1 shrink-0 ${u.score >= 0 ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
-                        <Star className="w-3 h-3" /> {t.score} {u.score}
+            <div className="pt-6 border-t border-white/10 space-y-4">
+              <h2 className="text-lg sm:text-xl font-black flex items-center gap-2.5 text-zinc-100 text-shadow-sm">
+                <User className="w-5 h-5 text-violet-400" /> {t.tracking}
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3.5">
+                {userTotals.map((u) => {
+                  const total = u.totalRemaining
+                  const credits = Number(u.credit_balance || 0)
+                  return (
+                    <div
+                      key={u.id}
+                      className={`p-5 rounded-3xl glass-panel border shadow-lg relative overflow-hidden transition-all ${
+                        u.isSuspended
+                          ? 'border-red-500 bg-red-950/40'
+                          : total > 0
+                          ? 'border-red-500/25'
+                          : credits > 0
+                          ? 'border-purple-500/30'
+                          : 'border-white/10'
+                      }`}
+                    >
+                      {u.isSuspended && (
+                        <div className="absolute top-0 right-0 bg-red-500 text-red-950 font-black text-[9px] px-3 py-1 rounded-bl-xl uppercase tracking-widest">
+                          {t.suspended}
+                        </div>
+                      )}
+                      <div className="flex justify-between items-start mb-3">
+                        <h3 className="font-bold text-zinc-100 text-sm sm:text-base truncate pr-2">
+                          {u.username || u.email}
+                        </h3>
+                        <div
+                          className={`px-2 py-0.5 rounded-full border text-[10px] uppercase font-black tracking-wider flex items-center gap-1 shrink-0 ${
+                            u.score >= 0
+                              ? 'bg-purple-500/15 text-purple-300 border-purple-500/30'
+                              : 'bg-red-500/15 text-red-400 border-red-500/30'
+                          }`}
+                        >
+                          <Star className="w-3 h-3" /> {u.score}
+                        </div>
                       </div>
-                    </div>
-                    <div>
-                      <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">{t.totalOwedPending}</p>
-                      <p className={`text-3xl sm:text-4xl font-black ${total > 0 ? 'text-red-400' : 'text-zinc-400'}`}>{formatted}</p>
-                    </div>
-                    {credits > 0 && (
-                      <div className="mt-3 sm:mt-4 inline-flex items-center gap-2 bg-purple-500/20 px-3 py-1 rounded-full border border-purple-500/30">
-                        <Wallet className="w-3 h-3 text-purple-400" />
-                        <span className="text-[10px] sm:text-xs font-bold text-purple-400 uppercase tracking-widest">+ {formatCOP(credits)} {t.creditBonus}</span>
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 mb-1">
+                          {t.totalOwedPending}
+                        </p>
+                        <p
+                          className={`text-2xl sm:text-3xl font-black ${
+                            total > 0 ? 'text-red-400' : 'text-zinc-400'
+                          }`}
+                        >
+                          <AnimatedNumber value={total} formatAsCurrency={true} />
+                        </p>
                       </div>
-                    )}
-                  </div>
-                )
-              })}
+                      {credits > 0 && (
+                        <div className="mt-3 inline-flex items-center gap-1.5 bg-purple-500/20 px-2.5 py-1 rounded-full border border-purple-500/30">
+                          <Wallet className="w-3 h-3 text-purple-400" />
+                          <span className="text-[10px] font-bold text-purple-300 uppercase tracking-wider">
+                            +{formatCOP(credits)} {t.creditBonus}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
             </div>
 
-            {/* Individual Debt Receipts (Client Component with Search) */}
-            <AdminDebtReceipts debtsByUser={debtsByUser} allocations={allocations || []} t={t} />
-
+            {/* Individual Debt Receipts */}
+            <AdminDebtReceipts
+              debtsByUser={debtsByUser}
+              allocations={allocations || []}
+              t={t}
+            />
           </div>
         </main>
 
-        <div className="pt-6 sm:pt-8">
-           <AdminHelpCenter adminId={user.id} users={profiles || []} messages={allMessages || []} />
+        <div className="pt-6 border-t border-white/10">
+          <AdminHelpCenter
+            adminId={user.id}
+            users={profiles || []}
+            messages={allMessages || []}
+          />
         </div>
 
-        {/* Experimental Tab */}
-        <div className="relative">
-
-          <div className="flex justify-end pr-4 sm:pr-8 md:pr-12 pt-4">
-             <form action={async () => {
-               'use server'
-               const { resetSmilingFriends } = await import('@/app/dashboard/actions')
-               await resetSmilingFriends()
-             }}>
-               <button className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-xl text-xs font-bold transition-colors">
-                 Reset Game Progress (Admin)
-               </button>
-             </form>
+        {/* Reset Game Progress & Games Section */}
+        <div className="relative pt-6 border-t border-white/10">
+          <div className="flex justify-end pb-2">
+            <form
+              action={async () => {
+                'use server'
+                const { resetSmilingFriends } = await import('@/app/dashboard/actions')
+                await resetSmilingFriends()
+              }}
+            >
+              <button className="px-4 py-2 bg-red-500/15 hover:bg-red-500/25 text-red-400 border border-red-500/30 rounded-2xl text-xs font-bold transition-all touch-feedback">
+                Reset Game Progress (Admin)
+              </button>
+            </form>
           </div>
-          <GamesTab lang={lang} initialProgress={profile?.sf_progress} initialCoins={profile?.fandi_coins || 0} initialVersion={profile?.coin_sync_version || 0} />
+          <GamesTab
+            lang={lang}
+            initialProgress={profile?.sf_progress}
+            initialCoins={profile?.fandi_coins || 0}
+            initialVersion={profile?.coin_sync_version || 0}
+          />
           <ExperimentalTab lang={lang} />
         </div>
 

@@ -20,22 +20,51 @@ export function LoanRequestForm() {
 
   return (
     <form action={handleSubmit} className="space-y-4">
-      <div className="p-4 bg-amber-950/30 border border-amber-500/20 rounded-xl text-sm text-amber-200/90 leading-relaxed shadow-inner">
-        <strong className="text-amber-400 block mb-2 text-base">Fandi Bank Loans:</strong>
-        Need extra cash? Request up to <strong>$500.000 COP</strong>! 
-        <br/><br/>
-        <em className="text-amber-300 relative z-10">Note: Loans automatically accrue a simple <strong>0.051% daily interest</strong> based strictly on the original principal. No interest-over-interest!</em>
+      <div className="p-4 bg-amber-950/40 border border-amber-500/25 rounded-2xl text-xs sm:text-sm text-amber-200/90 leading-relaxed shadow-inner">
+        <strong className="text-amber-400 block mb-1.5 text-sm sm:text-base font-bold">
+          Fandi Bank Loans:
+        </strong>
+        Need extra cash? Request up to <strong>$500.000 COP</strong>!
+        <br />
+        <br />
+        <em className="text-amber-300 relative z-10">
+          Note: Loans automatically accrue a simple <strong>0.051% daily interest</strong> based strictly on the original principal. No interest-over-interest!
+        </em>
       </div>
-      
+
       <div>
-        <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Amount (COP)</label>
-        <input name="amount" type="number" required placeholder="Max 500000" max="500000" min="1000" className="mt-1 w-full px-4 py-3 bg-transparent border border-white/10 rounded-xl text-zinc-100 placeholder-neutral-600 focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+        <label className="text-[10px] uppercase font-black tracking-widest text-zinc-400 pl-1 block mb-1">
+          Amount (COP)
+        </label>
+        <input
+          name="amount"
+          type="number"
+          required
+          placeholder="Max 500000"
+          max="500000"
+          min="1000"
+          className="w-full px-4 py-3 glass-input rounded-2xl text-zinc-100 placeholder-zinc-500 text-sm"
+        />
       </div>
-      
-      <SubmitButton loadingText="Requesting..." className="w-full py-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-zinc-50 font-bold rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98]">
-        <Landmark className="w-5 h-5" /> Request Loan
+
+      <SubmitButton
+        loadingText="Requesting..."
+        className="w-full py-3.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-black uppercase tracking-wider text-xs rounded-2xl flex items-center justify-center gap-2 transition-all touch-feedback shadow-lg shadow-amber-600/25"
+      >
+        <Landmark className="w-4 h-4" /> Request Loan
       </SubmitButton>
-      {msg && <p className={`text-sm text-center font-bold ${msg.includes('🎉') ? 'text-purple-400' : 'text-red-400'}`}>{msg}</p>}
+
+      {msg && (
+        <p
+          className={`text-xs text-center font-bold p-2.5 rounded-xl border ${
+            msg.includes('🎉') || msg.includes('Pending')
+              ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+              : 'text-red-400 bg-red-500/15 border-red-500/30'
+          }`}
+        >
+          {msg}
+        </p>
+      )}
     </form>
   )
 }

@@ -1,127 +1,272 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #060a14;
+  --foreground: #f8fafc;
+  --glass-bg: rgba(11, 19, 38, 0.65);
+  --glass-bg-hover: rgba(15, 23, 42, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-border-focus: rgba(192, 193, 255, 0.4);
+  --glass-glow: rgba(192, 193, 255, 0.15);
+  --primary-accent: #c0c1ff;
+  --primary-gradient-from: #8083ff;
+  --primary-gradient-to: #c0c1ff;
+  --accent-secondary: #f472b6;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-geist-sans), Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #040711;
+    --foreground: #f8fafc;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* ===== Smiling Friends Theme Overrides ===== */
-/* Color Palette from the crew:
-   Yellow/Gold (#eab308) — Charlie (dominant)
-   Green (#22c55e) — Mr. Frog
-   Red (#ef4444) — Alan
-   Pink (#ec4899) — Pim
-   Lime (#84cc16) — Glep
-*/
+/* ============================================================
+   ADVANCED GLASSMORPHISM & DESIGN TOKENS
+   ============================================================ */
+
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+}
+
+.glass-panel-heavy {
+  background: rgba(8, 14, 28, 0.82);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+}
+
+.glass-input {
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.glass-input:focus {
+  border-color: var(--glass-border-focus);
+  box-shadow: 0 0 15px var(--glass-glow);
+  outline: none;
+}
+
+/* Text legibility shadows for busy backgrounds */
+.text-shadow-sm {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+.text-shadow-md {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8), 0 0 12px rgba(0, 0, 0, 0.5);
+}
+.text-shadow-glow {
+  text-shadow: 0 0 20px var(--glass-glow);
+}
+
+/* Tactile touch interactions */
+.touch-feedback {
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.18s ease-out;
+}
+.touch-feedback:active {
+  transform: scale(0.97);
+  opacity: 0.88;
+}
+
+/* Horizontal scroll snapping for carousels */
+.snap-carousel {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+}
+.snap-carousel::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+}
+.snap-carousel > * {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   SPRING PHYSICS & MICRO-ANIMATIONS
+   ============================================================ */
+
+@keyframes springSlideUp {
+  0% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  60% {
+    transform: translateY(-2%);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes springFadeInUp {
+  0% {
+    transform: translateY(20px) scale(0.98);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes springScaleIn {
+  0% {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.02);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-spring-up {
+  animation: springSlideUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-spring-fade-in {
+  animation: springFadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-spring-scale {
+  animation: springScaleIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Stagger delay helpers */
+.stagger-1 { animation-delay: 50ms; }
+.stagger-2 { animation-delay: 100ms; }
+.stagger-3 { animation-delay: 150ms; }
+.stagger-4 { animation-delay: 200ms; }
+.stagger-5 { animation-delay: 250ms; }
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* ============================================================
+   SMILING FRIENDS THEME ENGINE OVERRIDES
+   ============================================================ */
 
 body.smiling-theme {
-  --background: #0a0800;
+  --background: #050401;
+  --glass-bg: rgba(18, 14, 2, 0.75);
+  --glass-bg-hover: rgba(26, 20, 4, 0.85);
+  --glass-border: rgba(234, 179, 8, 0.25);
+  --glass-border-focus: rgba(234, 179, 8, 0.6);
+  --glass-glow: rgba(234, 179, 8, 0.25);
+  --primary-accent: #eab308;
+  --primary-gradient-from: #ca8a04;
+  --primary-gradient-to: #eab308;
+  --accent-secondary: #ec4899;
 }
 
-/* === Purple → Gold (dominant) === */
 body.smiling-theme .border-purple-500\/30,
-body.smiling-theme .border-purple-500\/20 {
-  border-color: rgba(234, 179, 8, 0.4) !important;
+body.smiling-theme .border-purple-500\/20,
+body.smiling-theme .border-purple-500\/10 {
+  border-color: rgba(234, 179, 8, 0.35) !important;
 }
+
 body.smiling-theme .bg-purple-500\/10,
-body.smiling-theme .bg-purple-500\/5 {
+body.smiling-theme .bg-purple-500\/5,
+body.smiling-theme .bg-purple-500\/20 {
   background-color: rgba(234, 179, 8, 0.15) !important;
 }
+
 body.smiling-theme .text-purple-400,
 body.smiling-theme .text-purple-300,
 body.smiling-theme .text-purple-500 {
   color: #eab308 !important;
 }
+
 body.smiling-theme .shadow-purple-900\/40,
-body.smiling-theme .shadow-lg.shadow-purple-900\/40 {
-  --tw-shadow-color: rgba(234, 179, 8, 0.25) !important;
-}
-body.smiling-theme .ring-purple-500\/50 {
-  --tw-ring-color: rgba(234, 179, 8, 0.5) !important;
-}
-body.smiling-theme .focus\:ring-purple-500\/50:focus {
-  --tw-ring-color: rgba(234, 179, 8, 0.5) !important;
-}
-body.smiling-theme .focus\:border-purple-500\/50:focus {
-  border-color: rgba(234, 179, 8, 0.5) !important;
+body.smiling-theme .shadow-purple-900\/20,
+body.smiling-theme .shadow-purple-500\/20,
+body.smiling-theme .shadow-purple-500\/25 {
+  --tw-shadow-color: rgba(234, 179, 8, 0.3) !important;
 }
 
-/* === Fuchsia → Pim Pink === */
-body.smiling-theme .bg-fuchsia-500\/10,
-body.smiling-theme .border-fuchsia-500\/20 {
-  background-color: rgba(236, 72, 153, 0.12) !important;
-  border-color: rgba(236, 72, 153, 0.25) !important;
+body.smiling-theme .from-purple-600,
+body.smiling-theme .from-purple-500 {
+  --tw-gradient-from: #ca8a04 !important;
+  --tw-gradient-to: #eab308 !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
 }
-body.smiling-theme .text-fuchsia-400 {
+
+body.smiling-theme .to-purple-400,
+body.smiling-theme .to-purple-300,
+body.smiling-theme .to-fuchsia-600,
+body.smiling-theme .to-fuchsia-500 {
+  --tw-gradient-to: #facc15 !important;
+}
+
+body.smiling-theme .bg-fuchsia-500\/10,
+body.smiling-theme .border-fuchsia-500\/20,
+body.smiling-theme .border-fuchsia-500\/30 {
+  background-color: rgba(236, 72, 153, 0.12) !important;
+  border-color: rgba(236, 72, 153, 0.3) !important;
+}
+
+body.smiling-theme .text-fuchsia-400,
+body.smiling-theme .text-fuchsia-500 {
   color: #ec4899 !important;
 }
 
-/* === Header glow — gold border with warm shadow === */
-body.smiling-theme header {
-  border-color: rgba(234, 179, 8, 0.25) !important;
-  box-shadow: 0 1px 20px rgba(234, 179, 8, 0.08) !important;
-}
-
-/* === Zinc text gets warmer === */
-body.smiling-theme .text-zinc-400 {
-  color: #a8a29e !important;
-}
-
-/* === Cards and panels get warm borders === */
-body.smiling-theme .border-white\/5 {
-  border-color: rgba(234, 179, 8, 0.08) !important;
-}
-body.smiling-theme .border-white\/10 {
-  border-color: rgba(234, 179, 8, 0.12) !important;
-}
-
-/* === Buttons get character-colored hovers === */
-body.smiling-theme .hover\:bg-white\/5:hover {
-  background-color: rgba(234, 179, 8, 0.08) !important;
-}
-
-/* === Emerald states → Mr. Frog Green === */
 body.smiling-theme .text-emerald-400,
 body.smiling-theme .text-green-400 {
   color: #22c55e !important;
 }
 
-/* === Rose/Red states → Alan Red === */
 body.smiling-theme .text-rose-400,
 body.smiling-theme .text-red-400 {
   color: #ef4444 !important;
 }
 
-/* === Indigo states → Glep Lime === */
 body.smiling-theme .text-indigo-400 {
   color: #84cc16 !important;
 }
 
-/* === Scrollbar theming === */
 body.smiling-theme ::-webkit-scrollbar-thumb {
-  background: rgba(234, 179, 8, 0.3) !important;
-  border-radius: 999px;
-}
-body.smiling-theme ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.3) !important;
+  background: rgba(234, 179, 8, 0.35) !important;
 }

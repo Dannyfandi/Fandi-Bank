@@ -1,17 +1,28 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Zap, ShoppingBag, Clock, Target, ArrowLeft, Coins, X, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react'
+import {
+  Zap,
+  ShoppingBag,
+  Clock,
+  Target,
+  ArrowLeft,
+  Coins,
+  X,
+  AlertTriangle,
+  CheckCircle,
+  Loader2,
+  ChevronDown,
+} from 'lucide-react'
 import { SmilingFriendsGame } from './SmilingFriendsGame'
 import { getFandiCoins, syncFandiCoins, requestPrize } from '@/app/dashboard/actions'
+import { AnimatedNumber } from './AnimatedNumber'
 
 interface Reward {
   name: string
   price: number
   emoji: string
 }
-
-// Rewards are now defined dynamically inside the component to support translation
 
 const dict = {
   en: {
@@ -32,12 +43,12 @@ const dict = {
     confirmTitle: 'Confirm Prize Request',
     confirmMsg: 'Are you sure you want to spend',
     confirmOn: 'on',
-    confirmWarn: 'This action cannot be undone. Your coins will be deducted and a request will be sent to admin for approval.',
+    confirmWarn:
+      'This action cannot be undone. Your coins will be deducted and a request will be sent to admin for approval.',
     confirmBtn: 'Yes, Request Prize',
     cancelBtn: 'Cancel',
     requesting: 'Requesting...',
     syncing: 'Saving...',
-    pendingLabel: 'Pending requests',
     rwdOreo: 'Oreo Cookies (4-pack)',
     rwdGummy: 'Gummy Package',
     rwdMarlboro: 'Media Marlboro Rojo',
@@ -65,12 +76,12 @@ const dict = {
     confirmTitle: 'Confirmar Solicitud',
     confirmMsg: '¿Seguro que quieres gastar',
     confirmOn: 'en',
-    confirmWarn: 'Esta acción no se puede deshacer. Tus monedas se descontarán y se enviará una solicitud al admin para aprobación.',
+    confirmWarn:
+      'Esta acción no se puede deshacer. Tus monedas se descontarán y se enviará una solicitud al admin para aprobación.',
     confirmBtn: 'Sí, Solicitar Premio',
     cancelBtn: 'Cancelar',
     requesting: 'Solicitando...',
     syncing: 'Guardando...',
-    pendingLabel: 'Solicitudes pendientes',
     rwdOreo: 'Galletas Oreo (paq. de 4)',
     rwdGummy: 'Paquete de Gomas',
     rwdMarlboro: 'Media Marlboro Rojo',
@@ -79,11 +90,21 @@ const dict = {
     rwdIce15: 'Helado C&W (1.5L)',
     rwdMojito: 'Bacardí Mojito (750ml)',
     rwdZombie: 'Bacardí Zombie (750ml)',
-  }
+  },
 }
 
-export function GamesTab({ lang, initialProgress, initialCoins = 0, initialVersion = 0 }: { lang: 'en' | 'es', initialProgress?: any, initialCoins?: number, initialVersion?: number }) {
-  const t = dict[lang]
+export function GamesTab({
+  lang,
+  initialProgress,
+  initialCoins = 0,
+  initialVersion = 0,
+}: {
+  lang: 'en' | 'es'
+  initialProgress?: any
+  initialCoins?: number
+  initialVersion?: number
+}) {
+  const t = dict[lang] || dict.es
 
   const rewards: Reward[] = [
     { name: t.rwdOreo, price: 2300, emoji: '🍪' },
@@ -95,25 +116,23 @@ export function GamesTab({ lang, initialProgress, initialCoins = 0, initialVersi
     { name: t.rwdMojito, price: 56000, emoji: '🍹' },
     { name: t.rwdZombie, price: 59400, emoji: '🧟' },
   ]
-  
+
   const [menu, setMenu] = useState<'main' | 'fandi-tap' | 'mole-whack' | 'smiling-friends'>('main')
-  
+
   // Cloud-synced coins
   const [dbCoins, setDbCoins] = useState(initialCoins)
-  const [pendingCoins, setPendingCoins] = useState(0)  // buffer: not yet sent to server
+  const [pendingCoins, setPendingCoins] = useState(0)
   const syncVersion = useRef(initialVersion)
   const isSyncing = useRef(false)
   const [syncIndicator, setSyncIndicator] = useState(false)
-  
+
   // Confirmation modal
   const [confirmReward, setConfirmReward] = useState<Reward | null>(null)
   const [isRequesting, setIsRequesting] = useState(false)
   const [requestMsg, setRequestMsg] = useState('')
 
-  // Total visible coins = what's confirmed in DB + what's pending locally
   const totalCoins = dbCoins + pendingCoins
 
-  // Load coins from server on mount (in case SSR data is stale)
   useEffect(() => {
     getFandiCoins().then(({ coins, version }) => {
       setDbCoins(coins)
@@ -121,35 +140,15 @@ export function GamesTab({ lang, initialProgress, initialCoins = 0, initialVersi
     })
   }, [])
 
-  // Sync buffer to server every 15 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      flushCoins()
-    }, 15000)
-
-    // Also sync on page unload
-    const handleBeforeUnload = () => {
-      flushCoins()
-    }
-    window.addEventListener('beforeunload', handleBeforeUnload)
-
-    return () => {
-      clearInterval(interval)
-      window.removeEventListener('beforeunload', handleBeforeUnload)
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
   const flushCoins = useCallback(async () => {
-    // Grab current pending and reset immediately so new earnings go to next batch
     let toSync = 0
-    setPendingCoins(prev => {
+    setPendingCoins((prev) => {
       toSync = prev
       return 0
     })
 
     if (toSync <= 0 || isSyncing.current) {
-      if (toSync > 0) setPendingCoins(prev => prev + toSync) // put them back
+      if (toSync > 0) setPendingCoins((prev) => prev + toSync)
       return
     }
 
@@ -162,37 +161,52 @@ export function GamesTab({ lang, initialProgress, initialCoins = 0, initialVersi
         setDbCoins(result.coins)
         syncVersion.current = result.version
       } else {
-        // Version mismatch or error — coins are still in DB, refresh state
         setDbCoins(result.coins)
         syncVersion.current = result.version
-        // Don't put coins back since they were likely already counted from another device
       }
     } catch {
-      // Network error: put coins back in pending buffer for next cycle
-      setPendingCoins(prev => prev + toSync)
+      setPendingCoins((prev) => prev + toSync)
     } finally {
       isSyncing.current = false
       setTimeout(() => setSyncIndicator(false), 1000)
     }
   }, [])
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      flushCoins()
+    }, 15000)
+
+    const handleBeforeUnload = () => {
+      flushCoins()
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [flushCoins])
+
   const addPoints = useCallback((p: number) => {
-    setPendingCoins(prev => prev + p)
+    setPendingCoins((prev) => prev + p)
   }, [])
 
-  // Prize request flow
   const handleRequestPrize = async (reward: Reward) => {
     setIsRequesting(true)
     setRequestMsg('')
 
-    // First flush any pending coins so DB is up to date
     await flushCoins()
-
     const result = await requestPrize(reward.name, reward.price)
-    
+
     if (result.success) {
-      setDbCoins(result.newCoins ?? (dbCoins - reward.price))
-      setRequestMsg('✅ ' + (lang === 'es' ? '¡Solicitud enviada! El admin revisará tu pedido.' : 'Request sent! Admin will review your order.'))
+      setDbCoins(result.newCoins ?? dbCoins - reward.price)
+      setRequestMsg(
+        '✅ ' +
+          (lang === 'es'
+            ? '¡Solicitud enviada! El admin revisará tu pedido.'
+            : 'Request sent! Admin will review your order.')
+      )
     } else {
       setRequestMsg('❌ ' + result.message)
     }
@@ -205,71 +219,141 @@ export function GamesTab({ lang, initialProgress, initialCoins = 0, initialVersi
   }
 
   return (
-    <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-white/10">
-      <div className="flex items-center gap-4 mb-6">
-        {menu !== 'main' && (
-          <button onClick={() => { flushCoins(); setMenu('main') }} className="p-2 bg-white/5 hover:bg-white/10 rounded-xl transition-colors text-zinc-400">
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-        )}
-        <h2 className="text-lg sm:text-xl font-black tracking-tighter bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-          {t.gamesTitle}
-        </h2>
-        {syncIndicator && (
-          <span className="text-[10px] text-emerald-500/70 font-bold uppercase tracking-widest flex items-center gap-1 animate-pulse">
-            <Loader2 className="w-3 h-3 animate-spin" /> {t.syncing}
-          </span>
-        )}
+    <div id="games-section" className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-white/10 space-y-6">
+      {/* Header with Coin Count-Up */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          {menu !== 'main' && (
+            <button
+              onClick={() => {
+                flushCoins()
+                setMenu('main')
+              }}
+              className="p-2 glass-panel hover:bg-white/10 rounded-xl transition-colors text-zinc-300 touch-feedback"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          )}
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent text-shadow-sm">
+              {t.gamesTitle}
+            </h2>
+            <p className="text-xs text-zinc-400 font-medium">{t.pointsDesc}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          {syncIndicator && (
+            <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-1">
+              <Loader2 className="w-3 h-3 animate-spin" /> {t.syncing}
+            </span>
+          )}
+          <div className="px-4 py-2 rounded-2xl glass-panel border border-emerald-500/30 flex items-center gap-2">
+            <Coins className="w-5 h-5 text-emerald-400 animate-pulse" />
+            <div className="flex flex-col">
+              <span className="text-[9px] uppercase tracking-widest text-zinc-400 font-black">
+                Fandi Coins
+              </span>
+              <span className="text-base sm:text-lg font-black text-emerald-300 leading-none">
+                <AnimatedNumber value={totalCoins} duration={600} />
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {menu === 'main' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in zoom-in-95 duration-300">
-          {/* Smiling Friends (Newest) */}
-          <button onClick={() => setMenu('smiling-friends')} className="group relative overflow-hidden rounded-3xl aspect-[4/3] border border-white/10 flex flex-col items-center justify-center p-6 bg-gradient-to-br from-[#eab308]/40 to-black hover:border-[#eab308]/50 transition-all hover:scale-[1.02] sm:col-span-2 lg:col-span-1">
-             <span className="text-6xl mb-4 group-hover:scale-110 transition-transform block">😁</span>
-             <h3 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#eab308] to-red-400 text-center">Smiling Friends Labs</h3>
-          </button>
-          
-          {/* Mole Whack */}
-          <button onClick={() => setMenu('mole-whack')} className="group relative overflow-hidden rounded-3xl aspect-[4/3] border border-white/10 flex flex-col items-center justify-center p-6 bg-gradient-to-br from-amber-900/40 to-black hover:border-amber-500/50 transition-all hover:scale-[1.02]">
-             <Target className="w-16 h-16 text-amber-500 mb-4 group-hover:scale-110 transition-transform" />
-             <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">{t.game2}</h3>
-          </button>
-          
-          {/* Fandi Tap */}
-          <button onClick={() => setMenu('fandi-tap')} className="group relative overflow-hidden rounded-3xl aspect-[4/3] border border-white/10 flex flex-col items-center justify-center p-6 bg-gradient-to-br from-purple-900/40 to-black hover:border-purple-500/50 transition-all hover:scale-[1.02]">
-             <Zap className="w-16 h-16 text-purple-400 mb-4 group-hover:scale-110 transition-transform" />
-             <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-fuchsia-400">{t.game1}</h3>
-          </button>
-
-          {/* Rewards Shop */}
-          <div className="p-6 rounded-3xl bg-zinc-900/30 backdrop-blur-[40px] border border-white/10 shadow-xl space-y-4 lg:col-span-3 sm:col-span-2">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-base flex items-center gap-2 text-zinc-200">
-                <ShoppingBag className="w-5 h-5 text-emerald-400" /> {t.shopTitle}
+        <div className="space-y-6">
+          {/* Horizontal Swiping Carousel for Games */}
+          <div className="snap-carousel gap-4 pb-2 pt-1">
+            {/* Smiling Friends */}
+            <button
+              onClick={() => setMenu('smiling-friends')}
+              className="w-[260px] sm:w-[300px] shrink-0 group relative overflow-hidden rounded-[28px] p-6 bg-gradient-to-br from-[#eab308]/30 via-black/60 to-black border border-[#eab308]/40 hover:border-[#eab308]/70 transition-all touch-feedback flex flex-col items-center text-center justify-center aspect-[4/3] shadow-xl"
+            >
+              <div className="absolute inset-0 bg-[#eab308]/5 group-hover:bg-[#eab308]/10 transition-colors" />
+              <span className="text-5xl sm:text-6xl mb-3 group-hover:scale-110 transition-transform block">
+                😁
+              </span>
+              <h3 className="text-lg sm:text-xl font-black text-[#eab308] text-shadow-sm">
+                Smiling Friends Labs
               </h3>
-              <div className="text-xl font-black text-emerald-400 flex items-center gap-2">
-                 <Coins className="w-5 h-5" />
-                 {totalCoins.toLocaleString()} <span className="text-xs text-zinc-500 uppercase">Fandi Coins</span>
+              <p className="text-[11px] text-yellow-200/70 font-medium mt-1">
+                {lang === 'es' ? 'Minijuegos y desbloqueables' : 'Minigames & Character unlocks'}
+              </p>
+            </button>
+
+            {/* Mole Whack */}
+            <button
+              onClick={() => setMenu('mole-whack')}
+              className="w-[260px] sm:w-[300px] shrink-0 group relative overflow-hidden rounded-[28px] p-6 bg-gradient-to-br from-amber-900/35 via-black/60 to-black border border-amber-500/30 hover:border-amber-500/60 transition-all touch-feedback flex flex-col items-center text-center justify-center aspect-[4/3] shadow-xl"
+            >
+              <Target className="w-14 h-14 sm:w-16 sm:h-16 text-amber-400 mb-3 group-hover:scale-110 transition-transform" />
+              <h3 className="text-lg sm:text-xl font-black text-amber-300 text-shadow-sm">
+                {t.game2}
+              </h3>
+              <p className="text-[11px] text-amber-200/70 font-medium mt-1">
+                {lang === 'es' ? '¡Atrapa las ranas rápidamente!' : 'Fast reaction whacking game'}
+              </p>
+            </button>
+
+            {/* Fandi Tap */}
+            <button
+              onClick={() => setMenu('fandi-tap')}
+              className="w-[260px] sm:w-[300px] shrink-0 group relative overflow-hidden rounded-[28px] p-6 bg-gradient-to-br from-purple-900/35 via-black/60 to-black border border-purple-500/30 hover:border-purple-500/60 transition-all touch-feedback flex flex-col items-center text-center justify-center aspect-[4/3] shadow-xl"
+            >
+              <Zap className="w-14 h-14 sm:w-16 sm:h-16 text-purple-400 mb-3 group-hover:scale-110 transition-transform" />
+              <h3 className="text-lg sm:text-xl font-black text-purple-300 text-shadow-sm">
+                {t.game1}
+              </h3>
+              <p className="text-[11px] text-purple-200/70 font-medium mt-1">
+                {lang === 'es' ? 'Toca rápido para combos' : 'Tap fast for combo multipliers'}
+              </p>
+            </button>
+          </div>
+
+          {/* Rewards Shop Accordion */}
+          <details open className="group/shop glass-panel rounded-[28px] p-5 sm:p-6 shadow-xl border border-white/10">
+            <summary className="cursor-pointer list-none flex items-center justify-between gap-3 select-none mb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                  <ShoppingBag className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg sm:text-xl font-black text-zinc-100 text-shadow-sm flex items-center gap-2">
+                    {t.shopTitle}
+                  </h3>
+                </div>
               </div>
-            </div>
-            <div className="space-y-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
-              {rewards.map(r => {
+              <ChevronDown className="w-5 h-5 text-zinc-400 group-open/shop:rotate-180 transition-transform duration-300" />
+            </summary>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-80 overflow-y-auto pr-1 custom-scrollbar pt-2">
+              {rewards.map((r) => {
                 const canAfford = totalCoins >= r.price
                 return (
-                  <div key={r.name} className="flex items-center justify-between p-3 rounded-xl bg-black/20 border border-white/5 hover:border-emerald-500/20 transition-colors">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-base">{r.emoji}</span>
+                  <div
+                    key={r.name}
+                    className="flex items-center justify-between p-3 rounded-2xl bg-black/40 border border-white/10 hover:border-emerald-500/30 transition-all gap-2"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="text-2xl shrink-0">{r.emoji}</span>
                       <div className="min-w-0">
-                        <span className="font-bold text-zinc-200 text-xs truncate block">{r.name}</span>
-                        <span className="text-[10px] text-emerald-500/70 font-bold">{r.price.toLocaleString()} Fandi Coins</span>
+                        <span className="font-bold text-zinc-100 text-xs sm:text-sm truncate block">
+                          {r.name}
+                        </span>
+                        <span className="text-[10px] text-emerald-400 font-bold">
+                          {r.price.toLocaleString()} Fandi Coins
+                        </span>
                       </div>
                     </div>
                     <button
                       onClick={() => canAfford && setConfirmReward(r)}
                       disabled={!canAfford}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shrink-0 ${
-                        canAfford ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30' : 'bg-zinc-800/50 text-zinc-600 border border-white/5 cursor-not-allowed'
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 touch-feedback ${
+                        canAfford
+                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
+                          : 'bg-zinc-800/40 text-zinc-500 border border-white/5 cursor-not-allowed'
                       }`}
                     >
                       {canAfford ? t.redeem : t.notEnough}
@@ -278,67 +362,109 @@ export function GamesTab({ lang, initialProgress, initialCoins = 0, initialVersi
                 )
               })}
             </div>
-          </div>
+          </details>
         </div>
       )}
 
-      {menu === 'fandi-tap' && <FandiTap gameTitle={t.game1} tapBtn={t.tapBtn} cooldown={t.cooldown} maxRate={t.maxRate} pointsLabel={t.points} scoreLabel={t.score} comboLabel={t.combo} highScoreLabel={t.highScore} points={totalCoins} addPoints={addPoints} />}
-      
-      {menu === 'mole-whack' && <MoleWhack gameTitle={t.game2} scoreLabel={t.score} pointsLabel={t.points} points={totalCoins} addPoints={addPoints} />}
+      {menu === 'fandi-tap' && (
+        <FandiTap
+          gameTitle={t.game1}
+          tapBtn={t.tapBtn}
+          cooldown={t.cooldown}
+          maxRate={t.maxRate}
+          pointsLabel={t.points}
+          scoreLabel={t.score}
+          comboLabel={t.combo}
+          highScoreLabel={t.highScore}
+          points={totalCoins}
+          addPoints={addPoints}
+        />
+      )}
 
-      {/* Keep Smiling Friends always mounted so progress doesn't reset on menu switch */}
+      {menu === 'mole-whack' && (
+        <MoleWhack
+          gameTitle={t.game2}
+          scoreLabel={t.score}
+          pointsLabel={t.points}
+          points={totalCoins}
+          addPoints={addPoints}
+        />
+      )}
+
+      {/* Keep Smiling Friends mounted so progress stays intact */}
       <div className={menu === 'smiling-friends' ? '' : 'hidden'}>
-        <SmilingFriendsGame initialProgress={initialProgress} lang={lang} addPoints={addPoints} />
+        <SmilingFriendsGame
+          initialProgress={initialProgress}
+          lang={lang}
+          addPoints={addPoints}
+        />
       </div>
 
       {/* Confirmation Modal */}
       {confirmReward && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-zinc-900 border border-white/10 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="glass-panel-heavy rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-spring-scale border border-white/20">
             <div className="p-4 border-b border-white/10 flex justify-between items-center bg-black/40">
-              <h3 className="font-bold text-white flex items-center gap-2">
+              <h3 className="font-bold text-white flex items-center gap-2 text-sm sm:text-base">
                 <AlertTriangle className="w-4 h-4 text-amber-400" /> {t.confirmTitle}
               </h3>
-              <button onClick={() => { setConfirmReward(null); setRequestMsg('') }} className="text-zinc-500 hover:text-white">
-                <X className="w-5 h-5"/>
+              <button
+                onClick={() => {
+                  setConfirmReward(null)
+                  setRequestMsg('')
+                }}
+                className="text-zinc-400 hover:text-white p-1"
+              >
+                <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6 space-y-4">
               {requestMsg ? (
                 <div className="text-center py-4">
                   <CheckCircle className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
-                  <p className="text-sm text-zinc-200 font-bold">{requestMsg}</p>
+                  <p className="text-sm text-zinc-100 font-bold">{requestMsg}</p>
                 </div>
               ) : (
                 <>
-                  <div className="text-center p-4 bg-black/30 rounded-xl border border-white/5">
+                  <div className="text-center p-4 bg-black/40 rounded-2xl border border-white/10">
                     <span className="text-4xl block mb-2">{confirmReward.emoji}</span>
                     <p className="font-black text-white text-lg">{confirmReward.name}</p>
-                    <p className="text-emerald-400 font-bold text-sm mt-1">{confirmReward.price.toLocaleString()} Fandi Coins</p>
+                    <p className="text-emerald-400 font-bold text-sm mt-1">
+                      {confirmReward.price.toLocaleString()} Fandi Coins
+                    </p>
                   </div>
 
-                  <p className="text-sm text-zinc-300 text-center">
-                    {t.confirmMsg} <strong className="text-emerald-400">{confirmReward.price.toLocaleString()}</strong> Fandi Coins {t.confirmOn} <strong>{confirmReward.name}</strong>?
+                  <p className="text-sm text-zinc-200 text-center leading-relaxed">
+                    {t.confirmMsg}{' '}
+                    <strong className="text-emerald-400">
+                      {confirmReward.price.toLocaleString()}
+                    </strong>{' '}
+                    Fandi Coins {t.confirmOn} <strong>{confirmReward.name}</strong>?
                   </p>
-                  <p className="text-xs text-zinc-500 text-center">
+                  <p className="text-xs text-zinc-400 text-center leading-normal">
                     {t.confirmWarn}
                   </p>
 
-                  <div className="flex gap-3">
-                    <button 
-                      onClick={() => { setConfirmReward(null); setRequestMsg('') }} 
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      onClick={() => {
+                        setConfirmReward(null)
+                        setRequestMsg('')
+                      }}
                       disabled={isRequesting}
-                      className="flex-1 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-sm transition-colors"
+                      className="flex-1 py-3 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-xs uppercase tracking-wider transition-colors touch-feedback"
                     >
                       {t.cancelBtn}
                     </button>
-                    <button 
+                    <button
                       onClick={() => handleRequestPrize(confirmReward)}
                       disabled={isRequesting}
-                      className="flex-1 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                      className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 disabled:opacity-50 touch-feedback shadow-lg shadow-emerald-600/30"
                     >
                       {isRequesting ? (
-                        <><Loader2 className="w-4 h-4 animate-spin" /> {t.requesting}</>
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" /> {t.requesting}
+                        </>
                       ) : (
                         t.confirmBtn
                       )}
@@ -350,104 +476,166 @@ export function GamesTab({ lang, initialProgress, initialCoins = 0, initialVersi
           </div>
         </div>
       )}
-      
     </div>
   )
 }
 
-// ---------------------------------------------------- //
-// Fandi Tap Subcomponent
-// ---------------------------------------------------- //
-
-function FandiTap({ gameTitle, tapBtn, cooldown, maxRate, pointsLabel, scoreLabel, comboLabel, highScoreLabel, points, addPoints }: any) {
+function FandiTap({
+  gameTitle,
+  tapBtn,
+  cooldown,
+  maxRate,
+  pointsLabel,
+  scoreLabel,
+  comboLabel,
+  points,
+  addPoints,
+}: any) {
   const [combo, setCombo] = useState(0)
   const [ripples, setRipples] = useState<any[]>([])
-  
+
   const pointsThisMinute = useRef(0)
-  const minuteStart = useRef(Date.now())
+  const minuteStart = useRef(0)
   const [rateLimited, setRateLimited] = useState(false)
   const comboTimer = useRef<NodeJS.Timeout | null>(null)
   const rippleId = useRef(0)
 
-  const handleTap = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
-    const now = Date.now()
-    if (now - minuteStart.current >= 60000) {
-      minuteStart.current = now; pointsThisMinute.current = 0; setRateLimited(false)
-    }
-    if (pointsThisMinute.current >= 50) {
-      setRateLimited(true); return
-    }
-    
-    const comboBonus = Math.min(Math.floor(combo / 5), 3)
-    const earned = 1 + comboBonus
-    const actual = Math.min(earned, 50 - pointsThisMinute.current)
-    
-    addPoints(actual)
-    pointsThisMinute.current += actual
-    setCombo(c => c + 1)
-    
-    if (comboTimer.current) clearTimeout(comboTimer.current)
-    comboTimer.current = setTimeout(() => setCombo(0), 1500)
-    
-    const rect = e.currentTarget.getBoundingClientRect()
-    const id = rippleId.current++
-    setRipples(prev => [...prev, { id, x: e.clientX - rect.left, y: e.clientY - rect.top }])
-    setTimeout(() => setRipples(prev => prev.filter(r => r.id !== id)), 600)
-  }, [combo, addPoints])
+  const handleTap = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      const now = Date.now()
+      if (minuteStart.current === 0 || now - minuteStart.current >= 60000) {
+        minuteStart.current = now
+        pointsThisMinute.current = 0
+        setRateLimited(false)
+      }
+      if (pointsThisMinute.current >= 50) {
+        setRateLimited(true)
+        return
+      }
+
+      const comboBonus = Math.min(Math.floor(combo / 5), 3)
+      const earned = 1 + comboBonus
+      const actual = Math.min(earned, 50 - pointsThisMinute.current)
+
+      addPoints(actual)
+      pointsThisMinute.current += actual
+      setCombo((c) => c + 1)
+
+      if (comboTimer.current) clearTimeout(comboTimer.current)
+      comboTimer.current = setTimeout(() => setCombo(0), 1500)
+
+      const rect = e.currentTarget.getBoundingClientRect()
+      const id = rippleId.current++
+      setRipples((prev) => [
+        ...prev,
+        { id, x: e.clientX - rect.left, y: e.clientY - rect.top },
+      ])
+      setTimeout(() => setRipples((prev) => prev.filter((r) => r.id !== id)), 600)
+    },
+    [combo, addPoints]
+  )
 
   const ptsRemaining = 50 - pointsThisMinute.current
-  const comboColor = combo >= 20 ? 'text-red-400' : combo >= 10 ? 'text-amber-400' : combo >= 5 ? 'text-purple-400' : 'text-zinc-400'
+  const comboColor =
+    combo >= 20
+      ? 'text-red-400'
+      : combo >= 10
+      ? 'text-amber-400'
+      : combo >= 5
+      ? 'text-purple-400'
+      : 'text-zinc-400'
 
   return (
-    <div className="max-w-md mx-auto p-6 rounded-3xl bg-zinc-900/30 backdrop-blur-[40px] border border-white/10 shadow-xl space-y-6 animate-in zoom-in-95 duration-300 mt-2">
+    <div className="max-w-md mx-auto p-6 rounded-[28px] glass-panel-heavy border border-white/10 shadow-2xl space-y-5 animate-spring-scale mt-2">
       <h3 className="font-black text-xl text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-fuchsia-400 flex items-center justify-center gap-2">
-        <Zap className="w-5 h-5 text-purple-500" /> {gameTitle}
+        <Zap className="w-5 h-5 text-purple-400" /> {gameTitle}
       </h3>
       <div className="grid grid-cols-2 gap-3 text-center">
-        <div className="p-4 rounded-xl bg-black/30 border border-white/5">
-          <p className="text-[10px] uppercase tracking-widest text-zinc-600 font-bold">{scoreLabel}</p>
-          <p className="text-3xl font-black text-purple-400">{points.toLocaleString()}</p>
+        <div className="p-3.5 rounded-2xl bg-black/40 border border-white/5">
+          <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">
+            {scoreLabel}
+          </p>
+          <p className="text-2xl sm:text-3xl font-black text-purple-400">
+            {points.toLocaleString()}
+          </p>
         </div>
-        <div className="p-4 rounded-xl bg-black/30 border border-white/5">
-          <p className="text-[10px] uppercase tracking-widest text-zinc-600 font-bold">{comboLabel}</p>
-          <p className={`text-3xl font-black ${comboColor}`}>{combo}x</p>
+        <div className="p-3.5 rounded-2xl bg-black/40 border border-white/5">
+          <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">
+            {comboLabel}
+          </p>
+          <p className={`text-2xl sm:text-3xl font-black ${comboColor}`}>{combo}x</p>
         </div>
       </div>
       <div className="flex items-center justify-between text-xs">
-        <span className="text-zinc-600 flex items-center gap-1"><Clock className="w-3 h-3" /> {maxRate}</span>
-        <span className={`font-bold ${ptsRemaining <= 10 ? 'text-red-400' : 'text-zinc-500'}`}>{ptsRemaining} {pointsLabel}</span>
+        <span className="text-zinc-400 flex items-center gap-1">
+          <Clock className="w-3.5 h-3.5" /> {maxRate}
+        </span>
+        <span
+          className={`font-bold ${
+            ptsRemaining <= 10 ? 'text-red-400' : 'text-zinc-400'
+          }`}
+        >
+          {ptsRemaining} {pointsLabel}
+        </span>
       </div>
-      <div className="w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden">
-        <div className="h-full bg-gradient-to-r from-purple-500 to-fuchsia-500 transition-all duration-300" style={{ width: `${(ptsRemaining / 50) * 100}%` }} />
+      <div className="w-full bg-zinc-800 rounded-full h-2 overflow-hidden">
+        <div
+          className="h-full bg-gradient-to-r from-purple-500 to-fuchsia-500 transition-all duration-300"
+          style={{ width: `${(ptsRemaining / 50) * 100}%` }}
+        />
       </div>
-      <button onClick={handleTap} disabled={rateLimited} className={`relative w-full py-12 rounded-2xl text-3xl font-black tracking-wider transition-all active:scale-95 overflow-hidden select-none ${rateLimited ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed' : combo >= 20 ? 'bg-gradient-to-r from-red-600 to-orange-600 text-white shadow-2xl shadow-red-500/30 hover:from-red-500 hover:to-orange-500' : combo >= 10 ? 'bg-gradient-to-r from-amber-600 to-yellow-500 text-black shadow-2xl shadow-amber-500/30 hover:from-amber-500 hover:to-yellow-400' : 'bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-2xl shadow-purple-500/30 hover:from-purple-500 hover:to-fuchsia-500'}`}>
+      <button
+        onClick={handleTap}
+        disabled={rateLimited}
+        className={`relative w-full py-10 rounded-2xl text-2xl sm:text-3xl font-black tracking-wider transition-all touch-feedback overflow-hidden select-none ${
+          rateLimited
+            ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
+            : combo >= 20
+            ? 'bg-gradient-to-r from-red-600 to-orange-600 text-white shadow-2xl shadow-red-500/30'
+            : combo >= 10
+            ? 'bg-gradient-to-r from-amber-600 to-yellow-500 text-black shadow-2xl shadow-amber-500/30'
+            : 'bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-2xl shadow-purple-500/30'
+        }`}
+      >
         {rateLimited ? cooldown : tapBtn}
-        {combo >= 5 && !rateLimited && <span className="absolute top-2 right-3 text-sm font-black opacity-70">+{1 + Math.min(Math.floor(combo / 5), 3)}</span>}
-        {ripples.map(r => <span key={r.id} className="absolute w-16 h-16 rounded-full bg-white/30 animate-ping pointer-events-none" style={{ left: r.x - 32, top: r.y - 32 }} />)}
+        {combo >= 5 && !rateLimited && (
+          <span className="absolute top-2 right-3 text-xs font-black opacity-80">
+            +{1 + Math.min(Math.floor(combo / 5), 3)}
+          </span>
+        )}
+        {ripples.map((r) => (
+          <span
+            key={r.id}
+            className="absolute w-16 h-16 rounded-full bg-white/30 animate-ping pointer-events-none"
+            style={{ left: r.x - 32, top: r.y - 32 }}
+          />
+        ))}
       </button>
     </div>
   )
 }
 
-// ---------------------------------------------------- //
-// Mole Whack Subcomponent
-// ---------------------------------------------------- //
-
-function MoleWhack({ gameTitle, scoreLabel, pointsLabel, points, addPoints }: any) {
+function MoleWhack({
+  gameTitle,
+  scoreLabel,
+  pointsLabel,
+  points,
+  addPoints,
+}: any) {
   const [moles, setMoles] = useState<boolean[]>(Array(9).fill(false))
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     const interval = setInterval(() => {
       const id = Math.floor(Math.random() * 9)
-      setMoles(prev => {
+      setMoles((prev) => {
         const next = [...prev]
         next[id] = true
         return next
       })
       if (timeoutRef.current) clearTimeout(timeoutRef.current)
       timeoutRef.current = setTimeout(() => {
-        setMoles(prev => {
+        setMoles((prev) => {
           const next = [...prev]
           next[id] = false
           return next
@@ -464,7 +652,7 @@ function MoleWhack({ gameTitle, scoreLabel, pointsLabel, points, addPoints }: an
   const whack = (idx: number) => {
     if (moles[idx]) {
       addPoints(1)
-      setMoles(prev => {
+      setMoles((prev) => {
         const next = [...prev]
         next[idx] = false
         return next
@@ -473,29 +661,43 @@ function MoleWhack({ gameTitle, scoreLabel, pointsLabel, points, addPoints }: an
   }
 
   return (
-    <div className="max-w-md mx-auto p-6 rounded-3xl bg-zinc-900/30 backdrop-blur-[40px] border border-white/10 shadow-xl space-y-6 animate-in zoom-in-95 duration-300 mt-2">
+    <div className="max-w-md mx-auto p-6 rounded-[28px] glass-panel-heavy border border-white/10 shadow-2xl space-y-5 animate-spring-scale mt-2">
       <div className="flex justify-between items-center">
         <h3 className="font-black text-xl text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400 flex items-center gap-2">
           <Target className="w-5 h-5 text-amber-500" /> {gameTitle}
         </h3>
         <div className="text-right">
-          <p className="text-[10px] uppercase tracking-widest text-zinc-600 font-bold">{scoreLabel}</p>
-          <p className="text-2xl font-black text-amber-400">{points.toLocaleString()} <span className="text-xs">{pointsLabel}</span></p>
+          <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">
+            {scoreLabel}
+          </p>
+          <p className="text-2xl font-black text-amber-400">
+            {points.toLocaleString()}{' '}
+            <span className="text-xs">{pointsLabel}</span>
+          </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 aspect-square max-w-[280px] mx-auto bg-black border border-white/5 p-4 rounded-2xl shadow-inner">
+      <div className="grid grid-cols-3 gap-3 aspect-square max-w-[280px] mx-auto bg-black/60 border border-white/10 p-4 rounded-2xl shadow-inner">
         {moles.map((isMole, i) => (
           <button
             key={i}
-            onMouseDown={(e) => { e.preventDefault(); whack(i) }}
-            className={`w-full h-full rounded-full transition-all duration-75 active:scale-90 shadow-inner flex items-center justify-center ${isMole ? 'bg-amber-600 hover:bg-amber-500 animate-in zoom-in spin-in-12' : 'bg-zinc-800'}`}
+            onMouseDown={(e) => {
+              e.preventDefault()
+              whack(i)
+            }}
+            className={`w-full h-full rounded-2xl transition-all duration-75 touch-feedback shadow-inner flex items-center justify-center ${
+              isMole
+                ? 'bg-amber-600 hover:bg-amber-500 animate-in zoom-in spin-in-12'
+                : 'bg-zinc-900/60 border border-white/5'
+            }`}
           >
             {isMole && <span className="text-2xl drop-shadow-lg">🐸</span>}
           </button>
         ))}
       </div>
-      <p className="text-center text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Natural rate limit: ~50 coins/min</p>
+      <p className="text-center text-[10px] text-zinc-400 font-bold uppercase tracking-widest">
+        Rate limit: ~50 coins/min
+      </p>
     </div>
   )
 }

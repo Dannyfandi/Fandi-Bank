@@ -1,4 +1,5 @@
 'use client'
+
 import { login, signup } from './actions'
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
@@ -19,7 +20,7 @@ const dict = {
     switchIn: 'Already have an account? Sign in',
     switchUp: "Don't have an account? Sign up",
     processing: 'Processing...',
-    created: 'Account created! You can now sign in.'
+    created: 'Account created! You can now sign in.',
   },
   es: {
     welcome: 'Bienvenido de nuevo',
@@ -34,15 +35,15 @@ const dict = {
     switchIn: '¿Ya tienes una cuenta? Iniciar sesión',
     switchUp: '¿No tienes una cuenta? Regístrate',
     processing: 'Procesando...',
-    created: '¡Cuenta creada! Ya puedes iniciar sesión.'
-  }
+    created: '¡Cuenta creada! Ya puedes iniciar sesión.',
+  },
 }
 
 function AuthContent() {
   const [isLogin, setIsLogin] = useState(true)
   const [loading, setLoading] = useState(false)
-  const [lang, setLang] = useState<'en'|'es'>('es')
-  
+  const [lang, setLang] = useState<'en' | 'es'>('es')
+
   const searchParams = useSearchParams()
   const error = searchParams.get('error')
   const message = searchParams.get('message')
@@ -50,12 +51,11 @@ function AuthContent() {
 
   useEffect(() => {
     const match = document.cookie.match(/(^| )NEXT_LOCALE=([^;]+)/)
-    if (match) setLang(match[2] as 'en'|'es')
+    if (match) setLang(match[2] as 'en' | 'es')
   }, [])
 
   const t = dict[lang] || dict.es
 
-  // After successful signup, auto-switch to login mode and stop loading
   useEffect(() => {
     if (created === '1') {
       setIsLogin(true)
@@ -74,13 +74,11 @@ function AuthContent() {
         await signup(formData)
       }
     } catch {
-      // Server action redirects - this catch handles the redirect gracefully
+      // Server action redirects
     }
-    // Fallback: reset loading after 4s in case redirect doesn't fire
     setTimeout(() => setLoading(false), 4000)
   }
 
-  // Auto-dismiss toasts after 8 seconds (longer for visibility)
   useEffect(() => {
     if (error || message) {
       const timer = setTimeout(() => {
@@ -90,65 +88,65 @@ function AuthContent() {
     }
   }, [error, message])
 
-  // Compute display message
   const displayMessage = created === '1' ? t.created : message
 
   return (
     <div className="min-h-screen bg-transparent flex flex-col justify-center py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden font-sans">
-      
-      {/* Liquid Pulse Swirling Background Aesthetics */}
-      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none flex items-center justify-center">
-        <div className="absolute w-[800px] h-[800px] bg-purple-600/40 rounded-full blur-[120px] mix-blend-screen animate-pulse opacity-60" style={{ animationDuration: '6s' }} />
-        <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-fuchsia-600/40 rounded-full blur-[100px] mix-blend-screen animate-spin opacity-70" style={{ animationDuration: '24s' }} />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[700px] h-[700px] bg-violet-600/40 rounded-full blur-[140px] mix-blend-screen animate-pulse opacity-50" style={{ animationDuration: '8s' }} />
-      </div>
-      
-      {/* Toast Notifications — larger and longer lasting */}
-      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 w-full max-w-lg px-4 pointer-events-none">
+      {/* Toast Notifications */}
+      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 w-full max-w-md px-4 pointer-events-none">
         {error && (
-          <div className="w-full p-5 bg-red-950/90 border-2 border-red-500/60 rounded-2xl flex items-center gap-4 shadow-2xl shadow-red-500/30 animate-in slide-in-from-top-4 fade-in backdrop-blur-xl">
-             <div className="w-10 h-10 rounded-full bg-red-500/20 text-red-500 flex shrink-0 items-center justify-center">
-               <Shield className="w-5 h-5" />
-             </div>
-             <p className="text-base font-bold text-red-100">{error}</p>
+          <div className="w-full p-4 bg-red-950/90 border border-red-500/50 rounded-2xl flex items-center gap-3 shadow-2xl shadow-red-500/30 animate-in slide-in-from-top-4 fade-in backdrop-blur-xl">
+            <div className="w-9 h-9 rounded-full bg-red-500/20 text-red-400 flex shrink-0 items-center justify-center">
+              <Shield className="w-4 h-4" />
+            </div>
+            <p className="text-xs sm:text-sm font-bold text-red-100">{error}</p>
           </div>
         )}
         {displayMessage && (
-          <div className="w-full p-5 bg-purple-950/90 border-2 border-purple-500/60 rounded-2xl flex items-center gap-4 shadow-2xl shadow-purple-500/30 animate-in slide-in-from-top-4 fade-in duration-300 backdrop-blur-xl">
-             <div className="w-10 h-10 rounded-full bg-purple-500/20 text-purple-400 flex shrink-0 items-center justify-center">
-               <CheckCircle2 className="w-5 h-5" />
-             </div>
-             <p className="text-base font-bold text-purple-100">{displayMessage}</p>
+          <div className="w-full p-4 bg-purple-950/90 border border-purple-500/50 rounded-2xl flex items-center gap-3 shadow-2xl shadow-purple-500/30 animate-in slide-in-from-top-4 fade-in duration-300 backdrop-blur-xl">
+            <div className="w-9 h-9 rounded-full bg-purple-500/20 text-purple-300 flex shrink-0 items-center justify-center">
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
+            <p className="text-xs sm:text-sm font-bold text-purple-100">{displayMessage}</p>
           </div>
         )}
       </div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 flex flex-col items-center">
-        <div className="w-[400px] h-[220px] sm:w-[560px] sm:h-[320px] relative mb-6 hover:scale-105 transition-transform duration-700 ease-out">
-           <Image src="/logo.png" alt="Fandi Bank Logo" fill className="object-contain drop-shadow-[0_0_60px_rgba(168,85,247,1)]" priority />
+        <div className="w-[300px] h-[180px] sm:w-[420px] sm:h-[240px] relative mb-4 hover:scale-105 transition-transform duration-700 ease-out">
+          <Image
+            src="/logo.png"
+            alt="Fandi Bank Logo"
+            fill
+            className="object-contain drop-shadow-[0_0_50px_rgba(168,85,247,0.7)]"
+            priority
+          />
         </div>
-        <h2 className="text-center text-3xl font-black tracking-tighter bg-gradient-to-br from-white to-zinc-400 bg-clip-text text-transparent">
+        <h2 className="text-center text-2xl sm:text-3xl font-black tracking-tight bg-gradient-to-br from-white to-zinc-300 bg-clip-text text-transparent text-shadow-md">
           {isLogin ? t.welcome : t.join}
         </h2>
-        <p className="mt-2 text-center text-sm font-medium text-zinc-400">
+        <p className="mt-1.5 text-center text-xs sm:text-sm font-medium text-zinc-400">
           {isLogin ? t.descLogin : t.descJoin}
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-[400px] relative z-10">
-        <div className="bg-zinc-900/30 backdrop-blur-[40px] shadow-2xl shadow-purple-900/20 saturate-150 py-8 px-4 sm:px-10 border border-white/10 rounded-3xl">
-          <form className="space-y-5" onSubmit={handleSubmit}>
-            
+      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-[400px] relative z-10">
+        <div className="glass-panel-heavy shadow-2xl py-7 px-5 sm:px-8 border border-white/15 rounded-[32px]">
+          <form className="space-y-4" onSubmit={handleSubmit}>
             {!isLogin && (
               <div className="space-y-1 relative animate-in fade-in slide-in-from-top-2">
-                <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest pl-1">{t.username}</label>
+                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest pl-1">
+                  {t.username}
+                </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-zinc-500" />
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <User className="h-4 w-4 text-zinc-500" />
                   </div>
                   <input
-                    name="username" type="text" required={!isLogin}
-                    className="block w-full pl-11 pr-4 py-3 bg-transparent border border-white/10 rounded-2xl text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 sm:text-sm transition-all shadow-inner"
+                    name="username"
+                    type="text"
+                    required={!isLogin}
+                    className="w-full pl-10 pr-4 py-2.5 glass-input rounded-2xl text-white placeholder-zinc-500 text-sm"
                     placeholder="Ferb"
                   />
                 </div>
@@ -156,46 +154,55 @@ function AuthContent() {
             )}
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest pl-1">{t.email}</label>
+              <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest pl-1">
+                {t.email}
+              </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-zinc-500" />
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                  <Mail className="h-4 w-4 text-zinc-500" />
                 </div>
                 <input
-                  name="email" type="email" required
-                  className="block w-full pl-11 pr-4 py-3 bg-transparent border border-white/10 rounded-2xl text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 sm:text-sm transition-all shadow-inner"
+                  name="email"
+                  type="email"
+                  required
+                  className="w-full pl-10 pr-4 py-2.5 glass-input rounded-2xl text-white placeholder-zinc-500 text-sm"
                   placeholder="you@example.com"
                 />
               </div>
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest pl-1">{t.password}</label>
+              <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest pl-1">
+                {t.password}
+              </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-zinc-500" />
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                  <Lock className="h-4 w-4 text-zinc-500" />
                 </div>
                 <input
-                  name="password" type="password" required
-                  className="block w-full pl-11 pr-4 py-3 bg-transparent border border-white/10 rounded-2xl text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 sm:text-sm transition-all shadow-inner"
+                  name="password"
+                  type="password"
+                  required
+                  className="w-full pl-10 pr-4 py-2.5 glass-input rounded-2xl text-white placeholder-zinc-500 text-sm"
                   placeholder="••••••••"
                 />
               </div>
             </div>
 
             <button
-              type="submit" disabled={loading}
-              className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-2xl text-sm font-black tracking-wide text-white bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 focus:ring-offset-black transition-all active:scale-[0.98] mt-2 shadow-lg shadow-purple-500/25 disabled:opacity-50"
+              type="submit"
+              disabled={loading}
+              className="w-full flex justify-center py-3.5 px-4 rounded-2xl text-xs font-black tracking-wider uppercase text-white bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 transition-all active:scale-[0.98] mt-2 shadow-lg shadow-purple-500/25 disabled:opacity-50 touch-feedback"
             >
               {loading ? t.processing : isLogin ? t.btnIn : t.btnUp}
             </button>
           </form>
 
-          <div className="mt-6 flex items-center justify-center">
+          <div className="mt-5 flex items-center justify-center">
             <button
               type="button"
               onClick={() => setIsLogin(!isLogin)}
-              className="text-sm font-medium text-zinc-400 hover:text-purple-400 transition-colors focus:outline-none"
+              className="text-xs font-semibold text-zinc-400 hover:text-purple-300 transition-colors touch-feedback"
             >
               {isLogin ? t.switchUp : t.switchIn}
             </button>
