@@ -352,6 +352,34 @@ export default async function AdminPage() {
         {/* Mobile-First Admin Quick Actions Bar (Drawers for Debt, Payment, Score, Parser) */}
         <AdminQuickActions users={profiles || []} t={t} />
 
+        {/* Admin Labs & Sandbox Hub */}
+        <div className="p-4 sm:p-5 rounded-3xl glass-panel-heavy border border-cyan-500/30 bg-gradient-to-r from-slate-950/90 via-cyan-950/40 to-slate-950/90 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-spring-scale">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-cyan-500/20 border border-cyan-400/40 text-2xl flex items-center justify-center shadow-[0_0_15px_#00E5FF]">
+              ⚔️
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-black text-sm sm:text-base text-cyan-200">
+                  Star Wars Edition & Mini-Games Sandbox
+                </h3>
+                <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+                  Admin Lab
+                </span>
+              </div>
+              <p className="text-xs text-zinc-400">
+                6 hologramas desbloqueables, 5 mini-juegos interactivos y tema galáctico.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/admin/sandbox/star-wars"
+            className="px-4 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-black uppercase text-xs tracking-wider rounded-2xl transition-all shadow-lg shadow-cyan-500/25 touch-feedback shrink-0 text-center"
+          >
+            Abrir Sandbox Galáctico →
+          </Link>
+        </div>
+
         {/* Pending Requests Hub (Loans, Tickets, Visits) */}
         <div className="space-y-3 pt-2">
           <div className="flex items-center justify-between">
