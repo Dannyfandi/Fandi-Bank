@@ -90,20 +90,19 @@ export function BottomNav({
   // Scroll Spy: Tracks user scroll position and highlights active section
   useEffect(() => {
     const handleScroll = () => {
-      const scrollPos = window.scrollY + 200
+      const scrollPos = window.scrollY + 180
       const shopEl = document.getElementById('shop-section')
       const gamesEl = document.getElementById('games-section')
       const eventsEl = document.getElementById('events-section')
 
-      if (shopEl && scrollPos >= shopEl.offsetTop - 120) {
+      if (shopEl && scrollPos >= shopEl.offsetTop - 80) {
         setActiveSection('shop')
-      } else if (gamesEl && scrollPos >= gamesEl.offsetTop - 120) {
+      } else if (gamesEl && scrollPos >= gamesEl.offsetTop - 80) {
         setActiveSection('games')
       } else if (
         eventsEl &&
-        eventsEl.offsetHeight > 30 &&
-        scrollPos >= eventsEl.offsetTop - 100 &&
-        scrollPos < (gamesEl ? gamesEl.offsetTop - 120 : Infinity)
+        scrollPos >= eventsEl.offsetTop - 80 &&
+        scrollPos < (gamesEl ? gamesEl.offsetTop - 80 : Infinity)
       ) {
         setActiveSection('events')
       } else {
@@ -134,10 +133,6 @@ export function BottomNav({
       if (id === 'events-section') setActiveSection('events')
       if (id === 'games-section') setActiveSection('games')
       if (id === 'shop-section') setActiveSection('shop')
-    } else if (id === 'events-section') {
-      // Fallback: smooth scroll to approximate events area near top
-      window.scrollTo({ top: 120, behavior: 'smooth' })
-      setActiveSection('events')
     }
   }
 
