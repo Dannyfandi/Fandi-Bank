@@ -26,12 +26,15 @@ export function BottomSheet({
     }
     if (isOpen) {
       document.body.style.overflow = 'hidden'
+      document.body.classList.add('fandi-modal-open')
       window.addEventListener('keydown', handleKeyDown)
     } else {
       document.body.style.overflow = ''
+      document.body.classList.remove('fandi-modal-open')
     }
     return () => {
       document.body.style.overflow = ''
+      document.body.classList.remove('fandi-modal-open')
       window.removeEventListener('keydown', handleKeyDown)
     }
   }, [isOpen, onClose])
@@ -39,27 +42,27 @@ export function BottomSheet({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/75 backdrop-blur-md transition-opacity animate-in fade-in duration-300"
+        className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity animate-in fade-in duration-300"
         onClick={onClose}
       />
 
       {/* Sheet Container */}
       <div
-        className={`relative w-full ${maxWidth} glass-panel-heavy rounded-t-[32px] sm:rounded-[32px] overflow-hidden shadow-2xl z-10 max-h-[90vh] flex flex-col animate-spring-up sm:animate-spring-scale border-t sm:border border-white/20`}
+        className={`relative w-full ${maxWidth} glass-panel-heavy rounded-t-[36px] sm:rounded-[36px] overflow-hidden shadow-2xl z-10 max-h-[88vh] flex flex-col animate-spring-up sm:animate-spring-scale border-t sm:border border-white/20`}
       >
         {/* Grab Handle for Mobile */}
-        <div className="sm:hidden pt-3 pb-1 flex justify-center cursor-grab active:cursor-grabbing">
-          <div className="w-12 h-1.5 rounded-full bg-white/25" />
+        <div className="sm:hidden pt-3.5 pb-1 flex justify-center cursor-grab active:cursor-grabbing">
+          <div className="w-12 h-1.5 rounded-full bg-white/30" />
         </div>
 
         {/* Header */}
-        <div className="px-5 py-4 flex items-center justify-between border-b border-white/10 bg-black/20">
+        <div className="px-6 py-4 flex items-center justify-between border-b border-white/10 bg-black/25">
           <div className="flex items-center gap-2.5">
             {icon && <div className="text-purple-400">{icon}</div>}
-            <h3 className="text-base sm:text-lg font-bold text-zinc-100 tracking-tight text-shadow-sm">
+            <h3 className="text-base sm:text-lg font-black text-zinc-100 tracking-tight text-shadow-sm">
               {title}
             </h3>
           </div>
@@ -72,8 +75,8 @@ export function BottomSheet({
           </button>
         </div>
 
-        {/* Content Body */}
-        <div className="p-5 sm:p-6 overflow-y-auto custom-scrollbar flex-1">
+        {/* Content Body with Extra Bottom Spacing for Comfort */}
+        <div className="p-6 sm:p-7 pb-12 sm:pb-8 overflow-y-auto custom-scrollbar flex-1 space-y-4">
           {children}
         </div>
       </div>

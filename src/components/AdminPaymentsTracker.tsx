@@ -9,7 +9,7 @@ import { reversePayment } from '@/app/admin/actions'
 export function AdminPaymentsTracker({
   payments,
   allocations,
-  users
+  users,
 }: {
   payments: any[]
   allocations: any[]
@@ -18,113 +18,122 @@ export function AdminPaymentsTracker({
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [searchUser, setSearchUser] = useState('')
 
-  // Map users
-  const userMap = Object.fromEntries(users.map(u => [u.id, u.username || u.email]))
+  const userMap = Object.fromEntries(users.map((u) => [u.id, u.username || u.email]))
 
-  // Enrich payments
-  const enrichedPayments = payments.map(p => {
-    const paymentAllocs = allocations.filter(a => a.payment_id === p.id)
-    return {
-      ...p,
-      username: userMap[p.user_id] || 'Unknown User',
-      allocations: paymentAllocs
-    }
-  }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+  const enrichedPayments = payments
+    .map((p) => {
+      const paymentAllocs = allocations.filter((a) => a.payment_id === p.id)
+      return {
+        ...p,
+        username: userMap[p.user_id] || 'Unknown User',
+        allocations: paymentAllocs,
+      }
+    })
+    .sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )
 
-  const filteredPayments = enrichedPayments.filter(p => 
+  const filteredPayments = enrichedPayments.filter((p) =>
     p.username.toLowerCase().includes(searchUser.toLowerCase())
   )
 
   return (
-    <details className="space-y-4 group/adminpayments">
-      <summary className="cursor-pointer list-none flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border border-emerald-500/20 rounded-2xl bg-zinc-900/30 backdrop-blur-[40px] hover:bg-zinc-900/50 transition-colors">
-        <h3 className="text-base sm:text-lg font-bold text-zinc-100 flex items-center gap-2">
-          <Wallet className="w-5 h-5 text-emerald-400" /> All Payments
-          <span className="text-xs text-zinc-500 ml-1">({filteredPayments.length})</span>
+    <details className="space-y-4 group/adminpayments glass-panel rounded-[28px] p-4 sm:p-6 border border-white/10 shadow-xl">
+      <summary className="cursor-pointer list-none flex flex-col sm:flex-row sm:items-center justify-between gap-3 select-none">
+        <h3 className="text-base sm:text-lg font-black text-zinc-100 flex items-center gap-2.5 text-shadow-sm">
+          <Wallet className="w-5 h-5 text-emerald-400" /> Historial de Pagos
+          <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
+            {filteredPayments.length}
+          </span>
         </h3>
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="relative flex-1 sm:w-56">
+            <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Filter by user..."
+              placeholder="Buscar por usuario..."
               value={searchUser}
               onChange={(e) => setSearchUser(e.target.value)}
-              onClick={(e) => e.preventDefault()}
-              className="pl-9 pr-4 py-1.5 bg-black/40 border border-white/10 rounded-xl text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 w-full sm:w-48"
+              onClick={(e) => e.stopPropagation()}
+              className="w-full pl-10 pr-3.5 py-2 glass-input rounded-2xl text-xs text-zinc-200"
             />
           </div>
-          <ChevronDown className="w-5 h-5 text-zinc-500 group-open/adminpayments:rotate-180 transition-transform" />
+          <ChevronDown className="w-5 h-5 text-zinc-400 group-open/adminpayments:rotate-180 transition-transform duration-300 shrink-0" />
         </div>
       </summary>
-      
-      <div className="pt-2">
-        {filteredPayments.length === 0 && <p className="text-sm text-zinc-500 p-4">No payments found.</p>}
 
-        <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-          {filteredPayments.map(p => {
-          const isConfirming = confirmId === p.id
-          
-          return (
-            <div key={p.id} className="p-4 border border-emerald-500/20 rounded-2xl bg-zinc-900/30 backdrop-blur-[40px] relative overflow-hidden">
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <h4 className="font-bold text-zinc-200">{p.username}</h4>
-                  <p className="text-[10px] text-zinc-500">{new Date(p.created_at).toLocaleString()}</p>
+      <div className="pt-3 space-y-3">
+        {filteredPayments.length === 0 ? (
+          <p className="text-zinc-500 text-xs py-4 text-center">
+            No se encontraron pagos registrados.
+          </p>
+        ) : (
+          filteredPayments.map((p) => (
+            <div
+              key={p.id}
+              className="p-3.5 sm:p-4 rounded-2xl bg-black/45 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-emerald-500/30 transition-all shadow-md"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                  <Wallet className="w-4 h-4" />
                 </div>
-                <div className="text-right">
-                  <p className="text-lg font-black text-emerald-400">+{formatCOP(p.total_amount)}</p>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-bold text-zinc-100 text-xs sm:text-sm truncate">
+                      {p.username}
+                    </span>
+                    <span className="text-[10px] text-zinc-500">
+                      {new Date(p.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <p className="text-base sm:text-lg font-black text-emerald-400">
+                    +{formatCOP(p.total_amount)}
+                  </p>
+                  {p.description && (
+                    <p className="text-xs text-zinc-400 truncate mt-0.5">
+                      {p.description}
+                    </p>
+                  )}
                 </div>
               </div>
 
-              {p.allocations.length > 0 && (
-                <details className="mt-2 text-xs">
-                  <summary className="cursor-pointer text-emerald-500/80 hover:text-emerald-400 font-bold uppercase tracking-widest text-[10px]">
-                    View Allocations ({p.allocations.length})
-                  </summary>
-                  <div className="mt-2 p-2 bg-black/40 rounded-lg space-y-1">
-                    {p.allocations.map((a: any) => (
-                      <div key={a.id} className="flex justify-between text-zinc-400">
-                        <span className="truncate pr-2">↳ Debt: ...{a.debt_id.slice(-6)}</span>
-                        <span className="shrink-0">{formatCOP(a.allocated_amount)}</span>
-                      </div>
-                    ))}
-                  </div>
-                </details>
-              )}
-
-              <div className="mt-3 flex justify-end">
-                {isConfirming ? (
-                  <div className="flex gap-2 w-full animate-in fade-in slide-in-from-right-4 duration-200">
-                    <button 
-                      onClick={() => setConfirmId(null)}
-                      className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-xs font-bold transition-colors flex items-center gap-1"
-                    >
-                      <X className="w-3 h-3" /> Cancel
-                    </button>
-                    <form action={reversePayment} className="flex-1">
+              {/* Reverse Payment Button / Confirmation */}
+              <div className="self-end sm:self-auto">
+                {confirmId === p.id ? (
+                  <div className="flex items-center gap-2 p-2 bg-red-950/50 border border-red-500/30 rounded-xl">
+                    <span className="text-[10px] text-red-300 font-bold">
+                      ¿Revertir pago?
+                    </span>
+                    <form action={reversePayment}>
                       <input type="hidden" name="paymentId" value={p.id} />
-                      <SubmitButton 
-                        loadingText="Reversing..."
-                        className="w-full py-1.5 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-500 font-black tracking-widest uppercase rounded-lg text-[10px] transition-all flex items-center justify-center gap-1 shadow-[0_0_15px_rgba(239,68,68,0.2)]"
+                      <SubmitButton
+                        loadingText=".."
+                        className="px-2 py-1 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-bold transition-colors"
                       >
-                        <AlertOctagon className="w-3.5 h-3.5" /> Confirm Reverse
+                        Sí
                       </SubmitButton>
                     </form>
+                    <button
+                      onClick={() => setConfirmId(null)}
+                      className="p-1 text-zinc-400 hover:text-white"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 ) : (
-                  <button 
+                  <button
                     onClick={() => setConfirmId(p.id)}
-                    className="px-3 py-1.5 bg-emerald-500/5 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-500/20 text-emerald-500/60 hover:text-emerald-400 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all flex items-center gap-1"
+                    className="p-2 text-zinc-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors border border-transparent hover:border-red-500/20 touch-feedback flex items-center gap-1.5 text-xs font-bold"
+                    title="Revertir Pago"
                   >
-                    <Undo2 className="w-3 h-3" /> Reverse Payment
+                    <Undo2 className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Revertir</span>
                   </button>
                 )}
               </div>
             </div>
-          )
-        })}
-      </div>
+          ))
+        )}
       </div>
     </details>
   )
