@@ -61,7 +61,6 @@ export default async function RootLayout({
               <img
                 src="/sw_bg.jpg"
                 alt=""
-                onError={(e) => ((e.target as HTMLElement).style.display = 'none')}
                 className="absolute inset-0 w-full h-full object-cover blur-[10px] opacity-40 scale-105"
               />
               <div
