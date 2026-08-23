@@ -36,6 +36,7 @@ import { ThemeSettings } from '@/components/ThemeSettings'
 import { AdminSuggestionsManager } from '@/components/AdminSuggestionsManager'
 import { AdminPrizeRequests } from '@/components/AdminPrizeRequests'
 import { AdminQuickActions } from '@/components/AdminQuickActions'
+import { AdminThemeManager } from '@/components/AdminThemeManager'
 import { AnimatedNumber } from '@/components/AnimatedNumber'
 
 const dict = {
@@ -232,6 +233,8 @@ export default async function AdminPage() {
   }
 
   const isSmiling = profile?.active_theme === 'smiling_friends'
+  const isStarWars = profile?.active_theme === 'star_wars'
+  const logoSrc = isStarWars ? '/sw_logo.svg' : isSmiling ? '/sf_logo.png' : '/logo.png'
 
   // Count pending items for badges
   const pendingLoans = loans?.filter((l) => l.status === 'pending') || []
@@ -248,7 +251,7 @@ export default async function AdminPage() {
           <div className="flex items-center gap-3 sm:gap-4">
             <div className="w-11 h-11 sm:w-14 sm:h-14 relative shrink-0">
               <Image
-                src={isSmiling ? '/sf_logo.png' : '/logo.png'}
+                src={logoSrc}
                 alt="Fandi Bank"
                 fill
                 className="object-cover rounded-full shadow-lg shadow-purple-900/40"
@@ -258,7 +261,9 @@ export default async function AdminPage() {
             <div>
               <h1
                 className={`text-lg sm:text-2xl font-black tracking-tight bg-clip-text text-transparent text-shadow-sm ${
-                  isSmiling
+                  isStarWars
+                    ? 'bg-gradient-to-r from-cyan-400 via-white to-amber-300'
+                    : isSmiling
                     ? 'bg-gradient-to-r from-yellow-400 to-orange-500'
                     : 'bg-gradient-to-r from-purple-400 to-fuchsia-500'
                 }`}
@@ -352,33 +357,11 @@ export default async function AdminPage() {
         {/* Mobile-First Admin Quick Actions Bar (Drawers for Debt, Payment, Score, Parser) */}
         <AdminQuickActions users={profiles || []} t={t} />
 
-        {/* Admin Labs & Sandbox Hub */}
-        <div className="p-4 sm:p-5 rounded-3xl glass-panel-heavy border border-cyan-500/30 bg-gradient-to-r from-slate-950/90 via-cyan-950/40 to-slate-950/90 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-spring-scale">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-cyan-500/20 border border-cyan-400/40 text-2xl flex items-center justify-center shadow-[0_0_15px_#00E5FF]">
-              ⚔️
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-black text-sm sm:text-base text-cyan-200">
-                  Star Wars Edition & Mini-Games Sandbox
-                </h3>
-                <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
-                  Admin Lab
-                </span>
-              </div>
-              <p className="text-xs text-zinc-400">
-                6 hologramas desbloqueables, 5 mini-juegos interactivos y tema galáctico.
-              </p>
-            </div>
-          </div>
-          <Link
-            href="/admin/sandbox/star-wars"
-            className="px-4 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-black uppercase text-xs tracking-wider rounded-2xl transition-all shadow-lg shadow-cyan-500/25 touch-feedback shrink-0 text-center"
-          >
-            Abrir Sandbox Galáctico →
-          </Link>
-        </div>
+        {/* Admin Themes & Progress Management Suite */}
+        <AdminThemeManager
+          currentTheme={profile?.active_theme}
+          hasSmilingFriends={(profile?.sf_progress?.unlocked_mains?.length || 0) >= 6}
+        />
 
         {/* Pending Requests Hub (Loans, Tickets, Visits) */}
         <div className="space-y-3 pt-2">

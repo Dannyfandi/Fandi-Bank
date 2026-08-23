@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <radialGradient id="rebelGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00E5FF" stop-opacity="0.9"/>
+      <stop offset="60%" stop-color="#00B4D8" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#05070E" stop-opacity="0.95"/>
+    </radialGradient>
+    <filter id="swGlow">
+      <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- Outer Ring -->
+  <circle cx="100" cy="100" r="92" fill="#05070E" stroke="#00E5FF" stroke-width="3" filter="url(#swGlow)"/>
+  <!-- Rebel Starbird Symbol -->
+  <path d="M 100 22 C 115 50, 150 70, 168 110 C 145 95, 125 105, 100 135 C 75 105, 55 95, 32 110 C 50 70, 85 50, 100 22 Z" fill="#00E5FF" filter="url(#swGlow)"/>
+  <path d="M 100 55 C 108 75, 128 88, 142 115 C 128 108, 114 115, 100 140 C 86 115, 72 108, 58 115 C 72 88, 92 75, 100 55 Z" fill="#05070E"/>
+  <!-- Center Core Flare -->
+  <path d="M 100 70 C 104 88, 115 98, 125 118 C 112 112, 100 135, 100 135 C 100 135, 88 112, 75 118 C 85 98, 96 88, 100 70 Z" fill="#00E5FF"/>
+  <circle cx="100" cy="162" r="6" fill="#00E5FF" filter="url(#swGlow)"/>
+</svg>

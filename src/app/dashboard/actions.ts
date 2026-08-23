@@ -245,6 +245,62 @@ export async function resetSmilingFriends() {
   revalidatePath('/dashboard')
 }
 
+export async function unlockSmilingFriendsAdmin() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'admin') throw new Error('Unauthorized')
+
+  const allMains = ['mrfrog', 'mrboss', 'alan', 'pim', 'charlie', 'glep']
+  await supabase.from('profiles').update({
+    sf_progress: { unlocked_mains: allMains, randoms_smiled: 6 },
+    active_theme: 'smiling_friends'
+  }).eq('id', user.id)
+
+  revalidatePath('/', 'layout')
+  revalidatePath('/admin')
+  revalidatePath('/dashboard')
+  revalidatePath('/games/smiling-friends')
+}
+
+export async function unlockStarWarsAdmin() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'admin') throw new Error('Unauthorized')
+
+  await supabase.from('profiles').update({
+    active_theme: 'star_wars'
+  }).eq('id', user.id)
+
+  revalidatePath('/', 'layout')
+  revalidatePath('/admin')
+  revalidatePath('/dashboard')
+  revalidatePath('/admin/sandbox/star-wars')
+}
+
+export async function resetStarWarsProgress() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'admin') throw new Error('Unauthorized')
+
+  await supabase.from('profiles').update({
+    active_theme: 'normal'
+  }).eq('id', user.id)
+
+  revalidatePath('/', 'layout')
+  revalidatePath('/admin')
+  revalidatePath('/dashboard')
+  revalidatePath('/admin/sandbox/star-wars')
+}
+
 export async function updateTheme(themeStr: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -253,6 +309,8 @@ export async function updateTheme(themeStr: string) {
   await supabase.from('profiles').update({ active_theme: themeStr }).eq('id', user.id)
 
   revalidatePath('/', 'layout')
+  revalidatePath('/admin')
+  revalidatePath('/dashboard')
 }
 
 // -------------------------------------------------------

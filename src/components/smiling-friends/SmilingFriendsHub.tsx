@@ -13,6 +13,8 @@ import {
   Brain,
   Timer,
   Heart,
+  Target,
+  Smile,
 } from 'lucide-react'
 import { AnimatedNumber } from '@/components/AnimatedNumber'
 import { updateSmilingFriendsProgress, syncFandiCoins, updateTheme } from '@/app/dashboard/actions'
@@ -91,9 +93,9 @@ export function SmilingFriendsHub({
     initialProgress?.unlocked_mains || []
   )
   const [selectedCharacter, setSelectedCharacter] = useState<any>(MAINS[0])
-  const [activeGame, setActiveGame] = useState<'math' | 'cheer' | 'mole'>('math')
+  const [activeGame, setActiveGame] = useState<'math' | 'spam' | 'wait' | 'reaction' | 'memory'>('math')
 
-  // Math game state
+  // 1. Math Game State
   const [mathA, setMathA] = useState(12)
   const [mathB, setMathB] = useState(8)
   const [mathOp, setMathOp] = useState('+')
@@ -103,19 +105,34 @@ export function SmilingFriendsHub({
   const [mathActive, setMathActive] = useState(false)
   const [mathOver, setMathOver] = useState(false)
 
-  // Cheer clicker state
-  const [cheerCount, setCheerCount] = useState(0)
-  const [cheerTarget, setCheerTarget] = useState(25)
-  const [cheerTimeLeft, setCheerTimeLeft] = useState(10)
-  const [cheerActive, setCheerActive] = useState(false)
-  const [cheerOver, setCheerOver] = useState(false)
+  // 2. Spam Clicker State
+  const [spamCount, setSpamCount] = useState(0)
+  const [spamTarget, setSpamTarget] = useState(30)
+  const [spamTimeLeft, setSpamTimeLeft] = useState(10)
+  const [spamActive, setSpamActive] = useState(false)
+  const [spamOver, setSpamOver] = useState(false)
 
-  // Mole whack state
-  const [moleGrid, setMoleGrid] = useState<number | null>(null)
-  const [moleScore, setMoleScore] = useState(0)
-  const [moleActive, setMoleActive] = useState(false)
-  const [moleOver, setMoleOver] = useState(false)
-  const [moleTimer, setMoleTimer] = useState(20)
+  // 3. Wait / Patience State
+  const [waitTimer, setWaitTimer] = useState(12)
+  const [waitInitial, setWaitInitial] = useState(12)
+  const [waitActive, setWaitActive] = useState(false)
+  const [waitOver, setWaitOver] = useState(false)
+
+  // 4. Reaction State
+  const [reactionGreen, setReactionGreen] = useState(false)
+  const [reactionActive, setReactionActive] = useState(false)
+  const [reactionOver, setReactionOver] = useState(false)
+  const [reactionStartTime, setReactionStartTime] = useState(0)
+  const [reactionMs, setReactionMs] = useState(0)
+
+  // 5. Memory State
+  const [memorySeq, setMemorySeq] = useState<number[]>([])
+  const [memoryStep, setMemoryStep] = useState(0)
+  const [memoryActiveIndex, setMemoryActiveIndex] = useState<number | null>(null)
+  const [memoryIsDisplaying, setMemoryIsDisplaying] = useState(false)
+  const [memoryStage, setMemoryStage] = useState(1)
+  const [memoryActive, setMemoryActive] = useState(false)
+  const [memoryOver, setMemoryOver] = useState(false)
 
   const unlockedCount = unlockedMains.length
   const allUnlocked = unlockedCount === 6
@@ -156,7 +173,7 @@ export function SmilingFriendsHub({
     }
   }
 
-  // Math Minigame Generator
+  // 1. Math Game Logic
   const generateMathQuestion = () => {
     const a = Math.floor(Math.random() * 40) + 10
     const b = Math.floor(Math.random() * 25) + 5
@@ -165,9 +182,7 @@ export function SmilingFriendsHub({
     const f1 = correct + Math.floor(Math.random() * 5) + 1
     const f2 = Math.max(1, correct - (Math.floor(Math.random() * 4) + 1))
     const f3 = correct + (Math.random() > 0.5 ? 10 : -10)
-    const options = Array.from(new Set([correct, f1, f2, f3])).sort(
-      () => Math.random() - 0.5
-    )
+    const options = Array.from(new Set([correct, f1, f2, f3])).sort(() => Math.random() - 0.5)
 
     setMathA(a)
     setMathB(b)
@@ -210,84 +225,150 @@ export function SmilingFriendsHub({
     }
   }
 
-  // Cheer Clicker Logic
-  const startCheerGame = () => {
-    setCheerCount(0)
-    setCheerTarget(Math.floor(Math.random() * 15) + 25)
-    setCheerTimeLeft(10)
-    setCheerActive(true)
-    setCheerOver(false)
+  // 2. Spam Clicker Logic
+  const startSpamGame = () => {
+    setSpamCount(0)
+    setSpamTarget(Math.floor(Math.random() * 15) + 30)
+    setSpamTimeLeft(10)
+    setSpamActive(true)
+    setSpamOver(false)
   }
 
   useEffect(() => {
-    if (!cheerActive || cheerOver) return
+    if (!spamActive || spamOver) return
     const t = setInterval(() => {
-      setCheerTimeLeft((prev) => {
+      setSpamTimeLeft((prev) => {
         if (prev <= 1) {
-          setCheerOver(true)
-          setCheerActive(false)
+          setSpamOver(true)
+          setSpamActive(false)
           return 0
         }
         return prev - 1
       })
     }, 1000)
     return () => clearInterval(t)
-  }, [cheerActive, cheerOver])
+  }, [spamActive, spamOver])
 
-  const handleCheerTap = () => {
-    if (!cheerActive || cheerOver) return
-    const nextCount = cheerCount + 1
-    setCheerCount(nextCount)
-    if (nextCount >= cheerTarget) {
+  const handleSpamTap = () => {
+    if (!spamActive || spamOver) return
+    const next = spamCount + 1
+    setSpamCount(next)
+    if (next >= spamTarget) {
       handleAddCoins(15)
-      setCheerOver(true)
-      setCheerActive(false)
+      setSpamOver(true)
+      setSpamActive(false)
     }
   }
 
-  // Mole Whack Logic
-  const startMoleGame = () => {
-    setMoleScore(0)
-    setMoleTimer(20)
-    setMoleActive(true)
-    setMoleOver(false)
+  // 3. Wait / Patience Logic
+  const startWaitGame = () => {
+    const targetWait = Math.floor(Math.random() * 8) + 8 // 8s to 15s
+    setWaitInitial(targetWait)
+    setWaitTimer(targetWait)
+    setWaitActive(true)
+    setWaitOver(false)
   }
 
   useEffect(() => {
-    if (!moleActive || moleOver) return
-    const timerInt = setInterval(() => {
-      setMoleTimer((t) => {
-        if (t <= 1) {
-          setMoleOver(true)
-          setMoleActive(false)
-          setMoleGrid(null)
+    if (!waitActive || waitOver) return
+    const t = setInterval(() => {
+      setWaitTimer((prev) => {
+        if (prev <= 1) {
+          setWaitOver(true)
+          setWaitActive(false)
+          handleAddCoins(15)
           return 0
         }
-        return t - 1
+        return prev - 1
       })
     }, 1000)
+    return () => clearInterval(t)
+  }, [waitActive, waitOver])
 
-    const moleInt = setInterval(() => {
-      setMoleGrid(Math.floor(Math.random() * 9))
-    }, 850)
+  // 4. Reaction Flash Logic
+  const startReactionGame = () => {
+    setReactionGreen(false)
+    setReactionActive(true)
+    setReactionOver(false)
+    setReactionMs(0)
 
-    return () => {
-      clearInterval(timerInt)
-      clearInterval(moleInt)
+    const delay = Math.floor(Math.random() * 2500) + 1500
+    setTimeout(() => {
+      setReactionGreen(true)
+      setReactionStartTime(performance.now())
+    }, delay)
+  }
+
+  const handleReactionTap = () => {
+    if (!reactionActive) return
+    if (!reactionGreen) {
+      // Tapped too early!
+      setReactionActive(false)
+      setReactionOver(true)
+      setReactionMs(-1)
+    } else {
+      const elapsed = Math.floor(performance.now() - reactionStartTime)
+      setReactionMs(elapsed)
+      setReactionActive(false)
+      setReactionOver(true)
+      if (elapsed < 400) {
+        handleAddCoins(15)
+      } else {
+        handleAddCoins(5)
+      }
     }
-  }, [moleActive, moleOver])
+  }
 
-  const handleMoleHit = (idx: number) => {
-    if (moleGrid === idx) {
-      setMoleScore((s) => s + 1)
-      handleAddCoins(2)
-      setMoleGrid(null)
+  // 5. Memory Matrix Logic
+  const startMemoryGame = () => {
+    setMemoryStage(1)
+    setMemoryActive(true)
+    setMemoryOver(false)
+    startMemoryRound([Math.floor(Math.random() * 4)])
+  }
+
+  const startMemoryRound = (seq: number[]) => {
+    setMemorySeq(seq)
+    setMemoryStep(0)
+    setMemoryIsDisplaying(true)
+    playMemorySequence(seq)
+  }
+
+  const playMemorySequence = async (seq: number[]) => {
+    await new Promise((r) => setTimeout(r, 600))
+    for (let i = 0; i < seq.length; i++) {
+      setMemoryActiveIndex(seq[i])
+      await new Promise((r) => setTimeout(r, 450))
+      setMemoryActiveIndex(null)
+      await new Promise((r) => setTimeout(r, 180))
+    }
+    setMemoryIsDisplaying(false)
+  }
+
+  const handleMemoryTap = (idx: number) => {
+    if (!memoryActive || memoryIsDisplaying || memoryOver) return
+    setMemoryActiveIndex(idx)
+    setTimeout(() => setMemoryActiveIndex(null), 200)
+
+    if (memorySeq[memoryStep] === idx) {
+      const nextStep = memoryStep + 1
+      if (nextStep === memorySeq.length) {
+        handleAddCoins(5)
+        setMemoryStage((s) => s + 1)
+        const nextSeq = [...memorySeq, Math.floor(Math.random() * 4)]
+        setTimeout(() => startMemoryRound(nextSeq), 700)
+      } else {
+        setMemoryStep(nextStep)
+      }
+    } else {
+      setMemoryOver(true)
+      setMemoryActive(false)
     }
   }
 
   return (
     <div className="space-y-6 select-none font-sans">
-      {/* 1. Header Card */}
+      {/* 1. Header Card with Cartoon Vibe */}
       <div className="p-6 sm:p-8 rounded-[32px] glass-panel-heavy border border-yellow-500/40 shadow-2xl relative overflow-hidden bg-yellow-950/25">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
           <div>
@@ -297,10 +378,10 @@ export function SmilingFriendsHub({
               </span>
             </div>
             <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-200 to-orange-400 text-shadow-md">
-              Smiling Friends Labs & Games
+              Smiling Friends Labs (5 Mini-Juegos)
             </h2>
             <p className="text-xs sm:text-sm text-zinc-300 mt-1">
-              Desbloquea a los 6 trabajadores de Smiling Friends para liberar el tema psicodélico global.
+              Juega todos los 5 mini-juegos originales y desbloquea los 6 personajes animados.
             </p>
           </div>
 
@@ -399,7 +480,7 @@ export function SmilingFriendsHub({
           })}
         </div>
 
-        {/* Selected Character Card */}
+        {/* Selected Character Detail Card */}
         {selectedCharacter && (
           <div className="p-4 sm:p-6 rounded-2xl glass-panel border border-yellow-500/30 bg-black/60 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-spring-scale">
             <div className="flex items-center gap-4">
@@ -446,16 +527,16 @@ export function SmilingFriendsHub({
         )}
       </div>
 
-      {/* 3. Minigames Suite */}
+      {/* 3. All 5 Smiling Friends Minigames */}
       <div className="space-y-3 pt-2">
         <div className="flex items-center justify-between">
           <h3 className="text-sm sm:text-base font-black text-zinc-200 tracking-wider uppercase flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-yellow-400" /> Mini-Juegos de Smiling Friends
+            <Sparkles className="w-4 h-4 text-yellow-400" /> Los 5 Mini-Juegos de Smiling Friends
           </h3>
         </div>
 
-        {/* Tabs */}
-        <div className="grid grid-cols-3 gap-2.5">
+        {/* 5 Tabs */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
           <button
             onClick={() => setActiveGame('math')}
             className={`p-3 rounded-2xl text-xs font-black transition-all flex flex-col items-center gap-1.5 border touch-feedback ${
@@ -465,41 +546,65 @@ export function SmilingFriendsHub({
             }`}
           >
             <span className="text-xl">🐸</span>
-            <span>Cálculo Sr. Rana</span>
+            <span>1. Math (Rana)</span>
           </button>
 
           <button
-            onClick={() => setActiveGame('cheer')}
+            onClick={() => setActiveGame('spam')}
             className={`p-3 rounded-2xl text-xs font-black transition-all flex flex-col items-center gap-1.5 border touch-feedback ${
-              activeGame === 'cheer'
+              activeGame === 'spam'
                 ? 'bg-pink-500/20 border-pink-400 text-pink-300 shadow-[0_0_15px_rgba(236,72,153,0.3)]'
                 : 'bg-black/40 border-white/10 text-zinc-400'
             }`}
           >
             <span className="text-xl">🌸</span>
-            <span>Alegría de Pim</span>
+            <span>2. Spam (Pim)</span>
           </button>
 
           <button
-            onClick={() => setActiveGame('mole')}
+            onClick={() => setActiveGame('wait')}
             className={`p-3 rounded-2xl text-xs font-black transition-all flex flex-col items-center gap-1.5 border touch-feedback ${
-              activeGame === 'mole'
+              activeGame === 'wait'
+                ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.3)]'
+                : 'bg-black/40 border-white/10 text-zinc-400'
+            }`}
+          >
+            <span className="text-xl">🧘</span>
+            <span>3. Paciencia (Alan)</span>
+          </button>
+
+          <button
+            onClick={() => setActiveGame('reaction')}
+            className={`p-3 rounded-2xl text-xs font-black transition-all flex flex-col items-center gap-1.5 border touch-feedback ${
+              activeGame === 'reaction'
+                ? 'bg-orange-500/20 border-orange-400 text-orange-300 shadow-[0_0_15px_rgba(249,115,22,0.3)]'
+                : 'bg-black/40 border-white/10 text-zinc-400'
+            }`}
+          >
+            <span className="text-xl">⚡</span>
+            <span>4. Reflejo (Charlie)</span>
+          </button>
+
+          <button
+            onClick={() => setActiveGame('memory')}
+            className={`col-span-2 sm:col-span-1 p-3 rounded-2xl text-xs font-black transition-all flex flex-col items-center gap-1.5 border touch-feedback ${
+              activeGame === 'memory'
                 ? 'bg-purple-500/20 border-purple-400 text-purple-300 shadow-[0_0_15px_rgba(139,92,246,0.3)]'
                 : 'bg-black/40 border-white/10 text-zinc-400'
             }`}
           >
-            <span className="text-xl">🔨</span>
-            <span>Glep Aplastatop</span>
+            <span className="text-xl">🧠</span>
+            <span>5. Memoria (Glep)</span>
           </button>
         </div>
 
-        {/* Active Game Stage */}
+        {/* Active Game Component Render */}
         <div className="pt-2">
-          {/* Game 1: Math */}
+          {/* 1. Math Game */}
           {activeGame === 'math' && (
             <div className="p-6 rounded-3xl glass-panel-heavy border border-green-500/30 bg-black/60 text-center space-y-4">
               <div className="flex justify-between items-center text-xs">
-                <span className="font-black text-green-400">🐸 Reto de Cálculo</span>
+                <span className="font-black text-green-400">🐸 Reto de Cálculo del Sr. Rana</span>
                 <span className="px-2.5 py-1 rounded-full bg-green-950/80 text-green-300 font-bold">
                   ⏳ {mathTimer}s
                 </span>
@@ -509,16 +614,13 @@ export function SmilingFriendsHub({
                 <div className="py-6 space-y-3">
                   <span className="text-5xl block animate-bounce">🐸</span>
                   <h4 className="text-lg font-black text-white">
-                    ¡Resuelve rápido antes de que se acabe el tiempo!
+                    ¡Resuelve mentalmente antes de que se acabe el tiempo!
                   </h4>
-                  <p className="text-xs text-zinc-400 max-w-xs mx-auto">
-                    Cada respuesta correcta te da +2 Fandi Coins y nuevas operaciones.
-                  </p>
                   <button
                     onClick={startMathGame}
                     className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-black font-black uppercase text-xs rounded-2xl shadow-lg touch-feedback"
                   >
-                    Empezar Reto
+                    Empezar Reto Matemático
                   </button>
                 </div>
               )}
@@ -561,24 +663,24 @@ export function SmilingFriendsHub({
             </div>
           )}
 
-          {/* Game 2: Cheer Clicker */}
-          {activeGame === 'cheer' && (
+          {/* 2. Spam Clicker */}
+          {activeGame === 'spam' && (
             <div className="p-6 rounded-3xl glass-panel-heavy border border-pink-500/30 bg-black/60 text-center space-y-4">
               <div className="flex justify-between items-center text-xs">
                 <span className="font-black text-pink-400">🌸 Alegría Explosiva de Pim</span>
                 <span className="px-2.5 py-1 rounded-full bg-pink-950/80 text-pink-300 font-bold">
-                  ⏳ {cheerTimeLeft}s
+                  ⏳ {spamTimeLeft}s
                 </span>
               </div>
 
-              {!cheerActive && !cheerOver && (
+              {!spamActive && !spamOver && (
                 <div className="py-6 space-y-3">
                   <span className="text-5xl block animate-pulse">🌸</span>
                   <h4 className="text-lg font-black text-white">
-                    ¡Toca lo más rápido que puedas para animar al cliente!
+                    ¡Toca como un poseso para animar al cliente!
                   </h4>
                   <button
-                    onClick={startCheerGame}
+                    onClick={startSpamGame}
                     className="px-6 py-3 bg-gradient-to-r from-pink-500 to-rose-600 text-white font-black uppercase text-xs rounded-2xl shadow-lg touch-feedback"
                   >
                     Iniciar Taps
@@ -586,29 +688,27 @@ export function SmilingFriendsHub({
                 </div>
               )}
 
-              {cheerActive && (
+              {spamActive && (
                 <div className="py-4 space-y-4">
                   <button
-                    onClick={handleCheerTap}
+                    onClick={handleSpamTap}
                     className="w-32 h-32 rounded-full bg-gradient-to-tr from-pink-600 to-rose-400 text-white font-black text-4xl shadow-[0_0_30px_#ec4899] active:scale-90 transition-transform mx-auto flex items-center justify-center touch-feedback"
                   >
                     ¡TAP!
                   </button>
                   <p className="text-sm font-black text-pink-300">
-                    {cheerCount} / {cheerTarget} Taps
+                    {spamCount} / {spamTarget} Taps
                   </p>
                 </div>
               )}
 
-              {cheerOver && (
+              {spamOver && (
                 <div className="py-6 space-y-3 animate-spring-scale">
                   <h4 className="text-xl font-black text-pink-400">
-                    {cheerCount >= cheerTarget
-                      ? '¡Cliente Feliz! (+15 Coins)'
-                      : '¡Casi lo logras!'}
+                    {spamCount >= spamTarget ? '¡Cliente Animado! (+15 Coins)' : '¡Casi lo logras!'}
                   </h4>
                   <button
-                    onClick={startCheerGame}
+                    onClick={startSpamGame}
                     className="px-6 py-2.5 bg-pink-500 text-white font-black uppercase text-xs rounded-2xl shadow-lg touch-feedback"
                   >
                     Intentar de Nuevo
@@ -618,62 +718,170 @@ export function SmilingFriendsHub({
             </div>
           )}
 
-          {/* Game 3: Mole Whack */}
-          {activeGame === 'mole' && (
-            <div className="p-6 rounded-3xl glass-panel-heavy border border-purple-500/30 bg-black/60 text-center space-y-4">
+          {/* 3. Wait / Patience */}
+          {activeGame === 'wait' && (
+            <div className="p-6 rounded-3xl glass-panel-heavy border border-cyan-500/30 bg-black/60 text-center space-y-4">
               <div className="flex justify-between items-center text-xs">
-                <span className="font-black text-purple-400">🔨 Aplastatop de Glep</span>
-                <span className="px-2.5 py-1 rounded-full bg-purple-950/80 text-purple-300 font-bold">
-                  ⏳ {moleTimer}s · Golpes: {moleScore}
+                <span className="font-black text-cyan-400">🧘 Meditación de Queso de Alan</span>
+                <span className="px-2.5 py-1 rounded-full bg-cyan-950/80 text-cyan-300 font-bold">
+                  {waitActive ? `⏳ ${waitTimer}s` : 'Listo'}
                 </span>
               </div>
 
-              {!moleActive && !moleOver && (
+              {!waitActive && !waitOver && (
                 <div className="py-6 space-y-3">
-                  <span className="text-5xl block animate-spin">🔨</span>
+                  <span className="text-5xl block">🧀</span>
                   <h4 className="text-lg font-black text-white">
-                    ¡Golpea a Glep cuando asome la cabeza!
+                    ¡La prueba de paciencia suprema!
                   </h4>
+                  <p className="text-xs text-zinc-400 max-w-xs mx-auto">
+                    Inicia el temporizador y NO toques nada hasta que llegue a 0s.
+                  </p>
                   <button
-                    onClick={startMoleGame}
-                    className="px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-black uppercase text-xs rounded-2xl shadow-lg touch-feedback"
+                    onClick={startWaitGame}
+                    className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-black font-black uppercase text-xs rounded-2xl shadow-lg touch-feedback"
                   >
-                    Empezar
+                    Comenzar Espera Zen
                   </button>
                 </div>
               )}
 
-              {moleActive && (
-                <div className="grid grid-cols-3 gap-3 max-w-xs mx-auto py-2">
-                  {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((slot) => (
+              {waitActive && (
+                <div className="py-6 space-y-4">
+                  <div className="text-5xl font-black text-cyan-300 animate-pulse">
+                    {waitTimer}s
+                  </div>
+                  <p className="text-xs text-zinc-400">
+                    Respira hondo... el queso espera pacientemente.
+                  </p>
+                </div>
+              )}
+
+              {waitOver && (
+                <div className="py-6 space-y-3 animate-spring-scale">
+                  <h4 className="text-xl font-black text-cyan-400">
+                    ¡Paciencia Perfecta! (+15 Coins)
+                  </h4>
+                  <button
+                    onClick={startWaitGame}
+                    className="px-6 py-2.5 bg-cyan-500 text-black font-black uppercase text-xs rounded-2xl shadow-lg touch-feedback"
+                  >
+                    Repetir Meditación
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 4. Reaction Flash */}
+          {activeGame === 'reaction' && (
+            <div className="p-6 rounded-3xl glass-panel-heavy border border-orange-500/30 bg-black/60 text-center space-y-4">
+              <div className="flex justify-between items-center text-xs">
+                <span className="font-black text-orange-400">⚡ Reflejo Instantáneo de Charlie</span>
+                <span className="px-2.5 py-1 rounded-full bg-orange-950/80 text-orange-300 font-bold">
+                  Reflejos
+                </span>
+              </div>
+
+              {!reactionActive && !reactionOver && (
+                <div className="py-6 space-y-3">
+                  <span className="text-5xl block">⚡</span>
+                  <h4 className="text-lg font-black text-white">
+                    ¡Toca en cuanto la pantalla se ponga VERDE!
+                  </h4>
+                  <button
+                    onClick={startReactionGame}
+                    className="px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-black font-black uppercase text-xs rounded-2xl shadow-lg touch-feedback"
+                  >
+                    Iniciar Prueba de Reflejos
+                  </button>
+                </div>
+              )}
+
+              {reactionActive && (
+                <div
+                  onClick={handleReactionTap}
+                  className={`py-16 rounded-2xl cursor-pointer transition-colors ${
+                    reactionGreen
+                      ? 'bg-green-500 text-black font-black text-2xl shadow-[0_0_30px_#22c55e]'
+                      : 'bg-red-950/60 text-red-300 font-bold text-sm border border-red-500/30'
+                  }`}
+                >
+                  {reactionGreen ? '¡TOCA AHORA!' : 'Espera al color verde...'}
+                </div>
+              )}
+
+              {reactionOver && (
+                <div className="py-6 space-y-3 animate-spring-scale">
+                  <h4 className="text-xl font-black text-orange-400">
+                    {reactionMs === -1
+                      ? '¡Tocaste demasiado pronto!'
+                      : `¡Tiempo de Reacción: ${reactionMs} ms!`}
+                  </h4>
+                  <button
+                    onClick={startReactionGame}
+                    className="px-6 py-2.5 bg-orange-500 text-black font-black uppercase text-xs rounded-2xl shadow-lg touch-feedback"
+                  >
+                    Intentar de Nuevo
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 5. Memory Matrix */}
+          {activeGame === 'memory' && (
+            <div className="p-6 rounded-3xl glass-panel-heavy border border-purple-500/30 bg-black/60 text-center space-y-4">
+              <div className="flex justify-between items-center text-xs">
+                <span className="font-black text-purple-400">🧠 Matriz de Memoria de Glep</span>
+                <span className="px-2.5 py-1 rounded-full bg-purple-950/80 text-purple-300 font-bold">
+                  Nivel {memoryStage}
+                </span>
+              </div>
+
+              {!memoryActive && !memoryOver && (
+                <div className="py-6 space-y-3">
+                  <span className="text-5xl block animate-bounce">🧠</span>
+                  <h4 className="text-lg font-black text-white">
+                    ¡Memoriza la secuencia de colores de Glep!
+                  </h4>
+                  <button
+                    onClick={startMemoryGame}
+                    className="px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-black uppercase text-xs rounded-2xl shadow-lg touch-feedback"
+                  >
+                    Iniciar Memoria
+                  </button>
+                </div>
+              )}
+
+              {memoryActive && (
+                <div className="grid grid-cols-2 gap-3 max-w-[220px] aspect-square mx-auto py-2">
+                  {['#ec4899', '#3b82f6', '#22c55e', '#eab308'].map((color, idx) => (
                     <button
-                      key={slot}
-                      onClick={() => handleMoleHit(slot)}
-                      className={`h-20 rounded-2xl flex items-center justify-center text-3xl border transition-all touch-feedback ${
-                        moleGrid === slot
-                          ? 'bg-purple-600 border-purple-300 shadow-[0_0_20px_#8b5cf6] scale-105'
-                          : 'bg-black/50 border-white/10'
+                      key={idx}
+                      disabled={memoryIsDisplaying}
+                      onClick={() => handleMemoryTap(idx)}
+                      className={`rounded-2xl border transition-all duration-100 ${
+                        memoryActiveIndex === idx
+                          ? 'scale-95 border-white shadow-[0_0_25px_var(--c)] opacity-100'
+                          : 'opacity-40 border-white/10'
                       }`}
-                    >
-                      {moleGrid === slot ? '👾' : '🕳️'}
-                    </button>
+                      style={{ backgroundColor: color, '--c': color } as any}
+                    />
                   ))}
                 </div>
               )}
 
-              {moleOver && (
+              {memoryOver && (
                 <div className="py-6 space-y-3 animate-spring-scale">
                   <h4 className="text-xl font-black text-purple-400">
-                    ¡Fin del Juego!
+                    ¡Secuencia Fallida! Nivel: {memoryStage}
                   </h4>
-                  <p className="text-xs text-zinc-300">
-                    Golpes Totales: <strong className="text-purple-300">{moleScore}</strong>
-                  </p>
                   <button
-                    onClick={startMoleGame}
+                    onClick={startMemoryGame}
                     className="px-6 py-2.5 bg-purple-500 text-white font-black uppercase text-xs rounded-2xl shadow-lg touch-feedback"
                   >
-                    Jugar de Nuevo
+                    Intentar de Nuevo
                   </button>
                 </div>
               )}

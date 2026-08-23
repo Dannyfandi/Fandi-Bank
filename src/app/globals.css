@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Fredoka:wght@500;700;800&family=Bungee&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -76,197 +77,167 @@ body {
 .text-shadow-md {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8), 0 0 12px rgba(0, 0, 0, 0.5);
 }
+.text-shadow-lg {
+  text-shadow: 0 3px 6px rgba(0, 0, 0, 0.9), 0 0 20px rgba(0, 0, 0, 0.6);
+}
 .text-shadow-glow {
   text-shadow: 0 0 20px var(--glass-glow);
 }
 
-/* Tactile touch interactions */
-.touch-feedback {
-  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.18s ease-out;
-}
-.touch-feedback:active {
-  transform: scale(0.97);
-  opacity: 0.88;
+/* ============================================================
+   STAR WARS THEME SPECIFIC STYLES & LIGHTSABER GLOWS
+   ============================================================ */
+
+.star-wars-theme {
+  --background: #05070E;
+  --glass-bg: rgba(6, 11, 25, 0.82);
+  --glass-border: rgba(0, 229, 255, 0.35);
+  --glass-glow: rgba(0, 229, 255, 0.4);
 }
 
-/* Horizontal scroll snapping for carousels */
+.star-wars-theme h1,
+.star-wars-theme h2,
+.star-wars-theme h3,
+.star-wars-theme .font-black {
+  font-family: 'Orbitron', var(--font-sans), sans-serif;
+  letter-spacing: 0.05em;
+}
+
+.star-wars-theme .glass-panel {
+  border-color: rgba(0, 229, 255, 0.3);
+  box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.8), 0 0 18px rgba(0, 229, 255, 0.12), inset 0 0 15px rgba(0, 229, 255, 0.05);
+}
+
+.star-wars-theme .glass-panel-heavy {
+  border-color: rgba(0, 229, 255, 0.45);
+  box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.9), 0 0 25px rgba(0, 229, 255, 0.18), inset 0 0 20px rgba(0, 229, 255, 0.08);
+}
+
+/* Lightsaber glowing divider */
+.lightsaber-divider {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #00E5FF, #FFFFFF, #00E5FF, transparent);
+  box-shadow: 0 0 10px #00E5FF, 0 0 20px #00E5FF;
+}
+
+.lightsaber-divider-red {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #FF1E56, #FFFFFF, #FF1E56, transparent);
+  box-shadow: 0 0 10px #FF1E56, 0 0 20px #FF1E56;
+}
+
+/* ============================================================
+   SMILING FRIENDS THEME SPECIFIC STYLES & MIXED-MEDIA ANIMATIONS
+   ============================================================ */
+
+.smiling-theme {
+  --background: #120e03;
+  --glass-bg: rgba(30, 22, 5, 0.78);
+  --glass-border: rgba(234, 179, 8, 0.4);
+  --glass-glow: rgba(234, 179, 8, 0.3);
+}
+
+.smiling-theme h1,
+.smiling-theme h2,
+.smiling-theme h3,
+.smiling-theme .font-black {
+  font-family: 'Fredoka', 'Bungee', cursive, sans-serif;
+  letter-spacing: 0.02em;
+}
+
+/* Mixed-Media Wobbly Hand-Drawn Jitter */
+@keyframes wobbly-jitter {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(-1px, 1px) rotate(-0.5deg); }
+  50% { transform: translate(1px, -1px) rotate(0.5deg); }
+  75% { transform: translate(-1px, -1px) rotate(-0.3deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+/* Claymation Stop-Motion 8fps Effect */
+@keyframes claymation-step {
+  0% { transform: scale(1); filter: brightness(1); }
+  33% { transform: scale(1.02) rotate(1deg); filter: brightness(1.05); }
+  66% { transform: scale(0.99) rotate(-1deg); filter: brightness(0.98); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
+.claymation-anim {
+  animation: claymation-step 1.2s steps(4) infinite;
+}
+
+.wobbly-hover:hover {
+  animation: wobbly-jitter 0.3s infinite ease-in-out;
+}
+
+/* ============================================================
+   TOUCH FEEDBACK & SPRING ANIMATIONS
+   ============================================================ */
+
+.touch-feedback {
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.15s ease;
+  will-change: transform;
+}
+.touch-feedback:active {
+  transform: scale(0.96);
+  opacity: 0.9;
+}
+
+@keyframes springScale {
+  0% { transform: scale(0.92); opacity: 0; }
+  60% { transform: scale(1.02); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes springUp {
+  0% { transform: translateY(40px); opacity: 0; }
+  60% { transform: translateY(-4px); opacity: 1; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes springFadeIn {
+  0% { transform: translateY(12px) scale(0.98); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.animate-spring-scale {
+  animation: springScale 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-spring-up {
+  animation: springUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-spring-fade-in {
+  animation: springFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ============================================================
+   MOBILE SCROLLBAR & SNAP CAROUSEL
+   ============================================================ */
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
 .snap-carousel {
   display: flex;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: none; /* Firefox */
+  scrollbar-width: none;
 }
 .snap-carousel::-webkit-scrollbar {
-  display: none; /* Safari and Chrome */
+  display: none;
 }
 .snap-carousel > * {
   scroll-snap-align: start;
-  flex-shrink: 0;
-}
-
-/* ============================================================
-   SPRING PHYSICS & MICRO-ANIMATIONS
-   ============================================================ */
-
-@keyframes springSlideUp {
-  0% {
-    transform: translateY(100%);
-    opacity: 0;
-  }
-  60% {
-    transform: translateY(-2%);
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-@keyframes springFadeInUp {
-  0% {
-    transform: translateY(20px) scale(0.98);
-    opacity: 0;
-  }
-  100% {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-}
-
-@keyframes springScaleIn {
-  0% {
-    transform: scale(0.92);
-    opacity: 0;
-  }
-  70% {
-    transform: scale(1.02);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-.animate-spring-up {
-  animation: springSlideUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.animate-spring-fade-in {
-  animation: springFadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.animate-spring-scale {
-  animation: springScaleIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-}
-
-/* Stagger delay helpers */
-.stagger-1 { animation-delay: 50ms; }
-.stagger-2 { animation-delay: 100ms; }
-.stagger-3 { animation-delay: 150ms; }
-.stagger-4 { animation-delay: 200ms; }
-.stagger-5 { animation-delay: 250ms; }
-
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 9999px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-/* ============================================================
-   SMILING FRIENDS THEME ENGINE OVERRIDES
-   ============================================================ */
-
-body.smiling-theme {
-  --background: #050401;
-  --glass-bg: rgba(18, 14, 2, 0.75);
-  --glass-bg-hover: rgba(26, 20, 4, 0.85);
-  --glass-border: rgba(234, 179, 8, 0.25);
-  --glass-border-focus: rgba(234, 179, 8, 0.6);
-  --glass-glow: rgba(234, 179, 8, 0.25);
-  --primary-accent: #eab308;
-  --primary-gradient-from: #ca8a04;
-  --primary-gradient-to: #eab308;
-  --accent-secondary: #ec4899;
-}
-
-body.smiling-theme .border-purple-500\/30,
-body.smiling-theme .border-purple-500\/20,
-body.smiling-theme .border-purple-500\/10 {
-  border-color: rgba(234, 179, 8, 0.35) !important;
-}
-
-body.smiling-theme .bg-purple-500\/10,
-body.smiling-theme .bg-purple-500\/5,
-body.smiling-theme .bg-purple-500\/20 {
-  background-color: rgba(234, 179, 8, 0.15) !important;
-}
-
-body.smiling-theme .text-purple-400,
-body.smiling-theme .text-purple-300,
-body.smiling-theme .text-purple-500 {
-  color: #eab308 !important;
-}
-
-body.smiling-theme .shadow-purple-900\/40,
-body.smiling-theme .shadow-purple-900\/20,
-body.smiling-theme .shadow-purple-500\/20,
-body.smiling-theme .shadow-purple-500\/25 {
-  --tw-shadow-color: rgba(234, 179, 8, 0.3) !important;
-}
-
-body.smiling-theme .from-purple-600,
-body.smiling-theme .from-purple-500 {
-  --tw-gradient-from: #ca8a04 !important;
-  --tw-gradient-to: #eab308 !important;
-  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
-}
-
-body.smiling-theme .to-purple-400,
-body.smiling-theme .to-purple-300,
-body.smiling-theme .to-fuchsia-600,
-body.smiling-theme .to-fuchsia-500 {
-  --tw-gradient-to: #facc15 !important;
-}
-
-body.smiling-theme .bg-fuchsia-500\/10,
-body.smiling-theme .border-fuchsia-500\/20,
-body.smiling-theme .border-fuchsia-500\/30 {
-  background-color: rgba(236, 72, 153, 0.12) !important;
-  border-color: rgba(236, 72, 153, 0.3) !important;
-}
-
-body.smiling-theme .text-fuchsia-400,
-body.smiling-theme .text-fuchsia-500 {
-  color: #ec4899 !important;
-}
-
-body.smiling-theme .text-emerald-400,
-body.smiling-theme .text-green-400 {
-  color: #22c55e !important;
-}
-
-body.smiling-theme .text-rose-400,
-body.smiling-theme .text-red-400 {
-  color: #ef4444 !important;
-}
-
-body.smiling-theme .text-indigo-400 {
-  color: #84cc16 !important;
-}
-
-body.smiling-theme ::-webkit-scrollbar-thumb {
-  background: rgba(234, 179, 8, 0.35) !important;
 }

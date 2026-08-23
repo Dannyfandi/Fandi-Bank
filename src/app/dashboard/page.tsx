@@ -152,6 +152,8 @@ export default async function DashboardPage() {
 
   const credits = Number(profile?.credit_balance || 0)
   const isSmiling = profile?.active_theme === 'smiling_friends'
+  const isStarWars = profile?.active_theme === 'star_wars'
+  const logoSrc = isStarWars ? '/sw_logo.svg' : isSmiling ? '/sf_logo.png' : '/logo.png'
 
   return (
     <div className="min-h-screen bg-transparent text-zinc-50 p-3 sm:p-5 md:p-8 pb-28 sm:pb-12 font-sans">
@@ -161,7 +163,7 @@ export default async function DashboardPage() {
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 sm:w-14 sm:h-14 relative shrink-0">
               <Image
-                src={isSmiling ? '/sf_logo.png' : '/logo.png'}
+                src={logoSrc}
                 alt="Fandi Bank"
                 fill
                 className="object-cover rounded-full shadow-lg shadow-purple-900/40"

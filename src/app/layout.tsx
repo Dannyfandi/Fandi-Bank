@@ -57,19 +57,25 @@ export default async function RootLayout({
         <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none bg-black">
           {isStarWars ? (
             <>
-              {/* Star Wars Deep Cosmos & Starfield Backdrop */}
+              {/* Star Wars Deep Cosmos & Nebula Background */}
+              <img
+                src="/sw_bg.jpg"
+                alt=""
+                onError={(e) => ((e.target as HTMLElement).style.display = 'none')}
+                className="absolute inset-0 w-full h-full object-cover blur-[10px] opacity-40 scale-105"
+              />
               <div
-                className="absolute inset-0 bg-[#05070E]"
+                className="absolute inset-0 bg-[#05070E]/85"
                 style={{
                   backgroundImage:
                     'radial-gradient(1.5px 1.5px at 25px 35px, #ffffff, rgba(0,0,0,0)), radial-gradient(2px 2px at 120px 180px, #00E5FF, rgba(0,0,0,0)), radial-gradient(1.5px 1.5px at 280px 310px, #FF1E56, rgba(0,0,0,0)), radial-gradient(2px 2px at 450px 380px, #FFB800, rgba(0,0,0,0))',
-                  backgroundSize: '500px 500px',
+                  backgroundSize: '450px 450px',
                 }}
               />
-              <div className="absolute -top-[20%] -left-[10%] w-[70vw] h-[70vh] rounded-full bg-cyan-600/20 mix-blend-screen filter blur-[130px] opacity-70 animate-glass-1" />
-              <div className="absolute top-[20%] -right-[20%] w-[60vw] h-[80vh] rounded-full bg-red-600/15 mix-blend-screen filter blur-[140px] opacity-60 animate-glass-2" />
-              <div className="absolute -bottom-[20%] left-[20%] w-[80vw] h-[60vh] rounded-full bg-blue-600/15 mix-blend-screen filter blur-[130px] opacity-50 animate-glass-3" />
-              <div className="absolute inset-0 bg-black/40 backdrop-blur-[20px]" />
+              <div className="absolute -top-[20%] -left-[10%] w-[70vw] h-[70vh] rounded-full bg-cyan-500/20 mix-blend-screen filter blur-[130px] opacity-75 animate-glass-1" />
+              <div className="absolute top-[20%] -right-[20%] w-[60vw] h-[80vh] rounded-full bg-red-600/20 mix-blend-screen filter blur-[140px] opacity-65 animate-glass-2" />
+              <div className="absolute -bottom-[20%] left-[20%] w-[80vw] h-[60vh] rounded-full bg-blue-600/20 mix-blend-screen filter blur-[130px] opacity-55 animate-glass-3" />
+              <div className="absolute inset-0 bg-black/35 backdrop-blur-[20px]" />
             </>
           ) : isSmiling ? (
             <>
