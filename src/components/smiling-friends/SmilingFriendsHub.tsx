@@ -17,7 +17,7 @@ import {
   Smile,
 } from 'lucide-react'
 import { AnimatedNumber } from '@/components/AnimatedNumber'
-import { updateSmilingFriendsProgress, syncFandiCoins, updateTheme, claimThemeRefund } from '@/app/dashboard/actions'
+import { updateSmilingFriendsProgress, syncFandiCoins, addFandiCoins, spendFandiCoins, updateTheme, claimThemeRefund } from '@/app/dashboard/actions'
 
 const MAINS = [
   {
@@ -138,12 +138,13 @@ export function SmilingFriendsHub({
   const allUnlocked = unlockedCount === 6
 
   const handleAddCoins = async (amount: number) => {
-    const nextCoins = coins + amount
-    const nextVersion = coinVersion + 1
-    setCoins(nextCoins)
-    setCoinVersion(nextVersion)
+    setCoins((prev) => prev + amount)
     try {
-      await syncFandiCoins(nextCoins, nextVersion)
+      const res = await addFandiCoins(amount)
+      if (res.ok) {
+        setCoins(res.coins)
+        setCoinVersion(res.version)
+      }
     } catch {
       // fallback
     }
@@ -155,11 +156,12 @@ export function SmilingFriendsHub({
     if (!target || unlockedMains.includes(charId)) return
     if (coins < target.cost) return
 
-    const nextCoins = coins - target.cost
-    const nextVersion = coinVersion + 1
-    setCoins(nextCoins)
-    setCoinVersion(nextVersion)
-    await syncFandiCoins(nextCoins, nextVersion)
+    // Deduct coins atomically in Supabase
+    const spendRes = await spendFandiCoins(target.cost)
+    if (!spendRes.success) return
+
+    setCoins(spendRes.coins)
+    setCoinVersion(spendRes.version)
 
     const nextUnlocked = [...unlockedMains, charId]
     setUnlockedMains(nextUnlocked)

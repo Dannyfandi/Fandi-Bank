@@ -16,7 +16,7 @@ import {
   ChevronDown,
 } from 'lucide-react'
 import { SmilingFriendsGame } from './SmilingFriendsGame'
-import { getFandiCoins, syncFandiCoins, requestPrize } from '@/app/dashboard/actions'
+import { getFandiCoins, syncFandiCoins, addFandiCoins, requestPrize } from '@/app/dashboard/actions'
 import { AnimatedNumber } from './AnimatedNumber'
 
 interface Reward {
@@ -123,9 +123,13 @@ export function GamesTab({
   // Cloud-synced coins
   const [dbCoins, setDbCoins] = useState(initialCoins)
   const [pendingCoins, setPendingCoins] = useState(0)
+  const pendingCoinsRef = useRef(0)
+  pendingCoinsRef.current = pendingCoins
+
   const syncVersion = useRef(initialVersion)
   const isSyncing = useRef(false)
   const [syncIndicator, setSyncIndicator] = useState(false)
+  const flushTimer = useRef<NodeJS.Timeout | null>(null)
 
   // Confirmation modal
   const [confirmReward, setConfirmReward] = useState<Reward | null>(null)
@@ -157,41 +161,52 @@ export function GamesTab({
     setSyncIndicator(true)
 
     try {
-      const result = await syncFandiCoins(toSync, syncVersion.current)
+      const result = await addFandiCoins(toSync)
       if (result.ok) {
         setDbCoins(result.coins)
         syncVersion.current = result.version
       } else {
-        setDbCoins(result.coins)
-        syncVersion.current = result.version
+        setPendingCoins((prev) => prev + toSync)
       }
     } catch {
       setPendingCoins((prev) => prev + toSync)
     } finally {
       isSyncing.current = false
-      setTimeout(() => setSyncIndicator(false), 1000)
+      setTimeout(() => setSyncIndicator(false), 800)
     }
   }, [])
 
   useEffect(() => {
     const interval = setInterval(() => {
       flushCoins()
-    }, 15000)
+    }, 10000)
 
     const handleBeforeUnload = () => {
-      flushCoins()
+      if (pendingCoinsRef.current > 0) {
+        addFandiCoins(pendingCoinsRef.current).catch(() => {})
+      }
     }
     window.addEventListener('beforeunload', handleBeforeUnload)
 
     return () => {
       clearInterval(interval)
+      if (flushTimer.current) clearTimeout(flushTimer.current)
       window.removeEventListener('beforeunload', handleBeforeUnload)
+      // Flush immediately on unmount when navigating to profile or another section
+      if (pendingCoinsRef.current > 0) {
+        addFandiCoins(pendingCoinsRef.current).catch(() => {})
+      }
     }
   }, [flushCoins])
 
   const addPoints = useCallback((p: number) => {
     setPendingCoins((prev) => prev + p)
-  }, [])
+    // Debounce auto-flush: saves 1.5s after player pauses tapping
+    if (flushTimer.current) clearTimeout(flushTimer.current)
+    flushTimer.current = setTimeout(() => {
+      flushCoins()
+    }, 1500)
+  }, [flushCoins])
 
   const handleRequestPrize = async (reward: Reward) => {
     setIsRequesting(true)

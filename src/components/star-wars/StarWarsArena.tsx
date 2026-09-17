@@ -25,7 +25,14 @@ import { TrenchRunGame } from './TrenchRunGame'
 import { FalconFlightGame } from './FalconFlightGame'
 import { HolocronMemoryGame } from './HolocronMemoryGame'
 import { CantinaQuickDrawGame } from './CantinaQuickDrawGame'
-import { syncFandiCoins, updateTheme, claimThemeRefund } from '@/app/dashboard/actions'
+import {
+  syncFandiCoins,
+  addFandiCoins,
+  spendFandiCoins,
+  updateStarWarsProgress,
+  updateTheme,
+  claimThemeRefund,
+} from '@/app/dashboard/actions'
 
 export interface StarWarsCharacter {
   id: string
@@ -45,7 +52,7 @@ const INITIAL_CHARACTERS: StarWarsCharacter[] = [
     id: 'luke',
     name: 'Luke Skywalker',
     title: 'Caballero Jedi',
-    image: '/star-wars/luke.svg',
+    image: '/star-wars/luke.png',
     color: '#00FF66',
     cost: 250,
     perk: 'Aura Verde de Sable de Luz',
@@ -57,7 +64,7 @@ const INITIAL_CHARACTERS: StarWarsCharacter[] = [
     id: 'vader',
     name: 'Darth Vader',
     title: 'Lord Sith',
-    image: '/star-wars/vader.svg',
+    image: '/star-wars/vader.png',
     color: '#FF1E56',
     cost: 450,
     perk: 'Bordes Carmesí Sith & Respiración SFX',
@@ -69,7 +76,7 @@ const INITIAL_CHARACTERS: StarWarsCharacter[] = [
     id: 'yoda',
     name: 'Master Yoda',
     title: 'Gran Maestro',
-    image: '/star-wars/yoda.svg',
+    image: '/star-wars/yoda.png',
     color: '#00E5FF',
     cost: 650,
     perk: 'Widget de Sabiduría Jedi',
@@ -81,7 +88,7 @@ const INITIAL_CHARACTERS: StarWarsCharacter[] = [
     id: 'ahsoka',
     name: 'Ahsoka Tano',
     title: 'Fulcrum',
-    image: '/star-wars/ahsoka.svg',
+    image: '/star-wars/ahsoka.png',
     color: '#FFFFFF',
     cost: 850,
     perk: 'Gestos Rápidos de Doble Sable',
@@ -93,7 +100,7 @@ const INITIAL_CHARACTERS: StarWarsCharacter[] = [
     id: 'rez',
     name: 'Commander Rex',
     title: 'Capitán Clon',
-    image: '/star-wars/rex.svg',
+    image: '/star-wars/rex.png',
     color: '#3B82F6',
     cost: 1100,
     perk: 'Acción Rápida Blaster Fast-Pay',
@@ -105,7 +112,7 @@ const INITIAL_CHARACTERS: StarWarsCharacter[] = [
     id: 'obiwan',
     name: 'Obi-Wan Kenobi',
     title: 'Maestro Jedi',
-    image: '/star-wars/obiwan.svg',
+    image: '/star-wars/obiwan.png',
     color: '#FFB800',
     cost: 1400,
     perk: 'Cabecera Flotante del Terreno Alto',
@@ -126,13 +133,23 @@ const YODA_WISDOMS = [
 export function StarWarsArena({
   initialCoins = 250,
   initialVersion = 0,
+  initialUnlocked = [],
+  isAdmin = false,
 }: {
   initialCoins?: number
   initialVersion?: number
+  initialUnlocked?: string[]
+  isAdmin?: boolean
 }) {
   const [coins, setCoins] = useState(initialCoins)
   const [coinVersion, setCoinVersion] = useState(initialVersion)
-  const [characters, setCharacters] = useState<StarWarsCharacter[]>(INITIAL_CHARACTERS)
+  const [characters, setCharacters] = useState<StarWarsCharacter[]>(() => {
+    const unlockedSet = new Set(initialUnlocked || [])
+    return INITIAL_CHARACTERS.map((c) => ({
+      ...c,
+      unlocked: unlockedSet.has(c.id) || (c.id === 'rez' && unlockedSet.has('rex')),
+    }))
+  })
   const [activeGame, setActiveGame] = useState<
     'duel' | 'trench' | 'falcon' | 'holocron' | 'cantina'
   >('duel')
@@ -144,14 +161,15 @@ export function StarWarsArena({
   const unlockedCount = characters.filter((c) => c.unlocked).length
   const allUnlocked = unlockedCount === 6
 
-  // Coin Handler with Server Sync
+  // Coin Handler with Persistent Server Sync
   const handleAddCoins = async (amount: number) => {
-    const nextCoins = coins + amount
-    const nextVersion = coinVersion + 1
-    setCoins(nextCoins)
-    setCoinVersion(nextVersion)
+    setCoins((prev) => prev + amount)
     try {
-      await syncFandiCoins(nextCoins, nextVersion)
+      const res = await addFandiCoins(amount)
+      if (res.ok) {
+        setCoins(res.coins)
+        setCoinVersion(res.version)
+      }
     } catch {
       // offline fallback
     }
@@ -163,11 +181,12 @@ export function StarWarsArena({
     if (!target || target.unlocked) return
     if (coins < target.cost) return
 
-    const nextCoins = coins - target.cost
-    const nextVersion = coinVersion + 1
-    setCoins(nextCoins)
-    setCoinVersion(nextVersion)
-    await syncFandiCoins(nextCoins, nextVersion)
+    // Deduct coins atomically
+    const spendRes = await spendFandiCoins(target.cost)
+    if (!spendRes.success) return
+
+    setCoins(spendRes.coins)
+    setCoinVersion(spendRes.version)
 
     const updated = characters.map((c) =>
       c.id === charId ? { ...c, unlocked: true } : c
@@ -175,6 +194,9 @@ export function StarWarsArena({
     setCharacters(updated)
     setSelectedCharacter(updated.find((c) => c.id === charId) || null)
     starWarsAudio.playKyberChime(880)
+
+    // Save character unlock in database
+    await updateStarWarsProgress(charId)
 
     if (updated.every((c) => c.unlocked)) {
       await updateTheme('star_wars')
@@ -187,6 +209,7 @@ export function StarWarsArena({
 
   // Admin Sandbox Quick Unlock All
   const handleUnlockAll = async () => {
+    if (!isAdmin) return
     const updated = characters.map((c) => ({ ...c, unlocked: true }))
     setCharacters(updated)
     starWarsAudio.playLightsaberIgnite()
@@ -194,6 +217,7 @@ export function StarWarsArena({
   }
 
   const handleResetCharacters = () => {
+    if (!isAdmin) return
     setCharacters(INITIAL_CHARACTERS)
     setSelectedCharacter(null)
   }
@@ -230,9 +254,11 @@ export function StarWarsArena({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
           <div>
             <div className="flex items-center gap-2 mb-1.5">
-              <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[10px] uppercase font-black tracking-widest flex items-center gap-1.5 shadow-[0_0_10px_#00E5FF]">
-                <Zap className="w-3 h-3 animate-pulse" /> Sandbox Mode (Admin Only)
-              </span>
+              {isAdmin && (
+                <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[10px] uppercase font-black tracking-widest flex items-center gap-1.5 shadow-[0_0_10px_#00E5FF]">
+                  <Zap className="w-3 h-3 animate-pulse" /> Sandbox Mode (Admin Only)
+                </span>
+              )}
               <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-mono">
                 AUREBESH // 0x77A
               </span>
@@ -293,20 +319,22 @@ export function StarWarsArena({
           <h3 className="text-sm sm:text-base font-black text-zinc-200 tracking-wider uppercase flex items-center gap-2">
             <Award className="w-4 h-4 text-amber-400" /> Bóveda de Hologramas ({unlockedCount}/6)
           </h3>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleUnlockAll}
-              className="px-2.5 py-1 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 text-[10px] font-black uppercase tracking-wider transition-all touch-feedback"
-            >
-              Desbloquear Todos (Admin)
-            </button>
-            <button
-              onClick={handleResetCharacters}
-              className="px-2.5 py-1 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/40 text-[10px] font-black uppercase tracking-wider transition-all touch-feedback"
-            >
-              Reset
-            </button>
-          </div>
+          {isAdmin && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleUnlockAll}
+                className="px-2.5 py-1 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 text-[10px] font-black uppercase tracking-wider transition-all touch-feedback"
+              >
+                Desbloquear Todos (Admin)
+              </button>
+              <button
+                onClick={handleResetCharacters}
+                className="px-2.5 py-1 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/40 text-[10px] font-black uppercase tracking-wider transition-all touch-feedback"
+              >
+                Reset
+              </button>
+            </div>
+          )}
         </div>
 
         {/* 6 Character Cards Grid */}

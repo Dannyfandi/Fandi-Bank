@@ -196,7 +196,8 @@ export async function cancelVisitRequest(formData: FormData) {
 }
 
 export async function updateSmilingFriendsProgress(formData: FormData) {
-  const randomsSmiled = parseInt(formData.get('randomsSmiled') as string || '0', 10)
+  const hasRandoms = formData.has('randomsSmiled')
+  const randomsSmiled = hasRandoms ? parseInt(formData.get('randomsSmiled') as string || '0', 10) : null
   const newlyUnlocked = formData.get('newlyUnlocked') as string | null
 
   const supabase = await createClient()
@@ -206,7 +207,9 @@ export async function updateSmilingFriendsProgress(formData: FormData) {
   const { data: profile } = await supabase.from('profiles').select('sf_progress, active_theme').eq('id', user.id).single()
   const progress = profile?.sf_progress || { unlocked_mains: [], randoms_smiled: 0 }
   
-  progress.randoms_smiled = randomsSmiled
+  if (randomsSmiled !== null) {
+    progress.randoms_smiled = randomsSmiled
+  }
   let themeUnlocked = false
 
   if (newlyUnlocked && !progress.unlocked_mains.includes(newlyUnlocked)) {
@@ -225,6 +228,8 @@ export async function updateSmilingFriendsProgress(formData: FormData) {
   if (themeUnlocked) {
     revalidatePath('/', 'layout')
   }
+  revalidatePath('/dashboard')
+  revalidatePath('/games/smiling-friends')
 }
 
 export async function resetSmilingFriends() {
@@ -232,17 +237,23 @@ export async function resetSmilingFriends() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('role, sf_progress').eq('id', user.id).single()
   if (profile?.role !== 'admin') throw new Error('Unauthorized')
 
+  const progress = profile?.sf_progress || {}
+  progress.unlocked_mains = []
+  progress.randoms_smiled = 0
+  delete progress.refund_claimed_smiling_friends
+
   await supabase.from('profiles').update({
-    sf_progress: { unlocked_mains: [], randoms_smiled: 0 },
+    sf_progress: progress,
     active_theme: 'normal'
   }).eq('id', user.id)
 
   revalidatePath('/', 'layout')
   revalidatePath('/admin')
   revalidatePath('/dashboard')
+  revalidatePath('/games/smiling-friends')
 }
 
 export async function unlockSmilingFriendsAdmin() {
@@ -250,12 +261,16 @@ export async function unlockSmilingFriendsAdmin() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('role, sf_progress').eq('id', user.id).single()
   if (profile?.role !== 'admin') throw new Error('Unauthorized')
 
   const allMains = ['mrfrog', 'mrboss', 'alan', 'pim', 'charlie', 'glep']
+  const progress = profile?.sf_progress || {}
+  progress.unlocked_mains = allMains
+  progress.randoms_smiled = 6
+
   await supabase.from('profiles').update({
-    sf_progress: { unlocked_mains: allMains, randoms_smiled: 6 },
+    sf_progress: progress,
     active_theme: 'smiling_friends'
   }).eq('id', user.id)
 
@@ -270,17 +285,24 @@ export async function unlockStarWarsAdmin() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('role, sf_progress').eq('id', user.id).single()
   if (profile?.role !== 'admin') throw new Error('Unauthorized')
 
+  const allChars = ['luke', 'vader', 'yoda', 'ahsoka', 'rez', 'obiwan']
+  const progress = profile?.sf_progress || {}
+  progress.sw_unlocked_characters = allChars
+  progress.sw_theme_unlocked = true
+
   await supabase.from('profiles').update({
-    active_theme: 'star_wars'
+    active_theme: 'star_wars',
+    sf_progress: progress,
   }).eq('id', user.id)
 
   revalidatePath('/', 'layout')
   revalidatePath('/admin')
   revalidatePath('/dashboard')
   revalidatePath('/admin/sandbox/star-wars')
+  revalidatePath('/games/star-wars')
 }
 
 export async function resetStarWarsProgress() {
@@ -288,17 +310,57 @@ export async function resetStarWarsProgress() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('role, sf_progress').eq('id', user.id).single()
   if (profile?.role !== 'admin') throw new Error('Unauthorized')
 
+  const progress = profile?.sf_progress || {}
+  progress.sw_unlocked_characters = []
+  delete progress.refund_claimed_star_wars
+  delete progress.sw_theme_unlocked
+
   await supabase.from('profiles').update({
-    active_theme: 'normal'
+    active_theme: 'normal',
+    sf_progress: progress,
   }).eq('id', user.id)
 
   revalidatePath('/', 'layout')
   revalidatePath('/admin')
   revalidatePath('/dashboard')
   revalidatePath('/admin/sandbox/star-wars')
+  revalidatePath('/games/star-wars')
+}
+
+export async function updateStarWarsProgress(characterId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const { data: profile } = await supabase.from('profiles').select('sf_progress, active_theme').eq('id', user.id).single()
+  const progress = profile?.sf_progress || {}
+  const swUnlocked: string[] = Array.isArray(progress.sw_unlocked_characters) ? [...progress.sw_unlocked_characters] : []
+
+  if (characterId && !swUnlocked.includes(characterId)) {
+    swUnlocked.push(characterId)
+  }
+  progress.sw_unlocked_characters = swUnlocked
+
+  let themeUnlocked = false
+  if (swUnlocked.length >= 6) {
+    themeUnlocked = true
+    progress.sw_theme_unlocked = true
+  }
+
+  const updates: any = { sf_progress: progress }
+  if (themeUnlocked) updates.active_theme = 'star_wars'
+
+  await supabase.from('profiles').update(updates).eq('id', user.id)
+
+  if (themeUnlocked) {
+    revalidatePath('/', 'layout')
+  }
+  revalidatePath('/dashboard')
+  revalidatePath('/admin')
+  revalidatePath('/games/star-wars')
 }
 
 export async function updateTheme(themeStr: string) {
@@ -314,7 +376,7 @@ export async function updateTheme(themeStr: string) {
 }
 
 // -------------------------------------------------------
-// Fandi Coins: Cloud Sync (version-gated to prevent dupes)
+// Fandi Coins: Cloud Sync & Direct Operations
 // -------------------------------------------------------
 
 export async function getFandiCoins(): Promise<{ coins: number, version: number }> {
@@ -332,6 +394,74 @@ export async function getFandiCoins(): Promise<{ coins: number, version: number 
     coins: data?.fandi_coins || 0,
     version: data?.coin_sync_version || 0,
   }
+}
+
+export async function addFandiCoins(delta: number): Promise<{ coins: number, version: number, ok: boolean }> {
+  if (delta <= 0) return { coins: 0, version: 0, ok: false }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { coins: 0, version: 0, ok: false }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('fandi_coins, coin_sync_version')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile) return { coins: 0, version: 0, ok: false }
+
+  const newCoins = (profile.fandi_coins || 0) + delta
+  const newVersion = (profile.coin_sync_version || 0) + 1
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ fandi_coins: newCoins, coin_sync_version: newVersion })
+    .eq('id', user.id)
+
+  if (error) {
+    return { coins: profile.fandi_coins || 0, version: profile.coin_sync_version || 0, ok: false }
+  }
+
+  revalidatePath('/dashboard')
+  return { coins: newCoins, version: newVersion, ok: true }
+}
+
+export async function spendFandiCoins(amount: number): Promise<{ success: boolean, coins: number, version: number, message?: string }> {
+  if (amount <= 0) return { success: false, coins: 0, version: 0, message: 'Cantidad inválida' }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, coins: 0, version: 0, message: 'No autorizado' }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('fandi_coins, coin_sync_version')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile) return { success: false, coins: 0, version: 0, message: 'Perfil no encontrado' }
+
+  const currentCoins = profile.fandi_coins || 0
+  if (currentCoins < amount) {
+    return { success: false, coins: currentCoins, version: profile.coin_sync_version || 0, message: 'Monedas insuficientes' }
+  }
+
+  const newCoins = currentCoins - amount
+  const newVersion = (profile.coin_sync_version || 0) + 1
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ fandi_coins: newCoins, coin_sync_version: newVersion })
+    .eq('id', user.id)
+    .gte('fandi_coins', amount)
+
+  if (error) {
+    return { success: false, coins: currentCoins, version: profile.coin_sync_version || 0, message: 'Error en la transacción' }
+  }
+
+  revalidatePath('/dashboard')
+  return { success: true, coins: newCoins, version: newVersion }
 }
 
 export async function syncFandiCoins(delta: number, expectedVersion: number): Promise<{ coins: number, version: number, ok: boolean }> {

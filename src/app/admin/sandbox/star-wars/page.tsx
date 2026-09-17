@@ -14,7 +14,7 @@ export default async function StarWarsSandboxPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role, username, fandi_coins, coin_sync_version')
+    .select('role, username, fandi_coins, coin_sync_version, sf_progress')
     .eq('id', user.id)
     .single()
 
@@ -56,6 +56,8 @@ export default async function StarWarsSandboxPage() {
         <StarWarsArena
           initialCoins={profile?.fandi_coins || 0}
           initialVersion={profile?.coin_sync_version || 0}
+          initialUnlocked={profile?.sf_progress?.sw_unlocked_characters || []}
+          isAdmin={true}
         />
       </div>
     </div>

@@ -39,7 +39,7 @@ export function MobileNav({
 
       {isOpen && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xl flex flex-col animate-in slide-in-from-right-full duration-300">
-          <div className="p-4 flex justify-between items-center border-b border-white/10 bg-black/30">
+          <div className="p-4 pt-[max(1rem,env(safe-area-inset-top))] flex justify-between items-center border-b border-white/10 bg-black/30">
             <span className="text-xs font-black uppercase tracking-widest text-zinc-400">
               Menu
             </span>
@@ -135,7 +135,7 @@ export function MobileNav({
               )}
             </div>
 
-            <div className="mt-auto pt-4 border-t border-white/10">
+            <div className="mt-auto pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-white/10">
               <form action="/auth/signout" method="post">
                 <button className="flex w-full items-center gap-3.5 p-3.5 hover:bg-red-500/15 rounded-2xl transition-colors text-red-400 font-bold uppercase tracking-widest text-xs touch-feedback">
                   <LogOut className="w-5 h-5" /> {t.logout || 'Logout'}

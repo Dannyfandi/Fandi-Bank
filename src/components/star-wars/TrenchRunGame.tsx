@@ -321,7 +321,11 @@ export function TrenchRunGame({
       </div>
 
       {/* Main Canvas Area */}
-      <div className="relative w-full h-84 sm:h-96 rounded-2xl bg-slate-950 border border-red-500/30 overflow-hidden shadow-inner flex items-center justify-center">
+      <div
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        className="relative w-full h-[340px] sm:h-96 rounded-2xl bg-slate-950 border border-red-500/30 overflow-hidden shadow-inner flex items-center justify-center touch-none select-none"
+      >
         <canvas
           ref={canvasRef}
           width={400}

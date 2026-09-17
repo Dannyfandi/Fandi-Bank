@@ -87,6 +87,10 @@ export function FalconFlightGame({
   // Phantom Joystick Event Handlers
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!stateRef.current.isRunning) return
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId)
+    } catch {}
+
     const rect = e.currentTarget.getBoundingClientRect()
     const px = e.clientX - rect.left
     const py = e.clientY - rect.top
@@ -124,7 +128,10 @@ export function FalconFlightGame({
     }))
   }
 
-  const handlePointerUp = () => {
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    } catch {}
     stateRef.current.pointerActive = false
     setJoystickTouch((prev) => ({ ...prev, active: false }))
   }
@@ -344,7 +351,7 @@ export function FalconFlightGame({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
-        className="relative w-full h-84 sm:h-96 rounded-2xl bg-slate-950 border border-cyan-500/30 overflow-hidden shadow-inner flex items-center justify-center touch-none cursor-crosshair"
+        className="relative w-full h-[340px] sm:h-96 rounded-2xl bg-slate-950 border border-cyan-500/30 overflow-hidden shadow-inner flex items-center justify-center touch-none cursor-crosshair select-none"
       >
         <canvas
           ref={canvasRef}
