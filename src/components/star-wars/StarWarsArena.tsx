@@ -52,7 +52,7 @@ const INITIAL_CHARACTERS: StarWarsCharacter[] = [
     id: 'luke',
     name: 'Luke Skywalker',
     title: 'Caballero Jedi',
-    image: '/star-wars/luke.png',
+    image: '/star-wars/luke.png?v=2',
     color: '#00FF66',
     cost: 250,
     perk: 'Aura Verde de Sable de Luz',
@@ -64,7 +64,7 @@ const INITIAL_CHARACTERS: StarWarsCharacter[] = [
     id: 'vader',
     name: 'Darth Vader',
     title: 'Lord Sith',
-    image: '/star-wars/vader.png',
+    image: '/star-wars/vader.png?v=2',
     color: '#FF1E56',
     cost: 450,
     perk: 'Bordes Carmesí Sith & Respiración SFX',
@@ -76,7 +76,7 @@ const INITIAL_CHARACTERS: StarWarsCharacter[] = [
     id: 'yoda',
     name: 'Master Yoda',
     title: 'Gran Maestro',
-    image: '/star-wars/yoda.png',
+    image: '/star-wars/yoda.png?v=2',
     color: '#00E5FF',
     cost: 650,
     perk: 'Widget de Sabiduría Jedi',
@@ -88,7 +88,7 @@ const INITIAL_CHARACTERS: StarWarsCharacter[] = [
     id: 'ahsoka',
     name: 'Ahsoka Tano',
     title: 'Fulcrum',
-    image: '/star-wars/ahsoka.png',
+    image: '/star-wars/ahsoka.png?v=2',
     color: '#FFFFFF',
     cost: 850,
     perk: 'Gestos Rápidos de Doble Sable',
@@ -100,7 +100,7 @@ const INITIAL_CHARACTERS: StarWarsCharacter[] = [
     id: 'rez',
     name: 'Commander Rex',
     title: 'Capitán Clon',
-    image: '/star-wars/rex.png',
+    image: '/star-wars/rex.png?v=2',
     color: '#3B82F6',
     cost: 1100,
     perk: 'Acción Rápida Blaster Fast-Pay',
@@ -112,7 +112,7 @@ const INITIAL_CHARACTERS: StarWarsCharacter[] = [
     id: 'obiwan',
     name: 'Obi-Wan Kenobi',
     title: 'Maestro Jedi',
-    image: '/star-wars/obiwan.png',
+    image: '/star-wars/obiwan.png?v=2',
     color: '#FFB800',
     cost: 1400,
     perk: 'Cabecera Flotante del Terreno Alto',
@@ -357,14 +357,21 @@ export function StarWarsArena({
                 }`}
               >
                 {/* Character Image / Secret Silhouette */}
-                <div className="w-full aspect-square rounded-xl overflow-hidden mb-2 bg-black/50 relative flex items-center justify-center border border-white/10">
+                <div
+                  className="w-full aspect-square rounded-xl overflow-hidden mb-2 relative flex items-center justify-center border border-white/10"
+                  style={{
+                    background: c.unlocked
+                      ? `radial-gradient(circle at 50% 35%, ${c.color}25 0%, #030712 85%)`
+                      : 'rgba(2, 6, 23, 0.8)',
+                  }}
+                >
                   {c.unlocked ? (
                     !hasImgError ? (
                       <img
                         src={c.image}
                         alt={c.name}
                         onError={() => setImgErrors((prev) => ({ ...prev, [c.id]: true }))}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover select-none pointer-events-none drop-shadow-[0_4px_12px_rgba(0,0,0,0.6)]"
                       />
                     ) : (
                       <div
@@ -427,11 +434,14 @@ export function StarWarsArena({
           >
             <div className="flex items-center gap-4">
               <div
-                className="w-16 h-16 rounded-2xl overflow-hidden flex items-center justify-center border shadow-lg shrink-0 bg-black"
+                className="w-16 h-16 rounded-2xl overflow-hidden flex items-center justify-center border shadow-lg shrink-0"
                 style={{
                   borderColor: selectedCharacter.unlocked
                     ? selectedCharacter.color
                     : '#475569',
+                  background: selectedCharacter.unlocked
+                    ? `radial-gradient(circle at 50% 35%, ${selectedCharacter.color}30 0%, #020617 90%)`
+                    : '#090d16',
                 }}
               >
                 {selectedCharacter.unlocked ? (
@@ -445,7 +455,7 @@ export function StarWarsArena({
                           [selectedCharacter.id]: true,
                         }))
                       }
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover select-none pointer-events-none"
                     />
                   ) : (
                     <span className="text-2xl">⚔️</span>
